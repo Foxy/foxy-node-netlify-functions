@@ -7,3 +7,6 @@ dist
 # Env vars should be set in Netlify,
 # so let's make sure we don't accidentally commit them.
 .env
+
+# VSCode and other editor-specific files
+tempCodeRunner*
