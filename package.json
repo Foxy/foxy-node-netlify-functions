@@ -1,0 +1,24 @@
+{
+  "name": "foxy.io-serverless-functions-on-netlify-demo",
+  "version": "1.0.0",
+  "description": "Run serverless functions on Netlify to work with the Foxy.io hypermedia API.",
+  "private": false,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "http-server ./src/lambda --port 9000 -c-1"
+  },
+  "author": "Foxy.io",
+  "license": "MIT",
+  "devDependencies": {
+    "dotenv": "^5.0.1",
+    "prettier": "2.1.0"
+  },
+  "dependencies": {
+    "@foxy.io/node-api": "^1.0.0-beta.8",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "http-errors": "^1.8.0",
+    "serverless-http": "^2.5.0",
+    "traverse": "^0.6.6"
+  }
+}
