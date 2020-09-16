@@ -18,6 +18,7 @@
     "body-parser": "^1.19.0",
     "express": "^4.17.1",
     "http-errors": "^1.8.0",
+    "node-fetch": "^2.6.1",
     "serverless-http": "^2.5.0",
     "traverse": "^0.6.6"
   }

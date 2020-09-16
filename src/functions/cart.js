@@ -13,8 +13,8 @@ const bodyParser = require("body-parser");
 
 /** Functions and Variables */
 /** Default values */
-const defaultSubFrequency = process.env.DEFAULT_FREQUENCY
-  ? process.env.DEFAULT_FREQUENCY
+const defaultSubFrequency = process.env.DEFAULT_AUTOSHIP_FREQUENCY
+  ? process.env.DEFAULT_AUTOSHIP_FREQUENCY
   : "1m";
 
 

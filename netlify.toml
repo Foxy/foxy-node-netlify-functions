@@ -7,3 +7,6 @@
   FOXY_API_CLIENT_ID = "Enter your Foxy.io API Client ID here."
   FOXY_API_CLIENT_SECRET = "Enter your Foxy.io API Client Secret here."
   FOXY_API_REFRESH_TOKEN = "Enter your Foxy.io API Refresh Token here."
+  DEFAULT_AUTOSHIP_FREQUENCY = "Defaults to `1m`"
+  IDEV_SECRET_KEY = "Get this from the API settings in your iDevAffiliate admin."
+  IDEV_API_URL = "Get this from the API settings in your iDevAffiliate admin. It should end in `sale.php`."
