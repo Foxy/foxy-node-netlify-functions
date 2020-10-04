@@ -10,3 +10,5 @@
   DEFAULT_AUTOSHIP_FREQUENCY = "Defaults to `1m`"
   IDEV_SECRET_KEY = "Get this from the API settings in your iDevAffiliate admin."
   IDEV_API_URL = "Get this from the API settings in your iDevAffiliate admin. It should end in `sale.php`."
+  WEBFLOW_TOKEN = "Get this from Webflow's project settings, at the 'Integrations' tab."
+  
