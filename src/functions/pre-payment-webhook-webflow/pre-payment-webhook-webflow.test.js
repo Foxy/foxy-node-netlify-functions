@@ -1,4 +1,5 @@
 const rewire = require('rewire');
+const prePayment = rewire('./pre-pament-webhook-webflow-price');
 
 
 describe('Verifies the price of an item in a Webflow collection', function() {
