@@ -1,5 +1,5 @@
 [build]
-  command = "npm build"
+  command = "npm i"
   functions = "src/functions"
 
 [template.environment]
