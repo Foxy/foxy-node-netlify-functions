@@ -12,17 +12,19 @@ const Config = {
 const Cache = {
   cache: {},
   addItems(collection, items) {
-    if (!this.cache[collection]) {
-      this.cache[collection] = [];
+    if (!Cache.cache[collection]) {
+      Cache.cache[collection] = [];
     }
-    this.cache[collection].concat(items);
+    Cache.cache[collection] = Cache.cache[collection].concat(items);
   },
   findItem(collection, item) {
-    if (!this.cache[collection]) {
+    if (!Cache.cache[collection]) {
       return null;
     }
-    return this.cache[collection].find(
-      (e) => e[Config.code_field].toString() === item.code.toString(),
+    return Cache.cache[collection].find(
+      (e) => {
+        return getCustomItemOption(e, 'code').toString() === item.code.toString();
+      }
     );
   },
 };
@@ -32,6 +34,13 @@ const Cache = {
  */
 function validToken() {
   return !!process.env.WEBFLOW_TOKEN;
+}
+
+/**
+ * Set the configuration for the item
+ */
+function setFieldConfig(item) {
+
 }
 
 /**
@@ -48,22 +57,25 @@ function extractItems(body) {
  * Checks if item is valid
  */
 function validItem(item) {
-  return (item.price || item.quantity) && item.code && item.collection_id;
+  return item.price && 
+    item.quantity &&
+    item.code &&
+    getItemOption(item, 'collection_id').value;
 }
 
 /**
  * Retrieve a custom value from an item
  */
 function getItemOption(item, option) {
+  let found = item[option];
+  if (found) return {name: option, value: item[option]};
   if (item['_embedded']) {
-    let found = item[option];
-    if (found) return found;
-    if (!found && item['_embedded']['fx:item_options']) {
+    if (item['_embedded']['fx:item_options']) {
       found = item['_embedded']['fx:item_options'].find((e) => e.name === option);
-      if (found) found.value;
+      if (found && found.value) return found;
     }
   }
-  return null;
+  return {};
 }
 
 /**
@@ -72,11 +84,12 @@ function getItemOption(item, option) {
 function getCustomItemOption(item, option) {
   const field = getItemOption(item, `${option}_field`);
   let result;
-  if (field) {
-    result = getItemOption(item, field);
+  if (field.value) {
+    result = getItemOption(item, field.value);
   } else {
     result = getItemOption(item, option);
   }
+  if (!result) result = {};
   return result;
 }
 
@@ -85,7 +98,7 @@ function getCustomItemOption(item, option) {
  */
 function correctPrice(enrichedItem) {
   const i = enrichedItem;
-  return parseFloat(i.matchedItem.price) === parseFloat(getItemOption(i, 'price'));
+  return parseFloat(i.matchedItem.price) === parseFloat(getItemOption(i, 'price').value);
 }
 
 /**
@@ -104,17 +117,11 @@ function getToken() {
 }
 
 /**
- * IIFE returns a function that retrieve an instance of the Webflow API Client
+ * Retrieve an instance of the Webflow API Client
  */
-const getWebflow = (() => {
-  let WF;
-  return () => {
-    if (!WF) {
-      WF = new Webflow({ token: getToken() });
-    }
-    return WF;
-  };
-})();
+function getWebflow() {
+  return new Webflow({ token: getToken() });
+};
 
 function enrichFetchedItem(fetched, item) {
   const enriched = fetched;
@@ -136,7 +143,11 @@ function enrichFetchedItem(fetched, item) {
  * @offset number offet: the number of items already checked in this collection
  */
 function fetchItem(item, offset = 0) {
-  const collectionId = getCustomItemOption(item, 'collection_id');
+  if (offset > 1000) {
+    console.error("Infinite loop", offset, item);
+    return Promise.reject("Infinete Loop");
+  }
+  const collectionId = getCustomItemOption(item, 'collection_id').value;
   const webflow = getWebflow();
   const found = Cache.findItem(collectionId, item);
   if (found) {
@@ -145,26 +156,35 @@ function fetchItem(item, offset = 0) {
   return new Promise((resolve, reject) => {
     webflow.items(
       { collectionId },
-      { sort: [Config.code_field, 'ASC'], limit: Config.webflow.limit, offset },
+      { sort: [getCustomItemOption(item, 'code').name, 'ASC'], limit: Config.webflow.limit, offset },
     ).then((collection) => {
       Cache.addItems(collectionId, collection.items);
       const fetched = collection.items.find(
-        (e) => e[Config.code_field].toString() === item.code.toString(),
+        (e) => {
+          //console.log('fetching',
+          //  e[getCustomItemOption(item, 'code_field').name],
+          //  e[e[getCustomItemOption(item, 'code_field').name]],
+          //  item.code
+          //); 
+          return e[getCustomItemOption(item, 'code_field').name].toString() === item.code.toString();
+        }
       );
       if (fetched) {
         resolve(enrichFetchedItem(fetched));
-      } else if (collection.total > collection.offset * Config.webflow.limit + collection.count) {
-        fetchItem(item, offset * Config.webflow.limit)
+      } else if (collection.total > collection.offset + collection.count) {
+        fetchItem(item, ( (offset/Config.webflow.limit) + 1 ) * Config.webflow.limit)
           .then((i) => resolve(i))
           .catch((e) => reject(e));
       } else {
         reject(new Error('Item not found'));
       }
-    }).catch((e) => reject(e));
+    }).catch((e) => {
+      reject(e);
+    });
   });
 }
 
-function handleRequest(event, context, callback) {
+async function handleRequest(event, context, callback) {
   // Check if the function is ready to operate
   if (!validToken()) {
     callback(null, {
@@ -193,34 +213,41 @@ function handleRequest(event, context, callback) {
     });
     return;
   }
+  items.map(setFieldConfig);
+
   // Fetch information needed to validate the cart
-  Promise.all(items.map(fetchItem))
-    .then((values) => {
-      if (!values.every(correctPrice)) {
-        callback(null, {
-          statusCode: 200,
-          ok: false,
-          details: 'Prices do not match.',
-        });
-        return;
-      }
-      if (!values.every(sufficientInventory)) {
-        callback(null, {
-          statusCode: 200,
-          ok: false,
-          details: 'Insufficient inventory.',
-        });
-        return;
-      }
-      callback(null, { ok: true, details: '' });
-    })
-    .catch((e) => {
-      if (e.code.toString === '429') {
+  const values = [];
+  for (let i of items) {
+    let value;
+    try {
+      value = await fetchItem(i);
+    } catch(e) {
+      if (e.code && e.code.toString === '429') {
         callback(null, { statusCode: 429, body: 'Rate limit reached' });
       } else {
-        callback(null, { statusCode: e.code, body: e.message });
+        console.error(e);
+        callback(null, { statusCode: e.code ? e.code : 500, body: e.message });
       }
+    }
+    values.push(value);
+  }
+  if (!values.every(correctPrice)) {
+    callback(null, {
+      statusCode: 200,
+      ok: false,
+      details: 'Prices do not match.',
     });
+    return;
+  }
+  if (!values.every(sufficientInventory)) {
+    callback(null, {
+      statusCode: 200,
+      ok: false,
+      details: 'Insufficient inventory.',
+    });
+    return;
+  }
+  callback(null, { ok: true, details: '' });
 }
 
 exports.handler = handleRequest;
