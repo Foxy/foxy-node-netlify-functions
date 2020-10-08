@@ -2,18 +2,18 @@ function randomString() {
   return Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
 }
 
-function basicRequest(itemBuilder, qty=10) {
+function basicRequest(itemBuilder, qty = 10) {
   return {
     _links: {
     },
     _embedded: {
-      'fx:items': [... new Array(qty)].map(itemBuilder),
+      'fx:items': [...new Array(qty)].map(itemBuilder),
     },
     locale_code: 'en_US',
     total_item_price: 35.99,
     total_tax: 3.24,
     total_order: 49.86,
-  }
+  };
 }
 
 function basicItem() {
@@ -26,7 +26,7 @@ function basicItem() {
       'fx:item_options': [
         {
           name: 'collection_id',
-          value: 'COLLECTIONID'
+          value: 'COLLECTIONID',
         },
         {
           name: 'price_field',
@@ -34,7 +34,7 @@ function basicItem() {
         },
         {
           name: 'code_field',
-          value: 'mysku'
+          value: 'mysku',
         },
         {
           name: 'inventory_field',
@@ -57,14 +57,14 @@ function newItemRandomCollection() {
   return basic;
 }
 
-exports.deterministic = function() {
+exports.deterministic = function () {
   return basicRequest(basicItem);
 };
 
-exports.longCollection = function() {
+exports.longCollection = function () {
   return basicRequest(basicItem, 100);
 };
 
-exports.random = function() {
+exports.random = function () {
   return basicRequest(newItemRandomCollection);
 };
