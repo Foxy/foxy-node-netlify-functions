@@ -154,6 +154,7 @@ function fetchItem(item, offset = 0) {
   const collectionId = getCustomItemOption(item, 'collection_id').value;
   const webflow = getWebflow();
   const found = Cache.findItem(collectionId, item);
+
   if (found) {
     return Promise.resolve(enrichFetchedItem(found, item));
   }
@@ -205,7 +206,10 @@ async function handleRequest(event, context, callback) {
   if (!event || !event.body) {
     callback(null, {
       statusCode: 400,
-      details: 'Empty request.',
+      body: {
+        ok: false,
+        details: 'Empty request.',
+      },
     });
     return;
   }
@@ -263,8 +267,14 @@ async function handleRequest(event, context, callback) {
       },
     });
   }).catch((e) => {
-    if (e.code && e.code.toString === '429') {
-      callback(null, { statusCode: 429, body: 'Rate limit reached' });
+    if (e.code && e.code.toString() === '429') {
+      callback(null, {
+        statusCode: 429,
+        body: {
+          details: 'Rate limit reached.',
+          ok: false,
+        },
+      });
     } else if (e) {
       callback(null,
         {
