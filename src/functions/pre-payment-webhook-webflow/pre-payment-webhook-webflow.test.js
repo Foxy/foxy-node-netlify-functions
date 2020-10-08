@@ -12,10 +12,16 @@ const injectedWebflow = {
 
 prePayment.__set__('getWebflow', () => injectedWebflow);
 
+function functionToSet(key, value) {
+  return (el) => {
+    const toChange = el;
+    toChange[key] = value;
+    return toChange;
+  };
+}
 
 describe('Verifies the price of an item in a Webflow collection', () => {
-
-  it('Only executes if there is a WEBFLOW_TOKEN set', async function () {
+  it('Only executes if there is a WEBFLOW_TOKEN set', async () => {
     function noToken(error, response) {
       expect(response.ok).to.equal(false);
       expect(response.details).to.equal('Webflow token not configured.');
@@ -28,7 +34,7 @@ describe('Verifies the price of an item in a Webflow collection', () => {
     expect(prePayment.handler(null, null, withToken));
   });
 
-  it('Extracts the items from FoxyCart payload', async function() {
+  it('Extracts the items from FoxyCart payload', async () => {
     const extractItems = prePayment.__get__('extractItems');
     let items = extractItems(mockFoxyCart.deterministic());
     expect(items.length).to.equal(10);
@@ -36,7 +42,7 @@ describe('Verifies the price of an item in a Webflow collection', () => {
     expect(items.length).to.equal(100);
   });
 
-  it('Identifies the price, quantity and code fields', async function() {
+  it('Identifies the price, quantity and code fields', async () => {
     const extractItems = prePayment.__get__('extractItems');
     const getCustomItemOption = prePayment.__get__('getCustomItemOption');
     const items = extractItems(mockFoxyCart.longCollection());
@@ -48,7 +54,7 @@ describe('Verifies the price of an item in a Webflow collection', () => {
     expect(items.length).to.equal(100);
   });
 
-  it('Approves when all items are correct', async function(){
+  it('Approves when all items are correct', async () => {
     function callback(err, response) {
       expect(response).to.deep.equal(
         {
@@ -62,16 +68,16 @@ describe('Verifies the price of an item in a Webflow collection', () => {
     const event = {
       body: (() => {
         const r = mockFoxyCart.deterministic();
-        r['_embedded']['fx:items'].map(e => e.price = 11);
-        r['_embedded']['fx:items'].map(e => e.quantity = 1);
+        r._embedded['fx:items'].forEach(functionToSet('price', 11));
+        r._embedded['fx:items'].forEach(functionToSet('quantity', 1));
         return r;
       })(),
     };
     // Make sure the response values matches
-    injectedWebflow.items = function() {
+    injectedWebflow.items = function () {
       return Promise.resolve(
         mockWebflow.arbitrary(
-          event.body['_embedded']['fx:items']
+          event.body._embedded['fx:items'],
         )({}, {}),
       );
     };
@@ -79,12 +85,13 @@ describe('Verifies the price of an item in a Webflow collection', () => {
     await prePayment.handler(event, context, callback);
   });
 
-  it('Rejects when any price is incorrect', async function() {
+  it('Rejects when any price is incorrect', async () => {
     function callback(err, response) {
       expect(response).to.deep.equal(
         {
-          ok: true,
-          details: '',
+          statusCode: 200,
+          ok: false,
+          details: 'Prices do not match.',
         },
       );
     }
@@ -93,23 +100,21 @@ describe('Verifies the price of an item in a Webflow collection', () => {
     const event = {
       body: (() => {
         const r = mockFoxyCart.deterministic();
-        r['_embedded']['fx:items'].map(e => e.price = 21);
-        r['_embedded']['fx:items'].map(e => e.quantity = 1);
+        r._embedded['fx:items'].forEach(functionToSet('price', 21));
+        r._embedded['fx:items'].forEach(functionToSet('quantity', 1));
         return r;
       })(),
     };
     injectedWebflow.items = () => Promise.resolve(
       mockWebflow.arbitrary(
-        event.body['_embedded']['fx:items']
+        event.body._embedded['fx:items'], { price: false, quantity: true, code: true }
       )({}, {}),
     );
     const context = {};
     await prePayment.handler(event, context, callback);
-
-
   });
 
-  it('Rejects when any price is incorrect');
+  it('Rejects when any inventory is insufficient');
   it('Rejects when provided custom field does not exist');
   it('Rejects when any quantity over inventory');
   it('Returns Bad Request when no body is provided');

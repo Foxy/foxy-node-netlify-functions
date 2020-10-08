@@ -42,7 +42,7 @@ exports.deterministic = basicResponse(
 
 exports.arbitrary = function arbitrary(items,
   config = { price: true, quantity: true, code: true }) {
-  return function (context, options) {
+  return (context, options) => {
     const r = basicResponse(newWebflowBasicItem,
       100,
       500)(context, options);

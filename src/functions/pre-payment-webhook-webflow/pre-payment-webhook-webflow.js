@@ -88,6 +88,9 @@ function validItem(item) {
  * Checks if the price of the item is the same as found in WebFlow Collection
  */
 function correctPrice(enrichedItem) {
+  if (!enrichedItem.matchedItem) {
+    return true;
+  }
   const i = enrichedItem;
   return parseFloat(i.matchedItem.price) === parseFloat(getItemOption(i, 'price').value);
 }
@@ -96,6 +99,9 @@ function correctPrice(enrichedItem) {
  * Checks if there is sufficient inventory for this purchase.
  */
 function sufficientInventory(enrichedItem) {
+  if (!enrichedItem.matchedItem) {
+    return true;
+  }
   const i = enrichedItem;
   return !Config.inventory_field || i[Config.inventory_field] >= i.matchedItem.quantity;
 }
@@ -114,8 +120,8 @@ function getWebflow() {
   return new Webflow({ token: getToken() });
 }
 
-function enrichFetchedItem(fetched, item) {
-  const enriched = fetched;
+function enrichFetchedItem(match, item) {
+  const enriched = match;
   enriched.matchedItem = item;
   return enriched;
 }
@@ -141,7 +147,7 @@ function fetchItem(item, offset = 0) {
   const webflow = getWebflow();
   const found = Cache.findItem(collectionId, item);
   if (found) {
-    return Promise.resolve(enrichFetchedItem(found));
+    return Promise.resolve(enrichFetchedItem(found, item));
   }
   return new Promise((resolve, reject) => {
     webflow.items(
@@ -149,11 +155,11 @@ function fetchItem(item, offset = 0) {
       { sort: [getCustomItemOption(item, 'code').name, 'ASC'], limit: Config.webflow.limit, offset },
     ).then((collection) => {
       Cache.addItems(collectionId, collection.items);
-      const fetched = collection.items.find(
+      const match = collection.items.find(
         (e) => e[getCustomItemOption(item, 'code_field').name].toString() === item.code.toString(),
       );
-      if (fetched) {
-        resolve(enrichFetchedItem(fetched));
+      if (match) {
+        resolve(enrichFetchedItem(match, item));
       } else if (collection.total > collection.offset + collection.count) {
         fetchItem(item, ((offset / Config.webflow.limit) + 1) * Config.webflow.limit)
           .then((i) => resolve(i))
@@ -196,41 +202,44 @@ async function handleRequest(event, context, callback) {
     });
     return;
   }
-  items.map(setFieldConfig);
 
-  // Fetch information needed to validate the cart
   const values = [];
-  items.forEach(async (i) => {
-    let value;
-    try {
-      value = await fetchItem(i);
-    } catch (e) {
-      if (e.code && e.code.toString === '429') {
-        callback(null, { statusCode: 429, body: 'Rate limit reached' });
-      } else {
-        console.error(e);
-        callback(null, { statusCode: e.code ? e.code : 500, body: e.message });
-      }
+  // Fetch information needed to validate the cart
+  const concatenatedPromisses = items.reduce(
+    (p, i) => p.then(
+      (accum) => fetchItem(i).then((fetched) => {
+        values.push(fetched);
+        return accum;
+      }),
+    ), Promise.resolve(values),
+  );
+
+  await concatenatedPromisses.then(() => {
+    if (!values.every(correctPrice)) {
+      callback(null, {
+        statusCode: 200,
+        ok: false,
+        details: 'Prices do not match.',
+      });
+      return;
     }
-    values.push(value);
+    if (!values.every(sufficientInventory)) {
+      callback(null, {
+        statusCode: 200,
+        ok: false,
+        details: 'Insufficient inventory.',
+      });
+      return;
+    }
+    callback(null, { ok: true, details: '' });
+  }).catch((e) => {
+    if (e.code && e.code.toString === '429') {
+      callback(null, { statusCode: 429, body: 'Rate limit reached' });
+    } else {
+      console.error(e);
+      callback(null, { statusCode: e.code ? e.code : 500, body: e.message });
+    }
   });
-  if (!values.every(correctPrice)) {
-    callback(null, {
-      statusCode: 200,
-      ok: false,
-      details: 'Prices do not match.',
-    });
-    return;
-  }
-  if (!values.every(sufficientInventory)) {
-    callback(null, {
-      statusCode: 200,
-      ok: false,
-      details: 'Insufficient inventory.',
-    });
-    return;
-  }
-  callback(null, { ok: true, details: '' });
 }
 
 exports.handler = handleRequest;
