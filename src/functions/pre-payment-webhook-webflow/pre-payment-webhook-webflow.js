@@ -52,7 +52,7 @@ const Cache = {
       return null;
     }
     return Cache.cache[collection].find(
-      (e) => getCustomItemOption(e, 'code').toString() === item.code.toString(),
+      (e) => getCustomItemOption(e, 'code').value.toString() === item.code.toString(),
     );
   },
 };
@@ -135,7 +135,6 @@ function enrichFetchedItem(fetched, item) {
  */
 function fetchItem(item, offset = 0) {
   if (offset > 1000) {
-    console.error('Infinite loop', offset, item);
     return Promise.reject(new Error('Infinete Loop'));
   }
   const collectionId = getCustomItemOption(item, 'collection_id').value;
