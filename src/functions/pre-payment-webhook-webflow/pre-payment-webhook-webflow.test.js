@@ -65,6 +65,7 @@ describe('Verifies the price of an item in a Webflow collection', () => {
         return r;
       })(),
     };
+    // Make sure the response values matches
     injectedWebflow.items = function() {
       return Promise.resolve(
         mockWebflow.arbitrary(
@@ -75,9 +76,39 @@ describe('Verifies the price of an item in a Webflow collection', () => {
     const context = {};
     await prePayment.handler(event, context, callback);
   });
-  it('Rejects when any price is incorrect');
+
+  it('Rejects when any price is incorrect', async function() {
+    function callback(err, response) {
+      expect(response).to.deep.equal(
+        {
+          ok: true,
+          details: '',
+        },
+      );
+    }
+    // fix prices on requests
+    // fix quantity on requests
+    const event = {
+      body: (() => {
+        const r = mockFoxyCart.deterministic();
+        r['_embedded']['fx:items'].map(e => e.price = 21);
+        r['_embedded']['fx:items'].map(e => e.quantity = 1);
+        return r;
+      })(),
+    };
+    injectedWebflow.items = () => Promise.resolve(
+      mockWebflow.arbitrary(
+        event.body['_embedded']['fx:items']
+      )({}, {}),
+    );
+    const context = {};
+    await prePayment.handler(event, context, callback);
+  });
+
   it('Rejects when provided custom field does not exist');
   it('Rejects when any quantity over inventory');
   it('Returns Bad Request when no body is provided');
   it('Returns Rate limit exceeded when Weflow limit is exceeded');
+  it('Fetches each collection page only once');
+  it('Fetches different collections asynchronously');
 });

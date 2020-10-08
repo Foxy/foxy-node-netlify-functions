@@ -40,15 +40,16 @@ exports.deterministic = basicResponse(
   500,
 );
 
-exports.arbitrary = function (items) {
+exports.arbitrary = function arbitrary(items,
+  config = { price: true, quantity: true, code: true }) {
   return function (context, options) {
     const r = basicResponse(newWebflowBasicItem,
       100,
       500)(context, options);
     for (let i = 0; i < items.length; i += 1) {
-      r.items[i].price = items[i].price;
-      r.items[i].quantity = 1;
-      r.items[i][r.items[i].code_field] = items[i].code;
+      if (config.price) r.items[i].price = items[i].price;
+      if (config.quantity) r.items[i].quantity = 1;
+      if (config.code) r.items[i][r.items[i].code_field] = items[i].code;
     }
     return r;
   };
