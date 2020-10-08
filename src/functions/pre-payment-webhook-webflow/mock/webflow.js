@@ -41,15 +41,27 @@ exports.deterministic = basicResponse(
 );
 
 exports.arbitrary = function arbitrary(items,
-  config = { price: true, quantity: true, code: true }) {
+  config = {
+    price: (v) => v,
+    quantity: (v) => v,
+    code: (v) => v,
+  },
+  without = []) {
   return (context, options) => {
     const r = basicResponse(newWebflowBasicItem,
       100,
       500)(context, options);
     for (let i = 0; i < items.length; i += 1) {
-      if (config.price) r.items[i].price = items[i].price;
-      if (config.quantity) r.items[i].quantity = 1;
-      if (config.code) r.items[i][r.items[i].code_field] = items[i].code;
+      if (config.price instanceof Function) r.items[i].price = config.price(items[i].price);
+      if (config.inventory instanceof Function) {
+        r.items[i].inventory = config.inventory(items[i].quantity);
+      }
+      if (config.code instanceof Function) {
+        r.items[i][r.items[i].code_field] = config.code(items[i].code);
+      }
+      without.forEach((w) => {
+        delete r.items[i][w];
+      });
     }
     return r;
   };

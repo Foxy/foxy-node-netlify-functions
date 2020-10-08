@@ -52,7 +52,15 @@ const Cache = {
       return null;
     }
     return Cache.cache[collection].find(
-      (e) => getCustomItemOption(e, 'code').value.toString() === item.code.toString(),
+      (e) => {
+        try {
+          return getCustomItemOption(e, 'code').value.toString() === item.code.toString();
+        } catch (err) {
+          err.message = 'Wrong code_field.';
+          err.code = 400;
+          throw err;
+        }
+      },
     );
   },
 };
@@ -156,7 +164,15 @@ function fetchItem(item, offset = 0) {
     ).then((collection) => {
       Cache.addItems(collectionId, collection.items);
       const match = collection.items.find(
-        (e) => e[getCustomItemOption(item, 'code_field').name].toString() === item.code.toString(),
+        (e) => {
+          try {
+            return e[getCustomItemOption(item, 'code_field').name].toString() === item.code.toString();
+          } catch (err) {
+            err.code = 400;
+            err.message = 'wrong code_field';
+            throw err;
+          }
+        },
       );
       if (match) {
         resolve(enrichFetchedItem(match, item));
@@ -178,8 +194,10 @@ async function handleRequest(event, context, callback) {
   if (!validToken()) {
     callback(null, {
       statusCode: 503,
-      ok: false,
-      details: 'Webflow token not configured.',
+      body: {
+        ok: false,
+        details: 'Webflow token not configured.',
+      },
     });
     return;
   }
@@ -197,8 +215,10 @@ async function handleRequest(event, context, callback) {
   if (invalidItems.length) {
     callback(null, {
       statusCode: 200,
-      ok: false,
-      details: `Invalid items: ${invalidItems.map((e) => e.name).join(',')}`,
+      body: {
+        ok: false,
+        details: `Invalid items: ${invalidItems.map((e) => e.name).join(',')}`,
+      },
     });
     return;
   }
@@ -218,26 +238,42 @@ async function handleRequest(event, context, callback) {
     if (!values.every(correctPrice)) {
       callback(null, {
         statusCode: 200,
-        ok: false,
-        details: 'Prices do not match.',
+        body: {
+          ok: false,
+          details: 'Prices do not match.',
+        },
       });
       return;
     }
     if (!values.every(sufficientInventory)) {
       callback(null, {
         statusCode: 200,
-        ok: false,
-        details: 'Insufficient inventory.',
+        body: {
+          ok: false,
+          details: 'Insufficient inventory.',
+        },
       });
       return;
     }
-    callback(null, { ok: true, details: '' });
+    callback(null, {
+      statusCode: 200,
+      body: {
+        ok: true,
+        details: '',
+      },
+    });
   }).catch((e) => {
     if (e.code && e.code.toString === '429') {
       callback(null, { statusCode: 429, body: 'Rate limit reached' });
-    } else {
-      console.error(e);
-      callback(null, { statusCode: e.code ? e.code : 500, body: e.message });
+    } else if (e) {
+      callback(null,
+        {
+          statusCode: e.code ? e.code : 500,
+          body: {
+            ok: false,
+            details: e.message,
+          },
+        });
     }
   });
 }

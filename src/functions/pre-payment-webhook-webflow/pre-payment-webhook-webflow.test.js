@@ -20,18 +20,31 @@ function functionToSet(key, value) {
   };
 }
 
+function theSame (value) {
+  return value;
+}
+
+function increaseFrom (number) {
+  let count = number;
+  return () => {
+    const temp = count;
+    count += 1;
+    return temp;
+  };
+};
+
 describe('Verifies the price of an item in a Webflow collection', () => {
   it('Only executes if there is a WEBFLOW_TOKEN set', async () => {
     function noToken(error, response) {
-      expect(response.ok).to.equal(false);
-      expect(response.details).to.equal('Webflow token not configured.');
+      expect(response.body.ok).to.equal(false);
+      expect(response.body.details).to.equal('Webflow token not configured.');
     }
     function withToken(error, response) {
       expect(response.details).not.to.equal('Webflow token not configured.');
     }
-    expect(prePayment.handler(null, null, noToken));
+    await prePayment.handler(null, null, noToken);
     prePayment.__set__('process.env.WEBFLOW_TOKEN', 'FOOBAR');
-    expect(prePayment.handler(null, null, withToken));
+    await prePayment.handler(null, null, withToken);
   });
 
   it('Extracts the items from FoxyCart payload', async () => {
@@ -58,8 +71,11 @@ describe('Verifies the price of an item in a Webflow collection', () => {
     function callback(err, response) {
       expect(response).to.deep.equal(
         {
-          ok: true,
-          details: '',
+          statusCode: 200,
+          body: {
+            ok: true,
+            details: '',
+          },
         },
       );
     }
@@ -90,13 +106,13 @@ describe('Verifies the price of an item in a Webflow collection', () => {
       expect(response).to.deep.equal(
         {
           statusCode: 200,
-          ok: false,
-          details: 'Prices do not match.',
-        },
+          body: {
+            ok: false,
+            details: 'Prices do not match.',
+          },
+        }
       );
     }
-    // fix prices on requests
-    // fix quantity on requests
     const event = {
       body: (() => {
         const r = mockFoxyCart.deterministic();
@@ -107,15 +123,84 @@ describe('Verifies the price of an item in a Webflow collection', () => {
     };
     injectedWebflow.items = () => Promise.resolve(
       mockWebflow.arbitrary(
-        event.body._embedded['fx:items'], { price: false, quantity: true, code: true }
+        event.body._embedded['fx:items'], {
+          price: false,
+          inventory: theSame,
+          code: theSame,
+        },
       )({}, {}),
     );
     const context = {};
     await prePayment.handler(event, context, callback);
   });
 
-  it('Rejects when any inventory is insufficient');
-  it('Rejects when provided custom field does not exist');
+  it('Rejects when any inventory is insufficient', async () => {
+    function callback(err, response) {
+      expect(response).to.deep.equal(
+        {
+          statusCode: 200,
+          body: {
+            ok: false,
+            details: 'Insufficient inventory.',
+          },
+        },
+      );
+    }
+    const event = {
+      body: (() => {
+        const r = mockFoxyCart.deterministic();
+        r._embedded['fx:items'].forEach(functionToSet('price', 21));
+        r._embedded['fx:items'].forEach(functionToSet('quantity', 1));
+        return r;
+      })(),
+    };
+    injectedWebflow.items = () => Promise.resolve(
+      mockWebflow.arbitrary(
+        event.body._embedded['fx:items'], {
+          price: theSame,
+          inventory: increaseFrom(0),
+          code: theSame,
+        },
+      )({}, {}),
+    );
+    const context = {};
+    await prePayment.handler(event, context, callback);
+  });
+
+  it('Rejects when provided custom field does not exist', async () => {
+    function callback(err, response) {
+      expect(response).to.deep.equal(
+        {
+          statusCode: 400,
+          body: {
+            ok: false,
+            details: 'Wrong code_field.',
+          },
+        },
+      );
+    }
+    const event = {
+      body: (() => {
+        const r = mockFoxyCart.deterministic();
+        r._embedded['fx:items'].forEach(functionToSet('price', 21));
+        r._embedded['fx:items'].forEach(functionToSet('quantity', 1));
+        return r;
+      })(),
+    };
+    injectedWebflow.items = () => Promise.resolve(
+      mockWebflow.arbitrary(
+        event.body._embedded['fx:items'], {
+          price: theSame,
+          inventory: theSame,
+          code: theSame,
+        },
+        ['mysku'],
+      )({}, {}),
+    );
+    const context = {};
+    await prePayment.handler(event, context, callback);
+  });
+
   it('Rejects when any quantity over inventory');
   it('Returns Bad Request when no body is provided');
   it('Returns Rate limit exceeded when Weflow limit is exceeded');
