@@ -54,18 +54,14 @@ exports.deterministic = basicResponse(
 
 exports.arbitrary = function(items) {
   return function(context, options) {
-    console.log(items.length, "pra ter certeza");
     r = basicResponse(newWebflowBasicItem,
                       100,
                       500)(context, options);
-    console.log(items.length, "pra ter certeza2");
     for (let i=0; i < items.length; i++) {
       r.items[i].price = items[i].price;
       r.items[i].quantity = 1;
       r.items[i][r.items[i]['code_field']] = items[i].code;
     }
-    console.log(items.length, "pra ter certeza3");
-    console.log(r.items.slice(0, 15));
     return r;
   }
 }

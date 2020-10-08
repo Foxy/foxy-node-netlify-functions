@@ -144,7 +144,6 @@ function enrichFetchedItem(fetched, item) {
  */
 function fetchItem(item, offset = 0) {
   if (offset > 1000) {
-    console.error("Infinite loop", offset, item);
     return Promise.reject("Infinete Loop");
   }
   const collectionId = getCustomItemOption(item, 'collection_id').value;
@@ -161,11 +160,6 @@ function fetchItem(item, offset = 0) {
       Cache.addItems(collectionId, collection.items);
       const fetched = collection.items.find(
         (e) => {
-          //console.log('fetching',
-          //  e[getCustomItemOption(item, 'code_field').name],
-          //  e[e[getCustomItemOption(item, 'code_field').name]],
-          //  item.code
-          //); 
           return e[getCustomItemOption(item, 'code_field').name].toString() === item.code.toString();
         }
       );
@@ -225,7 +219,6 @@ async function handleRequest(event, context, callback) {
       if (e.code && e.code.toString === '429') {
         callback(null, { statusCode: 429, body: 'Rate limit reached' });
       } else {
-        console.error(e);
         callback(null, { statusCode: e.code ? e.code : 500, body: e.message });
       }
     }

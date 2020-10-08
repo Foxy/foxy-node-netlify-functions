@@ -64,7 +64,6 @@ describe('Verifies the price of an item in a Webflow collection', () => {
     const event = {
       body: (() => {
         r = mockFoxyCart.deterministic();
-        console.log("Recebi r");
         r['_embedded']['fx:items'].map(e => e.price = 11);
         r['_embedded']['fx:items'].map(e => e.quantity = 1);
         return r;
