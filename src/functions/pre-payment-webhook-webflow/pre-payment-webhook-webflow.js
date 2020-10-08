@@ -9,69 +9,15 @@ const Config = {
   inventory_field: 'inventory',
 };
 
-const Cache = {
-  cache: {},
-  addItems(collection, items) {
-    if (!Cache.cache[collection]) {
-      Cache.cache[collection] = [];
-    }
-    Cache.cache[collection] = Cache.cache[collection].concat(items);
-  },
-  findItem(collection, item) {
-    if (!Cache.cache[collection]) {
-      return null;
-    }
-    return Cache.cache[collection].find(
-      (e) => {
-        return getCustomItemOption(e, 'code').toString() === item.code.toString();
-      }
-    );
-  },
-};
-
-/**
- * Checks if the token is valid
- */
-function validToken() {
-  return !!process.env.WEBFLOW_TOKEN;
-}
-
-/**
- * Set the configuration for the item
- */
-function setFieldConfig(item) {
-
-}
-
-/**
- * Extract items from payload received from FoxyCart
- */
-function extractItems(body) {
-  if (body && body._embedded && body._embedded['fx:items']) {
-    return body._embedded['fx:items'];
-  }
-  return [];
-}
-
-/**
- * Checks if item is valid
- */
-function validItem(item) {
-  return item.price && 
-    item.quantity &&
-    item.code &&
-    getItemOption(item, 'collection_id').value;
-}
-
 /**
  * Retrieve a custom value from an item
  */
 function getItemOption(item, option) {
   let found = item[option];
-  if (found) return {name: option, value: item[option]};
-  if (item['_embedded']) {
-    if (item['_embedded']['fx:item_options']) {
-      found = item['_embedded']['fx:item_options'].find((e) => e.name === option);
+  if (found) return { name: option, value: item[option] };
+  if (item._embedded) {
+    if (item._embedded['fx:item_options']) {
+      found = item._embedded['fx:item_options'].find((e) => e.name === option);
       if (found && found.value) return found;
     }
   }
@@ -91,6 +37,51 @@ function getCustomItemOption(item, option) {
   }
   if (!result) result = {};
   return result;
+}
+
+const Cache = {
+  cache: {},
+  addItems(collection, items) {
+    if (!Cache.cache[collection]) {
+      Cache.cache[collection] = [];
+    }
+    Cache.cache[collection] = Cache.cache[collection].concat(items);
+  },
+  findItem(collection, item) {
+    if (!Cache.cache[collection]) {
+      return null;
+    }
+    return Cache.cache[collection].find(
+      (e) => getCustomItemOption(e, 'code').toString() === item.code.toString(),
+    );
+  },
+};
+
+/**
+ * Checks if the token is valid
+ */
+function validToken() {
+  return !!process.env.WEBFLOW_TOKEN;
+}
+
+/**
+ * Extract items from payload received from FoxyCart
+ */
+function extractItems(body) {
+  if (body && body._embedded && body._embedded['fx:items']) {
+    return body._embedded['fx:items'];
+  }
+  return [];
+}
+
+/**
+ * Checks if item is valid
+ */
+function validItem(item) {
+  return item.price
+    && item.quantity
+    && item.code
+    && getItemOption(item, 'collection_id').value;
 }
 
 /**
@@ -121,7 +112,7 @@ function getToken() {
  */
 function getWebflow() {
   return new Webflow({ token: getToken() });
-};
+}
 
 function enrichFetchedItem(fetched, item) {
   const enriched = fetched;
@@ -144,8 +135,8 @@ function enrichFetchedItem(fetched, item) {
  */
 function fetchItem(item, offset = 0) {
   if (offset > 1000) {
-    console.error("Infinite loop", offset, item);
-    return Promise.reject("Infinete Loop");
+    console.error('Infinite loop', offset, item);
+    return Promise.reject(new Error('Infinete Loop'));
   }
   const collectionId = getCustomItemOption(item, 'collection_id').value;
   const webflow = getWebflow();
@@ -160,19 +151,12 @@ function fetchItem(item, offset = 0) {
     ).then((collection) => {
       Cache.addItems(collectionId, collection.items);
       const fetched = collection.items.find(
-        (e) => {
-          //console.log('fetching',
-          //  e[getCustomItemOption(item, 'code_field').name],
-          //  e[e[getCustomItemOption(item, 'code_field').name]],
-          //  item.code
-          //); 
-          return e[getCustomItemOption(item, 'code_field').name].toString() === item.code.toString();
-        }
+        (e) => e[getCustomItemOption(item, 'code_field').name].toString() === item.code.toString(),
       );
       if (fetched) {
         resolve(enrichFetchedItem(fetched));
       } else if (collection.total > collection.offset + collection.count) {
-        fetchItem(item, ( (offset/Config.webflow.limit) + 1 ) * Config.webflow.limit)
+        fetchItem(item, ((offset / Config.webflow.limit) + 1) * Config.webflow.limit)
           .then((i) => resolve(i))
           .catch((e) => reject(e));
       } else {
@@ -198,7 +182,7 @@ async function handleRequest(event, context, callback) {
   if (!event || !event.body) {
     callback(null, {
       statusCode: 400,
-      details: 'Empty request.'
+      details: 'Empty request.',
     });
     return;
   }
@@ -213,15 +197,13 @@ async function handleRequest(event, context, callback) {
     });
     return;
   }
-  items.map(setFieldConfig);
-
   // Fetch information needed to validate the cart
   const values = [];
-  for (let i of items) {
+  items.forEach(async (i) => {
     let value;
     try {
       value = await fetchItem(i);
-    } catch(e) {
+    } catch (e) {
       if (e.code && e.code.toString === '429') {
         callback(null, { statusCode: 429, body: 'Rate limit reached' });
       } else {
@@ -230,7 +212,7 @@ async function handleRequest(event, context, callback) {
       }
     }
     values.push(value);
-  }
+  });
   if (!values.every(correctPrice)) {
     callback(null, {
       statusCode: 200,
