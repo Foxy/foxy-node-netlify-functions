@@ -29,24 +29,18 @@ Please note that `code` is required for this validation.
 
 The webflow collection needs to have the following fields:
 
-
 | Parameter                                        | Description                                                                                                                  | Example                                |
 | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
 | `code` or the value set in `code_field`          | A unique code for each item.                                                                                                 | `code=896EYSA678`                      |
 | `price` or the value set in `price_field`        | The price to be validated.                                                                                                   | `price=256.88`                         |
 | `inventory` or the value set in `inventory_field`| Optional. The field against with the quantity will be validated. If the field does not exist, this validation will be ignored| `inventory=3`                           |
 
-## Responses
-
-| Code   | Message                        | Description                                                                                                                             |
-| ------ | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `503`  | Webflow token not configured.  | No Webflow token was found. The server will not be able to communicate with Webflow.                                                    |
-| `400`  | Bad request                    | A required parameter was not provided. Besides `collectionId` and `code` either `price` or `quantity` must be provided to be validated. |
-| `429`  | Rate limit reached             | The maximum number of requests per minute to Webflow was reachd. It returns the object describing the error.                            |
-| `404`  | Not found.                     | All items in the collection were checked and no one matches the provided `code` in the provided `codeField`.                            |
-| `200`  | `{correctPrice: boolean, sufficientInventory: boolean, item: Object}`| An object describing the validation results: it contains validation for the price and inventory. Additionally, returns the item as retrieved from Webflow. |
 
 ## Limitations
 
 - It does not handle discounts.
 - It does not handle item options, such as `price_mod`.
+
+## Usage example
+
+
