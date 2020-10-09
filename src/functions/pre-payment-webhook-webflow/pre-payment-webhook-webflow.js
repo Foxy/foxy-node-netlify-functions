@@ -39,31 +39,37 @@ function getCustomItemOption(item, option) {
   return result;
 }
 
-const Cache = {
-  cache: {},
-  addItems(collection, items) {
-    if (!Cache.cache[collection]) {
-      Cache.cache[collection] = [];
-    }
-    Cache.cache[collection] = Cache.cache[collection].concat(items);
-  },
-  findItem(collection, item) {
-    if (!Cache.cache[collection]) {
-      return null;
-    }
-    return Cache.cache[collection].find(
-      (e) => {
-        try {
-          return getCustomItemOption(e, 'code').value.toString() === item.code.toString();
-        } catch (err) {
-          err.message = 'Wrong code_field.';
-          err.code = 400;
-          throw err;
-        }
-      },
-    );
-  },
-};
+/**
+ * Creates a cache object to store collection items and avoid repeated requests
+ * to webflow.
+ */
+function createCache() {
+  return {
+    cache: {},
+    addItems(collection, items) {
+      if (!this.cache[collection]) {
+        this.cache[collection] = [];
+      }
+      this.cache[collection] = this.cache[collection].concat(items);
+    },
+    findItem(collection, item) {
+      if (!this.cache[collection]) {
+        return null;
+      }
+      return this.cache[collection].find(
+        (e) => {
+          try {
+            return getCustomItemOption(e, 'code').value.toString() === item.code.toString();
+          } catch (err) {
+            err.message = 'Wrong code_field.';
+            err.code = 400;
+            throw err;
+          }
+        },
+      );
+    },
+  };
+}
 
 /**
  * Checks if the token is valid
@@ -97,6 +103,7 @@ function validItem(item) {
  */
 function correctPrice(enrichedItem) {
   if (!enrichedItem.matchedItem) {
+    // an item with no matched item is not to be checked
     return true;
   }
   const i = enrichedItem;
@@ -128,6 +135,10 @@ function getWebflow() {
   return new Webflow({ token: getToken() });
 }
 
+/**
+ * Stores a reference to the matched item in the item itself.
+ * returns an enriched item that can be easily validated.
+ */
 function enrichFetchedItem(match, item) {
   const enriched = match;
   enriched.matchedItem = item;
@@ -136,7 +147,7 @@ function enrichFetchedItem(match, item) {
 
 /**
  * Returns a recursive promise that fetches items from the collection until it
- * finds the item. Resolves the found item or an error.
+ * finds the item. Resolves the found item.
  *
  * Note: this method will take time linear on the size of the collection.
  * For large collections it will probably timeout.
@@ -147,13 +158,13 @@ function enrichFetchedItem(match, item) {
  * @param object item: an item received it the request from foxycart
  * @offset number offet: the number of items already checked in this collection
  */
-function fetchItem(item, offset = 0) {
+function fetchItem(cache, item, offset = 0) {
   if (offset > 1000) {
     return Promise.reject(new Error('Infinete Loop'));
   }
   const collectionId = getCustomItemOption(item, 'collection_id').value;
   const webflow = getWebflow();
-  const found = Cache.findItem(collectionId, item);
+  const found = cache.findItem(collectionId, item);
 
   if (found) {
     return Promise.resolve(enrichFetchedItem(found, item));
@@ -163,7 +174,7 @@ function fetchItem(item, offset = 0) {
       { collectionId },
       { sort: [getCustomItemOption(item, 'code').name, 'ASC'], limit: Config.webflow.limit, offset },
     ).then((collection) => {
-      Cache.addItems(collectionId, collection.items);
+      cache.addItems(collectionId, collection.items);
       const match = collection.items.find(
         (e) => {
           try {
@@ -178,7 +189,7 @@ function fetchItem(item, offset = 0) {
       if (match) {
         resolve(enrichFetchedItem(match, item));
       } else if (collection.total > collection.offset + collection.count) {
-        fetchItem(item, ((offset / Config.webflow.limit) + 1) * Config.webflow.limit)
+        fetchItem(cache, item, ((offset / Config.webflow.limit) + 1) * Config.webflow.limit)
           .then((i) => resolve(i))
           .catch((e) => reject(e));
       } else {
@@ -228,10 +239,11 @@ async function handleRequest(event, context, callback) {
   }
 
   const values = [];
+  const cache = createCache();
   // Fetch information needed to validate the cart
   const concatenatedPromisses = items.reduce(
     (p, i) => p.then(
-      (accum) => fetchItem(i).then((fetched) => {
+      (accum) => fetchItem(cache, i).then((fetched) => {
         values.push(fetched);
         return accum;
       }),

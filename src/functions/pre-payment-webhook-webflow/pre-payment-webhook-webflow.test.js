@@ -36,7 +36,6 @@ describe('Verifies the price of an item in a Webflow collection', () => {
     };
     prePayment.__set__('getWebflow', () => injectedWebflow);
     prePayment.__set__('process.env.WEBFLOW_TOKEN', 'FOOBAR');
-    prePayment.__set__('Cache.cache', {});
   });
 
   it('Only executes if there is a WEBFLOW_TOKEN set', async () => {
