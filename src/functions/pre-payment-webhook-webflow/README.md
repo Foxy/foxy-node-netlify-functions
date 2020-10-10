@@ -1,4 +1,4 @@
-# Pre-paymente webhook for Webflow-FoxyCart 
+# Pre-payment webhook for Webflow-FoxyCart 
 
 This webhook asumes you are using a Webflow CMS Collection to store your products.
 
