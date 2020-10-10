@@ -6,26 +6,25 @@ It provides you with a function to validate the price and quantity submitted to 
 
 It validates the cart just before payment to ensure the order is bellow inventory and that the price was not tampered.
 
+It validates the prices of all products in a purchase, regardless of if they are in the same webflow collection, therefore, you can have multiple collections with products in your CMS.
+
+#### Limitations
+
+- It does not handle discounts.
+- It does not handle item options, such as `price_mod`.
+- It does not update your inventory field to reflect the new quantities after purchase.
+
+## Usage
+
+Read the short configuration section bellow to make sure your Webflow Collection
+and FoxyCart links are all set, then click the deploy to Netlify button at the end of this page, configure your Webflow 
+
 
 ## Configuration
 
-It is necessary to provide the Webflow token as an environment variable `WEBFLOW_TOKEN`.
+In order to use this webhook you'll need to set your Webflow collection, create buttons or forms to add the products to the cart and setup your webhook.
 
-## FoxyCart Item
-
-When adding your items to the cart, you'll need to provide the following information, beyond `price` and `quantity` that are needed for the cart:
-
-Please note that `code` is required for this validation.
-
-| Parameter                | Description                                                                                               | Example                                |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| `collection_id`          | **Required** The id of the item's collection.                                                               | `collectionId=5f74f169fbbb4b118497207a`|
-| `code`                   | **Required** The item's code. Must be unique.                                                               | `code=896EYSA678`                      |
-| `code_field`             | Optional. The field containing the code in the collection. Defaults to `code`                               | `codeField=sku`                        |
-| `price_field`            | Optional. The field containing the price in the collection. Default to `price`                              | `priceField=investment`                |
-| `inventoryField`         | Optional. The field containing the price in the collection. If not provided inventory is not checked.       | `priceField=investment`                |
-
-## Parameters
+### In your Webflow collection, add the necessary fields
 
 The webflow collection needs to have the following fields:
 
@@ -35,12 +34,68 @@ The webflow collection needs to have the following fields:
 | `price` or the value set in `price_field`        | The price to be validated.                                                                                                   | `price=256.88`                         |
 | `inventory` or the value set in `inventory_field`| Optional. The field against with the quantity will be validated. If the field does not exist, this validation will be ignored| `inventory=3`                           |
 
+These fields do not need be shown to the user, but you will need to add them as parameters to foxy cart.
 
-## Limitations
 
-- It does not handle discounts.
-- It does not handle item options, such as `price_mod`.
+### When creating your FoxyCart Items
 
-## Usage example
+When adding your items to the cart,  beyond `price` and `quantity` that are needed for the cart, you'll need to provide the following information for the validation to work:
+
+
+| Parameter                | Description                                                                                               | Example                                |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| `collection_id`          | **Required** The id of the item's collection.                                                               | `collectionId=5f74f169fbbb4b118497207a`|
+| `code`                   | **Required** The item's code. Must be unique.                                                               | `code=896EYSA678`                      |
+| `code_field`             | Optional. The field containing the code in the collection. Defaults to `code`                               | `codeField=sku`                        |
+| `price_field`            | Optional. The field containing the price in the collection. Default to `price`                              | `priceField=investment`                |
+| `inventoryField`         | Optional. The field containing the price in the collection. If not provided inventory is not checked.       | `priceField=investment`                |
+
+### When configuring your webhook server
+
+It is necessary to provide the Webflow token as an environment variable named `WEBFLOW_TOKEN`.
+
+Yup. That's it.
+
+## Examples
+
+
+### Basic Example
+Here is a minimum example of a link button to add a product to the cart:
+
+```html
+<a class="button" href="https://YOURDOMAIN.foxycart.com/cart?name=A+great+product&price=5&code=123456&collection_id=123047812340791234">
+ Buy this Great Product!
+</a>
+```
+
+Here is what will happen in the validation considering the example above:
+
+The webhook:
+
+- not attempt to validate the inventory levels, as no `inventory_field` was provided.
+- will assume that there is a field named `code` in your Webflow collection, as there was no `code_field` provided.
+- will assume that there is a field named `price` in your Webflow collection, as there was no `price_field` provided.
+- will fetch the data from your collection directly, find the right `code` and compare the `price` field. It will approve the purchase if the price is the same as it is stored in your collection.
+
+### Complete Example
+
+This example assumes that:
+
+- you have a `sku` field in your Webflow collection that you want to use as `code` for FoxyCart.
+- you have a `value` field in your Webflow collection that you use to store the price.
+- you have a `inventory` field in your Webflow collection that you use to control your inventory. This field stores a numeric value.
+- your client is purchasing 2 units of this particular product.
+
+As you can see, it will be necessary to customize the `code` and `value` fields, as well as provide the inventory field to the webhook.
+
+Here is how that is done:
+
+```html
+<a class="button" href="https://YOURDOMAIN.foxycart.com/cart?name=A+great+product&price=5&price_field=value&code=123456&code_field=sku&quantity=2&inventory_field=inventory&collection_id=123047812340791234">
+ Buy this Great Product!
+</a>
+```
+
+## Time to deploy your pre-payment webhook server
 
 
