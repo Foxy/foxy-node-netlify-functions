@@ -111,6 +111,26 @@ function correctPrice(enrichedItem) {
 }
 
 /**
+ * Checks if the category of the item is the same as found in WebFlow Collection
+ */
+function correctCategory(enrichedItem) {
+  if (!enrichedItem.matchedItem) {
+    // an item with no matched item is not to be checked
+    return true;
+  }
+  // if no category is found in the collection item, ignore it
+  const category = getCustomItemOption(enrichedItem, 'category');
+  const categoryExists = !!Object.keys(category).length;
+  if (!categoryExists) return true;
+  let matchedCategory;
+  const embedded = enrichedItem.matchedItem._embedded;
+  if (embedded && embedded['fx:item_category']) {
+    matchedCategory = embedded['fx:item_category'].code;
+  }
+  return matchedCategory && category.value.trim() === matchedCategory.trim();
+}
+
+/**
  * Checks if there is sufficient inventory for this purchase.
  */
 function sufficientInventory(enrichedItem) {
@@ -178,7 +198,7 @@ function fetchItem(cache, item, offset = 0) {
       const match = collection.items.find(
         (e) => {
           try {
-            return e[getCustomItemOption(item, 'code_field').name].toString() === item.code.toString();
+            return e[getCustomItemOption(item, 'code_field').value].toString() === item.code.toString();
           } catch (err) {
             err.code = 400;
             err.message = 'Wrong code_field.';
@@ -199,6 +219,22 @@ function fetchItem(cache, item, offset = 0) {
       reject(e);
     });
   });
+}
+
+function findMismatch(values) {
+  const evaluations = [
+    [correctPrice, 'Prices do not match.'],
+    [correctCategory, 'Mismatched category.'],
+    [sufficientInventory, 'Insufficient inventory.'],
+  ];
+  for (let v = 0; v < values.length; v += 1) {
+    for (let i = 0; i < evaluations.length; i += 1) {
+      if (!evaluations[i][0](values[v])) {
+        return evaluations[i][1];
+      }
+    }
+  }
+  return false;
 }
 
 async function handleRequest(event, context, callback) {
@@ -251,33 +287,24 @@ async function handleRequest(event, context, callback) {
   );
 
   await concatenatedPromisses.then(() => {
-    if (!values.every(correctPrice)) {
+    const failed = findMismatch(values);
+    if (failed) {
       callback(null, {
         statusCode: 200,
         body: {
           ok: false,
-          details: 'Prices do not match.',
+          details: failed,
         },
       });
-      return;
-    }
-    if (!values.every(sufficientInventory)) {
+    } else {
       callback(null, {
         statusCode: 200,
         body: {
-          ok: false,
-          details: 'Insufficient inventory.',
+          ok: true,
+          details: '',
         },
       });
-      return;
     }
-    callback(null, {
-      statusCode: 200,
-      body: {
-        ok: true,
-        details: '',
-      },
-    });
   }).catch((e) => {
     if (e.code && e.code.toString() === '429') {
       callback(null, {

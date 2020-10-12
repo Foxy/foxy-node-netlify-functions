@@ -27,6 +27,8 @@ function newWebflowBasicItem() {
     inventory: 3584,
     mysku: randomString(),
     code_field: 'mysku',
+    category_field: 'category',
+    category: randomString(),
     name: randomString(),
     slug: randomString(),
     _cid: '5f74f169fbbb4b118497207a',
@@ -40,24 +42,30 @@ exports.deterministic = basicResponse(
   500,
 );
 
-exports.arbitrary = function arbitrary(items,
-  config = {
+exports.arbitrary = function arbitrary(items, customConfig = {}, without = []) {
+  const defaultConfig = {
     price: (v) => v,
     quantity: (v) => v,
     code: (v) => v,
-  },
-  without = []) {
+    category: (v) => v,
+  };
+  const config = { ...defaultConfig, ...customConfig };
   return (context, options) => {
     const r = basicResponse(newWebflowBasicItem,
       100,
       500)(context, options);
     for (let i = 0; i < items.length; i += 1) {
-      if (config.price instanceof Function) r.items[i].price = config.price(items[i].price);
+      if (config.price instanceof Function) {
+        r.items[i].price = config.price(items[i].price);
+      }
       if (config.inventory instanceof Function) {
         r.items[i].inventory = config.inventory(items[i].quantity);
       }
       if (config.code instanceof Function) {
         r.items[i][r.items[i].code_field] = config.code(items[i].code);
+      }
+      if (config.category instanceof Function) {
+        r.items[i][r.items[i].category_field] = config.category(items[i].category);
       }
       without.forEach((w) => {
         delete r.items[i][w];

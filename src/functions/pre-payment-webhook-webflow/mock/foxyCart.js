@@ -23,6 +23,9 @@ function basicItem() {
     quantity: 1,
     code: `code${randomString()}`,
     _embedded: {
+      'fx:item_category': {
+        code: 'DEFAULT',
+      },
       'fx:item_options': [
         {
           name: 'collection_id',

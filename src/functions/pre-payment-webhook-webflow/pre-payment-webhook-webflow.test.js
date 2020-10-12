@@ -16,10 +16,6 @@ function functionToSet(key, value) {
   };
 }
 
-function theSame(value) {
-  return value;
-}
-
 function increaseFrom(number) {
   let count = number;
   return () => {
@@ -30,7 +26,6 @@ function increaseFrom(number) {
 }
 
 describe('Initialize and validate the webhook', () => {
-
   it('Validate the request is from FoxyCart.');
 
   it('Gets the webflow api instance with the token from the environment variable', () => {
@@ -78,7 +73,6 @@ describe('Initialize and validate the webhook', () => {
   });
 });
 
-
 describe('Verifies the price of an item in a Webflow collection', () => {
   beforeEach(() => {
     injectedWebflow = {
@@ -89,21 +83,12 @@ describe('Verifies the price of an item in a Webflow collection', () => {
   });
 
   it('Ignore existing subscriptions.');
-  it('Reject when the price option modifier is tampered.');
+  it('Reject when the price option modifier has no corresponded discount in Webflow.');
   it('Reject when the category is tampered and there are discounts applied. (if there is no discount, price and quantity are correct, is there a need to validate the category?)');
   it('Reject when the category option modifier is tampered and there are category discounts');
+
   it('Approves when all items are correct', async () => {
-    function callback(err, response) {
-      expect(response).to.deep.equal(
-        {
-          statusCode: 200,
-          body: {
-            ok: true,
-            details: '',
-          },
-        },
-      );
-    }
+    let response;
     const event = {
       body: (() => {
         const r = mockFoxyCart.deterministic();
@@ -117,25 +102,24 @@ describe('Verifies the price of an item in a Webflow collection', () => {
       return Promise.resolve(
         mockWebflow.arbitrary(
           event.body._embedded['fx:items'],
-        )({}, {}),
+        )({}, {}, ['category', 'category_field']),
       );
     };
     const context = {};
-    await prePayment.handler(event, context, callback);
+    await prePayment.handler(event, context, (err, resp) => { response = resp; });
+    expect(response).to.deep.equal(
+      {
+        statusCode: 200,
+        body: {
+          ok: true,
+          details: '',
+        },
+      },
+    );
   });
 
   it('Rejects when any price is incorrect', async () => {
-    function callback(err, response) {
-      expect(response).to.deep.equal(
-        {
-          statusCode: 200,
-          body: {
-            ok: false,
-            details: 'Prices do not match.',
-          },
-        }
-      );
-    }
+    let response;
     const event = {
       body: (() => {
         const r = mockFoxyCart.deterministic();
@@ -148,27 +132,46 @@ describe('Verifies the price of an item in a Webflow collection', () => {
       mockWebflow.arbitrary(
         event.body._embedded['fx:items'], {
           price: false,
-          inventory: theSame,
-          code: theSame,
         },
       )({}, {}),
     );
     const context = {};
-    await prePayment.handler(event, context, callback);
+    await prePayment.handler(event, context, (err, resp) => { response = resp; });
+    expect(response).to.deep.equal(
+      {
+        statusCode: 200,
+        body: {
+          ok: false,
+          details: 'Prices do not match.',
+        },
+      }
+    );
+  });
+
+  it('Rejects when any category is incorrect', async () => {
+    let response;
+    const event = { body: mockFoxyCart.deterministic() };
+    injectedWebflow.items = () => Promise.resolve(
+      mockWebflow.arbitrary(
+        event.body._embedded['fx:items'],
+        { category: () => 'WrongCategory' }, ['category_field']
+      )({}, {}),
+    );
+    const context = {};
+    await prePayment.handler(event, context, (err, resp) => { response = resp; });
+    expect(response).to.deep.equal(
+      {
+        statusCode: 200,
+        body: {
+          ok: false,
+          details: 'Mismatched category.',
+        },
+      },
+    );
   });
 
   it('Rejects when any inventory is insufficient', async () => {
-    function callback(err, response) {
-      expect(response).to.deep.equal(
-        {
-          statusCode: 200,
-          body: {
-            ok: false,
-            details: 'Insufficient inventory.',
-          },
-        },
-      );
-    }
+    let response;
     const event = {
       body: (() => {
         const r = mockFoxyCart.deterministic();
@@ -180,28 +183,25 @@ describe('Verifies the price of an item in a Webflow collection', () => {
     injectedWebflow.items = () => Promise.resolve(
       mockWebflow.arbitrary(
         event.body._embedded['fx:items'], {
-          price: theSame,
           inventory: increaseFrom(0),
-          code: theSame,
         },
       )({}, {}),
     );
     const context = {};
-    await prePayment.handler(event, context, callback);
+    await prePayment.handler(event, context, (err, resp) => { response = resp; });
+    expect(response).to.deep.equal(
+      {
+        statusCode: 200,
+        body: {
+          ok: false,
+          details: 'Insufficient inventory.',
+        },
+      },
+    );
   });
 
   it('Rejects when no code field exist', async () => {
-    function callback(err, response) {
-      expect(response).to.deep.equal(
-        {
-          statusCode: 400,
-          body: {
-            ok: false,
-            details: 'Wrong code_field.',
-          },
-        },
-      );
-    }
+    let response;
     const event = {
       body: (() => {
         const r = mockFoxyCart.deterministic();
@@ -213,29 +213,25 @@ describe('Verifies the price of an item in a Webflow collection', () => {
     injectedWebflow.items = () => Promise.resolve(
       mockWebflow.arbitrary(
         event.body._embedded['fx:items'], {
-          price: theSame,
-          inventory: theSame,
-          code: theSame,
         },
         ['mysku', 'code_field', 'code'],
       )({}, {}),
     );
     const context = {};
-    await prePayment.handler(event, context, callback);
+    await prePayment.handler(event, context, (err, resp) => { response = resp; });
+    expect(response).to.deep.equal(
+      {
+        statusCode: 400,
+        body: {
+          ok: false,
+          details: 'Wrong code_field.',
+        },
+      },
+    );
   });
 
   it('Rejects when provided custom field does not exist', async () => {
-    function callback(err, response) {
-      expect(response).to.deep.equal(
-        {
-          statusCode: 400,
-          body: {
-            ok: false,
-            details: 'Wrong code_field.',
-          },
-        },
-      );
-    }
+    let response;
     const event = {
       body: (() => {
         const r = mockFoxyCart.deterministic();
@@ -246,50 +242,43 @@ describe('Verifies the price of an item in a Webflow collection', () => {
     };
     injectedWebflow.items = () => Promise.resolve(
       mockWebflow.arbitrary(
-        event.body._embedded['fx:items'], {
-          price: theSame,
-          inventory: theSame,
-          code: theSame,
-        },
-        ['mysku'],
+        event.body._embedded['fx:items'], { }, ['mysku'],
       )({}, {}),
     );
     const context = {};
-    await prePayment.handler(event, context, callback);
+    await prePayment.handler(event, context, (err, resp) => { response = resp; });
+    expect(response).to.deep.equal(
+      {
+        statusCode: 400,
+        body: {
+          ok: false,
+          details: 'Wrong code_field.',
+        },
+      },
+    );
   });
 
   it('Returns Bad Request when no body is provided', async () => {
-    function callback(err, response) {
-      expect(response).to.deep.equal(
-        {
-          statusCode: 400,
-          body: {
-            ok: false,
-            details: 'Empty request.',
-          },
-        },
-      );
-    }
+    let response;
     const event = {};
     injectedWebflow.items = () => Promise.resolve(
       mockWebflow.arbitrary(event.body._embedded['fx:items'])({}, {}),
     );
     const context = {};
-    await prePayment.handler(event, context, callback);
+    await prePayment.handler(event, context, (err, resp) => { response = resp; });
+    expect(response).to.deep.equal(
+      {
+        statusCode: 400,
+        body: {
+          ok: false,
+          details: 'Empty request.',
+        },
+      },
+    );
   });
 
   it('Returns Rate limit exceeded when Weflow limit is exceeded', async () => {
-    function callback(err, response) {
-      expect(response).to.deep.equal(
-        {
-          statusCode: 429,
-          body: {
-            ok: false,
-            details: 'Rate limit reached.',
-          },
-        },
-      );
-    }
+    let response;
     const event = {
       body: mockFoxyCart.deterministic(),
     };
@@ -297,14 +286,20 @@ describe('Verifies the price of an item in a Webflow collection', () => {
     err.code = 429;
     injectedWebflow.items = () => Promise.reject(err);
     const context = {};
-    await prePayment.handler(event, context, callback);
+    await prePayment.handler(event, context, (err, resp) => { response = resp; });
+    expect(response).to.deep.equal(
+      {
+        statusCode: 429,
+        body: {
+          ok: false,
+          details: 'Rate limit reached.',
+        },
+      },
+    );
   });
 
   it('Fetches each collection page only once', async () => {
     let counting = 0;
-    function callback() {
-      expect(counting).to.equal(1);
-    }
     const event = {
       body: (() => {
         const r = mockFoxyCart.deterministic();
@@ -322,6 +317,7 @@ describe('Verifies the price of an item in a Webflow collection', () => {
       );
     };
     const context = {};
-    await prePayment.handler(event, context, callback);
+    await prePayment.handler(event, context, () => {});
+    expect(counting).to.equal(1);
   });
 });
