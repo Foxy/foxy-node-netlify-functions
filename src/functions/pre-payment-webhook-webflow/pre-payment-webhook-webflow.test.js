@@ -29,6 +29,16 @@ function increaseFrom(number) {
   };
 }
 
+describe('Initialize the webflow api', () => {
+  it('Gets the webflow api instance with the token from the environment variable', () => {
+    prePayment.__set__('process.env', {WEBFLOW_TOKEN: 'foobar' });
+    const getToken = prePayment.__get__('getToken');
+    expect(getToken()).to.equal('foobar');
+    const getWebflow = prePayment.__get__('getWebflow');
+    expect(getWebflow().token).to.equal('foobar');
+  });
+});
+
 describe('Verifies the price of an item in a Webflow collection', () => {
   beforeEach(() => {
     injectedWebflow = {
@@ -54,7 +64,9 @@ describe('Verifies the price of an item in a Webflow collection', () => {
 
   it('Extracts the items from FoxyCart payload', async () => {
     const extractItems = prePayment.__get__('extractItems');
-    let items = extractItems(mockFoxyCart.deterministic());
+    let items = extractItems({});
+    expect(items.length).to.equal(0);
+    items = extractItems(mockFoxyCart.deterministic());
     expect(items.length).to.equal(10);
     items = extractItems(mockFoxyCart.longCollection());
     expect(items.length).to.equal(100);
@@ -164,6 +176,40 @@ describe('Verifies the price of an item in a Webflow collection', () => {
           inventory: increaseFrom(0),
           code: theSame,
         },
+      )({}, {}),
+    );
+    const context = {};
+    await prePayment.handler(event, context, callback);
+  });
+
+  it('Rejects when no code field exist', async () => {
+    function callback(err, response) {
+      expect(response).to.deep.equal(
+        {
+          statusCode: 400,
+          body: {
+            ok: false,
+            details: 'Wrong code_field.',
+          },
+        },
+      );
+    }
+    const event = {
+      body: (() => {
+        const r = mockFoxyCart.deterministic();
+        r._embedded['fx:items'].forEach(functionToSet('price', 21));
+        r._embedded['fx:items'].forEach(functionToSet('quantity', 1));
+        return r;
+      })(),
+    };
+    injectedWebflow.items = () => Promise.resolve(
+      mockWebflow.arbitrary(
+        event.body._embedded['fx:items'], {
+          price: theSame,
+          inventory: theSame,
+          code: theSame,
+        },
+        ['mysku', 'code_field', 'code'],
       )({}, {}),
     );
     const context = {};

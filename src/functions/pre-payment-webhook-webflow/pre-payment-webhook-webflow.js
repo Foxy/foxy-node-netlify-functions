@@ -181,7 +181,7 @@ function fetchItem(cache, item, offset = 0) {
             return e[getCustomItemOption(item, 'code_field').name].toString() === item.code.toString();
           } catch (err) {
             err.code = 400;
-            err.message = 'wrong code_field';
+            err.message = 'Wrong code_field.';
             throw err;
           }
         },
