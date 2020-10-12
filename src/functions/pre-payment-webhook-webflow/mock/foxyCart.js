@@ -49,22 +49,10 @@ function basicItem() {
   };
 }
 
-function newItemRandomCollection() {
-  const basic = basicItem();
-  basic._embedded['fx:item_options'][0].value = randomString();
-  basic.price = (Math.random() * 200).toFixed(2);
-  basic.quantity = parseInt(Math.random() * 10, 10);
-  return basic;
-}
-
 exports.deterministic = function () {
   return basicRequest(basicItem);
 };
 
 exports.longCollection = function () {
   return basicRequest(basicItem, 100);
-};
-
-exports.random = function () {
-  return basicRequest(newItemRandomCollection);
 };
