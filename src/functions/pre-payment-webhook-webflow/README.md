@@ -2,9 +2,9 @@
 
 This webhook asumes you are using a Webflow CMS Collection to store your products.
 
-It provides you with a function to validate the price and quantity submitted to FoxyCart before a payment is made, thus providing security against HTML tampering in the client side.
+It provides you with a function to validate the price and quantity submitted to FoxyCart before a payment is made, thus providing security against HTML modifications in the client side.
 
-It validates the cart just before payment to ensure the order is bellow inventory and that the price was not tampered.
+It validates the cart just before payment to ensure the order is bellow inventory and that the price was not changes in the client side.
 
 It validates the prices of all products in a purchase, regardless of if they are in the same webflow collection, therefore, you can have multiple collections with products in your CMS.
 
