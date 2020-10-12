@@ -84,8 +84,6 @@ describe('Verifies the price of an item in a Webflow collection', () => {
 
   it('Ignore existing subscriptions.');
   it('Reject when the price option modifier has no corresponded discount in Webflow.');
-  it('Reject when the category is tampered and there are discounts applied. (if there is no discount, price and quantity are correct, is there a need to validate the category?)');
-  it('Reject when the category option modifier is tampered and there are category discounts');
 
   it('Approves when all items are correct', async () => {
     let response;
