@@ -29,23 +29,16 @@ function increaseFrom(number) {
   };
 }
 
-describe('Initialize the webflow api', () => {
+describe('Initialize and validate the webhook', () => {
+
+  it('Validate the request is from FoxyCart.');
+
   it('Gets the webflow api instance with the token from the environment variable', () => {
     prePayment.__set__('process.env', {WEBFLOW_TOKEN: 'foobar' });
     const getToken = prePayment.__get__('getToken');
     expect(getToken()).to.equal('foobar');
     const getWebflow = prePayment.__get__('getWebflow');
     expect(getWebflow().token).to.equal('foobar');
-  });
-});
-
-describe('Verifies the price of an item in a Webflow collection', () => {
-  beforeEach(() => {
-    injectedWebflow = {
-      items: () => Promise.reject(new Error('Mocked function')),
-    };
-    prePayment.__set__('getWebflow', () => injectedWebflow);
-    prePayment.__set__('process.env.WEBFLOW_TOKEN', 'FOOBAR');
   });
 
   it('Only executes if there is a WEBFLOW_TOKEN set', async () => {
@@ -83,7 +76,22 @@ describe('Verifies the price of an item in a Webflow collection', () => {
     });
     expect(items.length).to.equal(100);
   });
+});
 
+
+describe('Verifies the price of an item in a Webflow collection', () => {
+  beforeEach(() => {
+    injectedWebflow = {
+      items: () => Promise.reject(new Error('Mocked function')),
+    };
+    prePayment.__set__('getWebflow', () => injectedWebflow);
+    prePayment.__set__('process.env.WEBFLOW_TOKEN', 'FOOBAR');
+  });
+
+  it('Ignore existing subscriptions.');
+  it('Reject when the price option modifier is tampered.');
+  it('Reject when the category is tampered and there are discounts applied. (if there is no discount, price and quantity are correct, is there a need to validate the category?)');
+  it('Reject when the category option modifier is tampered and there are category discounts');
   it('Approves when all items are correct', async () => {
     function callback(err, response) {
       expect(response).to.deep.equal(
