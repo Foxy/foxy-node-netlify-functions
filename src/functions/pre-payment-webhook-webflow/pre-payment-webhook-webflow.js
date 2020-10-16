@@ -242,10 +242,10 @@ async function handleRequest(event, context, callback) {
   if (!validToken()) {
     callback(null, {
       statusCode: 503,
-      body: {
+      body: JSON.stringify({
         ok: false,
         details: 'Webflow token not configured.',
-      },
+      }),
     });
     return;
   }
@@ -253,10 +253,10 @@ async function handleRequest(event, context, callback) {
   if (!event || !event.body) {
     callback(null, {
       statusCode: 400,
-      body: {
+      body: JSON.stringify({
         ok: false,
         details: 'Empty request.',
-      },
+      }),
     });
     return;
   }
@@ -266,10 +266,10 @@ async function handleRequest(event, context, callback) {
   if (invalidItems.length) {
     callback(null, {
       statusCode: 200,
-      body: {
+      body: JSON.stringify({
         ok: false,
         details: `Invalid items: ${invalidItems.map((e) => e.name).join(',')}`,
-      },
+      }),
     });
     return;
   }
@@ -291,37 +291,37 @@ async function handleRequest(event, context, callback) {
     if (failed) {
       callback(null, {
         statusCode: 200,
-        body: {
+        body: JSON.stringify({
           ok: false,
           details: failed,
-        },
+        }),
       });
     } else {
       callback(null, {
         statusCode: 200,
-        body: {
+        body: JSON.stringify({
           ok: true,
           details: '',
-        },
+        }),
       });
     }
   }).catch((e) => {
     if (e.code && e.code.toString() === '429') {
       callback(null, {
         statusCode: 429,
-        body: {
+        body: JSON.stringify({
           details: 'Rate limit reached.',
           ok: false,
-        },
+        }),
       });
     } else if (e) {
       callback(null,
         {
           statusCode: e.code ? e.code : 500,
-          body: {
+          body: JSON.stringify({
             ok: false,
             details: e.message,
-          },
+          }),
         });
     }
   });
