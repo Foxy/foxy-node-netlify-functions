@@ -74,22 +74,48 @@ describe('Verifies the price of an item in a Webflow collection', () => {
     prePayment.__set__('process.env.WEBFLOW_TOKEN', 'FOOBAR');
   });
 
-  it('Ignore existing subscriptions.', async () => {
-    let response;
-    const yesterday = ((d) => new Date(d.setDate(d.getDate() - 1)))(new Date());
+  function subscriptionsWithStartDate(startDate) {
     const nextMonth = ((d) => new Date(d.setDate(d.getMonth() + 1)))(new Date());
     const nextYear = ((d) => new Date(d.setDate(d.getYear() + 1)))(new Date());
     const event = mockFoxyCart.request(
-      { 
+      {
         subscription_frequency: '1m',
-        subscription_start_date: yesterday.toISOString(),
+        subscription_start_date: startDate.toISOString(),
         subscription_next_transaction_date: nextMonth.toISOString(),
         subscription_end_date: nextYear.toISOString(),
         sub_frequency: '1m',
         price: 21,
-        quantity: 1 
+        quantity: 1,
       },
-      mockFoxyCart.subscription
+      mockFoxyCart.itemBuilders.subscriptionItem,
+    );
+    return event;
+  }
+
+  it('Evaluates new subscriptions', async () => {
+    let response;
+    const event = subscriptionsWithStartDate(
+      ((d) => new Date(d.setDate(d.getDate() + 1)))(new Date()),
+    );
+    injectedWebflow.items = () => Promise.resolve(
+      mockWebflow.arbitrary(
+        event.body._embedded['fx:items'], {
+          price: false,
+        },
+      )({}, {}),
+    );
+    const context = {};
+    await prePayment.handler(event, context, (err, resp) => { response = resp; });
+    expect(response.statusCode).to.exist.and.to.equal(200);
+    expect(JSON.parse(response.body)).to.deep.equal(
+      { ok: false, details: 'Prices do not match.' },
+    );
+  });
+
+  it('Ignore existing subscriptions.', async () => {
+    let response;
+    const event = subscriptionsWithStartDate(
+      ((d) => new Date(d.setDate(d.getDate() - 1)))(new Date()),
     );
     injectedWebflow.items = () => Promise.resolve(
       mockWebflow.arbitrary(

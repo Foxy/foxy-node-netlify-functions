@@ -52,6 +52,20 @@ function basicItem() {
   };
 }
 
+function basicSubscription(item) {
+  const emptySubscription = {
+    subscription_frequency: '',
+    subscription_start_date: null,
+    subscription_next_transaction_date: null,
+    subscription_end_date: null,
+  };
+  return { ...item, ...emptySubscription };
+}
+
+function subscriptionItem() {
+  return basicSubscription(basicItem());
+}
+
 function foxyRequest(changes, itemBuilder = basicItem) {
   function functionToSet(key, value) {
     return (el) => {
@@ -84,15 +98,10 @@ function foxyRequest(changes, itemBuilder = basicItem) {
   };
 }
 
-function basicSubscription(item) {
-  const emptySubscription = {
-    subscription_frequency: '',
-    subscription_start_date: null,
-    subscription_next_transaction_date: null,
-    subscription_end_date: null,
-  };
-  return { ...item, ...emptySubscription };
-}
+exports.itemBuilders = {
+  basicItem,
+  subscriptionItem,
+};
 
 exports.basic = function () {
   return basicRequest(basicItem);

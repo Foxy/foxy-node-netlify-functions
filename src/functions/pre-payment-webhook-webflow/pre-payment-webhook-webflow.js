@@ -102,19 +102,19 @@ function validItem(item) {
  * Checks if the price of the item is the same as found in WebFlow Collection
  */
 function correctPrice(enrichedItem) {
-  if (!enrichedItem.matchedItem) {
+  if (!enrichedItem.matchedFoxyItem) {
     // an item with no matched item is not to be checked
     return true;
   }
   const i = enrichedItem;
-  return parseFloat(i.matchedItem.price) === parseFloat(getItemOption(i, 'price').value);
+  return parseFloat(i.matchedFoxyItem.price) === parseFloat(getItemOption(i, 'price').value);
 }
 
 /**
  * Checks if the category of the item is the same as found in WebFlow Collection
  */
 function correctCategory(enrichedItem) {
-  if (!enrichedItem.matchedItem) {
+  if (!enrichedItem.matchedFoxyItem) {
     // an item with no matched item is not to be checked
     return true;
   }
@@ -123,7 +123,7 @@ function correctCategory(enrichedItem) {
   const categoryExists = !!Object.keys(category).length;
   if (!categoryExists) return true;
   let matchedCategory;
-  const embedded = enrichedItem.matchedItem._embedded;
+  const embedded = enrichedItem.matchedFoxyItem._embedded;
   if (embedded && embedded['fx:item_category']) {
     matchedCategory = embedded['fx:item_category'].code;
   }
@@ -134,11 +134,11 @@ function correctCategory(enrichedItem) {
  * Checks if there is sufficient inventory for this purchase.
  */
 function sufficientInventory(enrichedItem) {
-  if (!enrichedItem.matchedItem) {
+  if (!enrichedItem.matchedFoxyItem) {
     return true;
   }
   const i = enrichedItem;
-  return !Config.inventory_field || i[Config.inventory_field] >= i.matchedItem.quantity;
+  return !Config.inventory_field || i[Config.inventory_field] >= i.matchedFoxyItem.quantity;
 }
 
 /**
@@ -159,9 +159,9 @@ function getWebflow() {
  * Stores a reference to the matched item in the item itself.
  * returns an enriched item that can be easily validated.
  */
-function enrichFetchedItem(match, item) {
-  const enriched = match;
-  enriched.matchedItem = item;
+function enrichFetchedItem(webflowItem, foxyItem) {
+  const enriched = webflowItem;
+  enriched.matchedFoxyItem = foxyItem;
   return enriched;
 }
 
@@ -178,27 +178,27 @@ function enrichFetchedItem(match, item) {
  * @param object item: an item received it the request from foxycart
  * @offset number offet: the number of items already checked in this collection
  */
-function fetchItem(cache, item, offset = 0) {
+function fetchItem(cache, foxyItem, offset = 0) {
   if (offset > 1000) {
     return Promise.reject(new Error('Infinete Loop'));
   }
-  const collectionId = getCustomItemOption(item, 'collection_id').value;
+  const collectionId = getCustomItemOption(foxyItem, 'collection_id').value;
   const webflow = getWebflow();
-  const found = cache.findItem(collectionId, item);
+  const found = cache.findItem(collectionId, foxyItem);
 
   if (found) {
-    return Promise.resolve(enrichFetchedItem(found, item));
+    return Promise.resolve(enrichFetchedItem(found, foxyItem));
   }
   return new Promise((resolve, reject) => {
     webflow.items(
       { collectionId },
-      { sort: [getCustomItemOption(item, 'code').name, 'ASC'], limit: Config.webflow.limit, offset },
+      { sort: [getCustomItemOption(foxyItem, 'code').name, 'ASC'], limit: Config.webflow.limit, offset },
     ).then((collection) => {
       cache.addItems(collectionId, collection.items);
       const match = collection.items.find(
         (e) => {
           try {
-            return e[getCustomItemOption(item, 'code_field').value].toString() === item.code.toString();
+            return e[getCustomItemOption(foxyItem, 'code_field').value].toString() === foxyItem.code.toString();
           } catch (err) {
             err.code = 400;
             err.message = 'Wrong code_field.';
@@ -207,9 +207,9 @@ function fetchItem(cache, item, offset = 0) {
         },
       );
       if (match) {
-        resolve(enrichFetchedItem(match, item));
+        resolve(enrichFetchedItem(match, foxyItem));
       } else if (collection.total > collection.offset + collection.count) {
-        fetchItem(cache, item, ((offset / Config.webflow.limit) + 1) * Config.webflow.limit)
+        fetchItem(cache, foxyItem, ((offset / Config.webflow.limit) + 1) * Config.webflow.limit)
           .then((i) => resolve(i))
           .catch((e) => reject(e));
       } else {
@@ -221,6 +221,26 @@ function fetchItem(cache, item, offset = 0) {
   });
 }
 
+function shouldEvaluate(enrichedItem) {
+  // Ignore past subscriptions
+  if (
+    enrichedItem.matchedFoxyItem.subscription_frequency
+    && enrichedItem.matchedFoxyItem.subscription_start_date
+  ) {
+    const subscriptionStart = new Date(enrichedItem.matchedFoxyItem.subscription_start_date);
+    const stripTime = (v) => v.replace(/T.*$/, '');
+    // Convert to UTC, strip time and compare
+    if (stripTime(new Date().toISOString()) > stripTime(subscriptionStart.toISOString())) {
+      return false;
+    }
+  }
+  // Evaluates by default
+  return true;
+}
+
+/**
+ * Searches for an invalid value applying a list of criteria
+ */
 function findMismatch(values) {
   const evaluations = [
     [correctPrice, 'Prices do not match.'],
@@ -228,9 +248,11 @@ function findMismatch(values) {
     [sufficientInventory, 'Insufficient inventory.'],
   ];
   for (let v = 0; v < values.length; v += 1) {
-    for (let i = 0; i < evaluations.length; i += 1) {
-      if (!evaluations[i][0](values[v])) {
-        return evaluations[i][1];
+    if (shouldEvaluate(values[v])) {
+      for (let i = 0; i < evaluations.length; i += 1) {
+        if (!evaluations[i][0](values[v])) {
+          return evaluations[i][1];
+        }
       }
     }
   }
