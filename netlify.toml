@@ -1,14 +1,13 @@
 [build]
-  command = "npm build"
+  command = "npm i"
   functions = "src/functions"
 
 [template.environment]
-  FOXY_TIMEZONE = "Enter your store's timezone, such as `America/Los_Angeles`, `America/Chicago`, `America/New_York`, `Europe/Paris`, etc. You can see a complete list here: https://gist.github.com/diogocapela/12c6617fc87607d11fd62d2a4f42b02a"
+  FOXY_TIMEZONE = "Foxy store timezone, such as `America/Los_Angeles`. Complete list here: https://gist.github.com/diogocapela/12c6617fc87607d11fd62d2a4f42b02a"
   FOXY_API_CLIENT_ID = "Enter your Foxy.io API Client ID here."
   FOXY_API_CLIENT_SECRET = "Enter your Foxy.io API Client Secret here."
   FOXY_API_REFRESH_TOKEN = "Enter your Foxy.io API Refresh Token here."
-  DEFAULT_AUTOSHIP_FREQUENCY = "Defaults to `1m`"
-  IDEV_SECRET_KEY = "Get this from the API settings in your iDevAffiliate admin."
-  IDEV_API_URL = "Get this from the API settings in your iDevAffiliate admin. It should end in `sale.php`."
+  DEFAULT_AUTOSHIP_FREQUENCY = "Default autoship frequency (such as `1m`)"
+  IDEV_SECRET_KEY = "iDevAffiliate secret key (from the API settings)"
+  IDEV_API_URL = "iDevAffiliate API URL (from the API settings; should end in `sale.php`)"
   WEBFLOW_TOKEN = "Get this from Webflow's project settings, at the 'Integrations' tab."
-  
