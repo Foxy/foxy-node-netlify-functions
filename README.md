@@ -2,6 +2,8 @@
 
 This repository allows for easily creating serverless functions to work with the Foxy.io API, deployed using Netlify. The goal is to make this as approachable as possible, so we're avoiding unnecessary
 
+Be sure to check the README for each function in the functions folder.
+
 ## Localdev Setup
 
 1. `npm install -g netlify-cli`
