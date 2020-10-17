@@ -8,19 +8,23 @@ It validates the cart just before payment to ensure the order is bellow inventor
 
 It validates the prices of all products in a purchase, regardless of if they are in the same webflow collection, therefore, you can have multiple collections with products in your CMS.
 
+**It ignores existing subscriptions**. If a subscription start date is current, price will be checked. If it is in the past, the price is not checked.
+
 #### Limitations
 
 - It does not handle discounts.
 - It does not handle item options, such as `price_mod`.
-- It does not update your inventory field to reflect the new quantities after purchase.
+- Due to netlify time limit and webflow request limit, it will break on collections with thousands of products
 
 ## Usage
 
-Read the short configuration section bellow to make sure your Webflow Collection
-and FoxyCart links are all set, then click the deploy to Netlify button at the end of this page, configure your Webflow 
+1. Read the short configuration section bellow to make sure your Webflow Collection and FoxyCart links are all set; **This step is important**: your webflow collection and your add to cart buttons/forms need to be properly set for the webhook to work.
+1. Grab your Webflow token: https://university.webflow.com/lesson/intro-to-the-webflow-api#generating-an-api-access-token;
+1. Click the deploy to Netlify button at the end of this page. Netlify will provide you with a form for you to provide your configuration. The Webflow Prepayment Webhook requires only WEBFLOW_TOKEN. The other settings are used for the other services in this repo.
+1. Grab the URL for your webhook in Netlify. Be sure to get the correct URL for the webflow-prepayment-webhook. To do this, after the deploy is finished, click the "functions" tab, look for `pre-payment-webhook-webflow` function and copy the **Endpoint URL**.
+1. Configure your prepayment webhook using your endpoint. Check the docs here: https://wiki.foxycart.com/v/2.0/pre_payment_webhook
 
-
-## Configuration
+## Webflow Setup
 
 In order to use this webhook you'll need to set your Webflow collection, create buttons or forms to add the products to the cart and setup your webhook.
 
@@ -62,8 +66,7 @@ Yup. That's it.
 ### Basic Example
 Here is a minimum example of a link button to add a product to the cart:
 
-```html
-<a class="button" href="https://YOURDOMAIN.foxycart.com/cart?name=A+great+product&price=5&code=123456&collection_id=123047812340791234">
+```html <a class="button" href="https://YOURDOMAIN.foxycart.com/cart?name=A+great+product&price=5&code=123456&collection_id=123047812340791234">
  Buy this Great Product!
 </a>
 ```
@@ -98,4 +101,6 @@ Here is how that is done:
 
 ## Time to deploy your pre-payment webhook server
 
-
+<a href="https://app.netlify.com/start/deploy?repository=https://github.com/brettflorio/foxy-node-netlify-starter"><img
+src="https://www.netlify.com/img/deploy/button.svg"
+alt="Deploy to Netlify"></a>
