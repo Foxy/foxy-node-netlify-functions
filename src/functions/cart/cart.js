@@ -22,7 +22,6 @@ function validateConfig() {
 }
 
 function validateCart(cart) {
-  console.log("cart under validation", cart);
   if (!cart) return false;
   if (!cart._embedded || !Array.isArray(cart._embedded["fx:items"])) {
     return false;
@@ -52,7 +51,6 @@ const defaultSubFrequency = process.env.DEFAULT_AUTOSHIP_FREQUENCY
  */
 const getCart = async (id) => {
   if (!id && !Number.isInteger(id)) {
-    console.log('id?:', id);
     return {};
   }
   const carts = await store.follow('fx:carts').fetch({
@@ -76,7 +74,6 @@ const patchCart = async (id, cart) => {
     body: cart
   })
     .catch((e) => {
-      console.log("cartRef.fetch failed:", e);
       return Promise.reject("Patching cart failed.");
     });
 }
@@ -102,13 +99,11 @@ const convertCartToOneOff = async (id, cart) => {
   }
 
   if (cart._embedded["fx:items"].length > 0) {
-    console.log("Patching…");
     return patchCart(id, cart)
       .catch((e) => {
         return Promise.reject("ERROR patching cart.");
       });
   } else {
-    console.log("All products are already one-offs.");
     return cartOriginal;
   }
 }
@@ -139,12 +134,10 @@ const convertCartToSubscription = async (
   }
 
   if (cart._embedded["fx:items"].length > 0) {
-    console.log("Patching…");
     return patchCart(id, cart).catch(e => {
       return Promise.reject("ERROR patching cart.");
     })
   } else {
-    console.log("All products are already subscriptions.");
     return cartOriginal;
   }
 };
