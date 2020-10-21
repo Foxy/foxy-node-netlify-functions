@@ -1,22 +1,50 @@
 require("dotenv").config();
 const traverse = require("traverse");
+
 const { FoxyApi } = require("@foxy.io/node-api");
-const foxy = new FoxyApi();
-const store = foxy.follow("fx:store");
 
 const createError = require("http-errors");
-const express = require("express");
-const serverless = require("serverless-http");
+const express = require('express');
+const serverless = require('serverless-http');
 const app = express();
-const bodyParser = require("body-parser");
+const bodyParser = require('body-parser');
 
+let foxy;
+let store;
+
+/**
+ * Validate configuration requirements
+ */
+function validateConfig() {
+  return process.env.FOXY_API_CLIENT_ID
+    && process.env.FOXY_API_CLIENT_SECRET
+    && process.env.FOXY_API_REFRESH_TOKEN;
+}
+
+function validateCart(cart) {
+  console.log("cart under validation", cart);
+  if (!cart) return false;
+  if (!cart._embedded || !Array.isArray(cart._embedded["fx:items"])) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Initialize Foxy API
+ */
+function setup() {
+  if (validateConfig()) {
+    foxy = new FoxyApi();
+    store = foxy.follow('fx:store');
+  }
+}
 
 /** Functions and Variables */
 /** Default values */
 const defaultSubFrequency = process.env.DEFAULT_AUTOSHIP_FREQUENCY
   ? process.env.DEFAULT_AUTOSHIP_FREQUENCY
-  : "1m";
-
+  : '1m';
 
 /**
  * Retrieves a `cart` resource by ID.
@@ -24,21 +52,16 @@ const defaultSubFrequency = process.env.DEFAULT_AUTOSHIP_FREQUENCY
  */
 const getCart = async (id) => {
   if (!id && !Number.isInteger(id)) {
-    console.log("id?:", id)
+    console.log('id?:', id);
     return {};
   }
-  const carts = await store.follow("fx:carts").fetch({
-    query: {
-      id: id
-    },
-    zoom: ["items", "items:item_options", "items:item_options:discount_details"]
+  const carts = await store.follow('fx:carts').fetch({
+    query: { id },
+    zoom: ['items', 'items:item_options', 'items:item_options:discount_details'],
   })
-    .catch(e => {
-      return Promise.reject("Error getting cart.");
-    });
-  return carts._embedded["fx:carts"][0] || {};
-}
-
+    .catch(() => Promise.reject(new Error('Error getting cart.')));
+  return carts._embedded['fx:carts'][0] || {};
+};
 
 /**
  * Updates the cart and its contents
@@ -138,11 +161,21 @@ cartRouter.get("/", (req, res) => {
 
 // TODO: Make it POST
 cartRouter.get("/:cartId(\\d+)/convert/recurring/:frequency", async (req, res, next) => {
+  if (!validateConfig()) {
+    res
+      .status(500)
+      .json('FOXY_API_CLIENT_ID is not configured;');
+    return;
+  }
+  setup();
   if (!req.params.cartId) {
     throw createError(400, `cartId not found.`);
   }
   await getCart(req.params.cartId)
     .then(async (cart) => {
+      if (!validateCart(cart)) {
+        throw createError(404, 'Cart not found');
+      }
       return convertCartToSubscription(
         req.params.cartId,
         cart,
@@ -151,24 +184,39 @@ cartRouter.get("/:cartId(\\d+)/convert/recurring/:frequency", async (req, res, n
     })
     .then((data) => res.json(data))
     .catch((err) => {
-      console.log("ERROR in getCart:", err);
-      throw createError(500, "Error fetching or modifying cart.");
+      if (err.status) {
+        res.status(err.status).json(err.message);
+      } else {
+        res.status(500).json('Error fetching or modifying cart.');
+      }
     });
 });
 
 // TODO: Make it POST
 cartRouter.get("/:cartId(\\d+)/convert/nonrecurring", async (req, res, next) => {
+  if (!validateConfig()) {
+    res.status(500)
+      .json('FOXY_API_CLIENT_ID is not configured;');
+    return;
+  }
+  setup();
   if (!req.params.cartId) {
     throw createError(400, `cartId not found.`);
   }
   await getCart(req.params.cartId)
     .then(async (cart) => {
+      if (!validateCart(cart)) {
+        throw createError(404, 'Cart not found');
+      }
       return convertCartToOneOff(req.params.cartId, cart);
     })
     .then((data) => res.json(data))
     .catch((err) => {
-      console.log("ERROR in getCart:", err);
-      throw createError(500, "Error fetching or modifying cart.");
+      if (err.status) {
+        res.status(err.status).json(err.message);
+      } else {
+        res.status(500).json('Error fetching or modifying cart.');
+      }
     });
 });
 
