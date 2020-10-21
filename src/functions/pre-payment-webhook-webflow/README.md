@@ -101,6 +101,8 @@ Here is how that is done:
 
 ## Time to deploy your pre-payment webhook server
 
-<a href="https://app.netlify.com/start/deploy?repository=https://github.com/brettflorio/foxy-node-netlify-starter"><img
+<a href="https://app.netlify.com/start/deploy?repository=https://github.com/Foxy/foxy-node-netlify-functions"><img
 src="https://www.netlify.com/img/deploy/button.svg"
 alt="Deploy to Netlify"></a>
+
+[![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)

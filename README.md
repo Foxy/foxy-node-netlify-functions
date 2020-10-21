@@ -21,5 +21,8 @@ Be sure to check the README for each function in the functions folder.
 That will stay running in your terminal. Open up a new tab to your project's directory, and you can run `netlify functions:list` to see your serverless functions. You can then load them up like `http://localhost:8888/.netlify/functions/get_cart` to test.
 
 
+<a href="https://app.netlify.com/start/deploy?repository=https://github.com/Foxy/foxy-node-netlify-functions"><img
+src="https://www.netlify.com/img/deploy/button.svg"
+alt="Deploy to Netlify"></a>
 
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
