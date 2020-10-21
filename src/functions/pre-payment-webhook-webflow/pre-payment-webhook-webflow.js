@@ -1,12 +1,12 @@
-const Webflow = require('webflow-api');
+const Webflow = require("webflow-api");
 
 const Config = {
   webflow: {
     limit: 100,
   },
-  code_field: 'code',
-  price_field: 'price',
-  inventory_field: 'inventory',
+  code_field: "code",
+  price_field: "price",
+  inventory_field: "inventory",
 };
 
 /**
@@ -16,8 +16,8 @@ function getItemOption(item, option) {
   let found = item[option];
   if (found) return { name: option, value: item[option] };
   if (item._embedded) {
-    if (item._embedded['fx:item_options']) {
-      found = item._embedded['fx:item_options'].find((e) => e.name === option);
+    if (item._embedded["fx:item_options"]) {
+      found = item._embedded["fx:item_options"].find((e) => e.name === option);
       if (found && found.value) return found;
     }
   }
@@ -56,17 +56,18 @@ function createCache() {
       if (!this.cache[collection]) {
         return null;
       }
-      return this.cache[collection].find(
-        (e) => {
-          try {
-            return getCustomItemOption(e, 'code').value.toString() === item.code.toString();
-          } catch (err) {
-            err.message = 'Wrong code_field.';
-            err.code = 400;
-            throw err;
-          }
-        },
-      );
+      return this.cache[collection].find((e) => {
+        try {
+          return (
+            getCustomItemOption(e, "code").value.toString() ===
+            item.code.toString()
+          );
+        } catch (err) {
+          err.message = "Wrong code_field.";
+          err.code = 400;
+          throw err;
+        }
+      });
     },
   };
 }
@@ -82,8 +83,8 @@ function validToken() {
  * Extract items from payload received from FoxyCart
  */
 function extractItems(body) {
-  if (body && body._embedded && body._embedded['fx:items']) {
-    return body._embedded['fx:items'];
+  if (body && body._embedded && body._embedded["fx:items"]) {
+    return body._embedded["fx:items"];
   }
   return [];
 }
@@ -92,10 +93,12 @@ function extractItems(body) {
  * Checks if item is valid
  */
 function validItem(item) {
-  return item.price
-    && item.quantity
-    && item.code
-    && getItemOption(item, 'collection_id').value;
+  return (
+    item.price &&
+    item.quantity &&
+    item.code &&
+    getItemOption(item, "collection_id").value
+  );
 }
 
 /**
@@ -107,7 +110,10 @@ function correctPrice(enrichedItem) {
     return true;
   }
   const i = enrichedItem;
-  return parseFloat(i.matchedFoxyItem.price) === parseFloat(getItemOption(i, 'price').value);
+  return (
+    parseFloat(i.matchedFoxyItem.price) ===
+    parseFloat(getItemOption(i, "price").value)
+  );
 }
 
 /**
@@ -119,13 +125,13 @@ function correctCategory(enrichedItem) {
     return true;
   }
   // if no category is found in the collection item, ignore it
-  const category = getCustomItemOption(enrichedItem, 'category');
+  const category = getCustomItemOption(enrichedItem, "category");
   const categoryExists = !!Object.keys(category).length;
   if (!categoryExists) return true;
   let matchedCategory;
   const embedded = enrichedItem.matchedFoxyItem._embedded;
-  if (embedded && embedded['fx:item_category']) {
-    matchedCategory = embedded['fx:item_category'].code;
+  if (embedded && embedded["fx:item_category"]) {
+    matchedCategory = embedded["fx:item_category"].code;
   }
   return matchedCategory && category.value.trim() === matchedCategory.trim();
 }
@@ -138,7 +144,10 @@ function sufficientInventory(enrichedItem) {
     return true;
   }
   const i = enrichedItem;
-  return !Config.inventory_field || i[Config.inventory_field] >= i.matchedFoxyItem.quantity;
+  return (
+    !Config.inventory_field ||
+    i[Config.inventory_field] >= i.matchedFoxyItem.quantity
+  );
 }
 
 /**
@@ -180,9 +189,9 @@ function enrichFetchedItem(webflowItem, foxyItem) {
  */
 function fetchItem(cache, foxyItem, offset = 0) {
   if (offset > 1000) {
-    return Promise.reject(new Error('Infinete Loop'));
+    return Promise.reject(new Error("Infinete Loop"));
   }
-  const collectionId = getCustomItemOption(foxyItem, 'collection_id').value;
+  const collectionId = getCustomItemOption(foxyItem, "collection_id").value;
   const webflow = getWebflow();
   const found = cache.findItem(collectionId, foxyItem);
 
@@ -190,47 +199,65 @@ function fetchItem(cache, foxyItem, offset = 0) {
     return Promise.resolve(enrichFetchedItem(found, foxyItem));
   }
   return new Promise((resolve, reject) => {
-    webflow.items(
-      { collectionId },
-      { sort: [getCustomItemOption(foxyItem, 'code').name, 'ASC'], limit: Config.webflow.limit, offset },
-    ).then((collection) => {
-      cache.addItems(collectionId, collection.items);
-      const match = collection.items.find(
-        (e) => {
+    webflow
+      .items(
+        { collectionId },
+        {
+          sort: [getCustomItemOption(foxyItem, "code").name, "ASC"],
+          limit: Config.webflow.limit,
+          offset,
+        }
+      )
+      .then((collection) => {
+        cache.addItems(collectionId, collection.items);
+        const match = collection.items.find((e) => {
           try {
-            return e[getCustomItemOption(foxyItem, 'code_field').value].toString() === foxyItem.code.toString();
+            return (
+              e[
+                getCustomItemOption(foxyItem, "code_field").value
+              ].toString() === foxyItem.code.toString()
+            );
           } catch (err) {
             err.code = 400;
-            err.message = 'Wrong code_field.';
+            err.message = "Wrong code_field.";
             throw err;
           }
-        },
-      );
-      if (match) {
-        resolve(enrichFetchedItem(match, foxyItem));
-      } else if (collection.total > collection.offset + collection.count) {
-        fetchItem(cache, foxyItem, ((offset / Config.webflow.limit) + 1) * Config.webflow.limit)
-          .then((i) => resolve(i))
-          .catch((e) => reject(e));
-      } else {
-        reject(new Error('Item not found'));
-      }
-    }).catch((e) => {
-      reject(e);
-    });
+        });
+        if (match) {
+          resolve(enrichFetchedItem(match, foxyItem));
+        } else if (collection.total > collection.offset + collection.count) {
+          fetchItem(
+            cache,
+            foxyItem,
+            (offset / Config.webflow.limit + 1) * Config.webflow.limit
+          )
+            .then((i) => resolve(i))
+            .catch((e) => reject(e));
+        } else {
+          reject(new Error("Item not found"));
+        }
+      })
+      .catch((e) => {
+        reject(e);
+      });
   });
 }
 
 function shouldEvaluate(enrichedItem) {
   // Ignore past subscriptions
   if (
-    enrichedItem.matchedFoxyItem.subscription_frequency
-    && enrichedItem.matchedFoxyItem.subscription_start_date
+    enrichedItem.matchedFoxyItem.subscription_frequency &&
+    enrichedItem.matchedFoxyItem.subscription_start_date
   ) {
-    const subscriptionStart = new Date(enrichedItem.matchedFoxyItem.subscription_start_date);
-    const stripTime = (v) => v.replace(/T.*$/, '');
+    const subscriptionStart = new Date(
+      enrichedItem.matchedFoxyItem.subscription_start_date
+    );
+    const stripTime = (v) => v.replace(/T.*$/, "");
     // Convert to UTC, strip time and compare
-    if (stripTime(new Date().toISOString()) > stripTime(subscriptionStart.toISOString())) {
+    if (
+      stripTime(new Date().toISOString()) >
+      stripTime(subscriptionStart.toISOString())
+    ) {
       return false;
     }
   }
@@ -243,9 +270,9 @@ function shouldEvaluate(enrichedItem) {
  */
 function findMismatch(values) {
   const evaluations = [
-    [correctPrice, 'Prices do not match.'],
-    [correctCategory, 'Mismatched category.'],
-    [sufficientInventory, 'Insufficient inventory.'],
+    [correctPrice, "Prices do not match."],
+    [correctCategory, "Mismatched category."],
+    [sufficientInventory, "Insufficient inventory."],
   ];
   for (let v = 0; v < values.length; v += 1) {
     if (shouldEvaluate(values[v])) {
@@ -266,7 +293,7 @@ async function handleRequest(event, context, callback) {
       statusCode: 503,
       body: JSON.stringify({
         ok: false,
-        details: 'Webflow token not configured.',
+        details: "Webflow token not configured.",
       }),
     });
     return;
@@ -277,7 +304,7 @@ async function handleRequest(event, context, callback) {
       statusCode: 400,
       body: JSON.stringify({
         ok: false,
-        details: 'Empty request.',
+        details: "Empty request.",
       }),
     });
     return;
@@ -290,7 +317,7 @@ async function handleRequest(event, context, callback) {
       statusCode: 200,
       body: JSON.stringify({
         ok: false,
-        details: `Invalid items: ${invalidItems.map((e) => e.name).join(',')}`,
+        details: `Invalid items: ${invalidItems.map((e) => e.name).join(",")}`,
       }),
     });
     return;
@@ -300,53 +327,56 @@ async function handleRequest(event, context, callback) {
   const cache = createCache();
   // Fetch information needed to validate the cart
   const concatenatedPromisses = items.reduce(
-    (p, i) => p.then(
-      (accum) => fetchItem(cache, i).then((fetched) => {
-        values.push(fetched);
-        return accum;
-      }),
-    ), Promise.resolve(values),
+    (p, i) =>
+      p.then((accum) =>
+        fetchItem(cache, i).then((fetched) => {
+          values.push(fetched);
+          return accum;
+        })
+      ),
+    Promise.resolve(values)
   );
 
-  await concatenatedPromisses.then(() => {
-    const failed = findMismatch(values);
-    if (failed) {
-      callback(null, {
-        statusCode: 200,
-        body: JSON.stringify({
-          ok: false,
-          details: failed,
-        }),
-      });
-    } else {
-      callback(null, {
-        statusCode: 200,
-        body: JSON.stringify({
-          ok: true,
-          details: '',
-        }),
-      });
-    }
-  }).catch((e) => {
-    if (e.code && e.code.toString() === '429') {
-      callback(null, {
-        statusCode: 429,
-        body: JSON.stringify({
-          details: 'Rate limit reached.',
-          ok: false,
-        }),
-      });
-    } else if (e) {
-      callback(null,
-        {
+  await concatenatedPromisses
+    .then(() => {
+      const failed = findMismatch(values);
+      if (failed) {
+        callback(null, {
+          statusCode: 200,
+          body: JSON.stringify({
+            ok: false,
+            details: failed,
+          }),
+        });
+      } else {
+        callback(null, {
+          statusCode: 200,
+          body: JSON.stringify({
+            ok: true,
+            details: "",
+          }),
+        });
+      }
+    })
+    .catch((e) => {
+      if (e.code && e.code.toString() === "429") {
+        callback(null, {
+          statusCode: 429,
+          body: JSON.stringify({
+            details: "Rate limit reached.",
+            ok: false,
+          }),
+        });
+      } else if (e) {
+        callback(null, {
           statusCode: e.code ? e.code : 500,
           body: JSON.stringify({
             ok: false,
             details: e.message,
           }),
         });
-    }
-  });
+      }
+    });
 }
 
 exports.handler = handleRequest;

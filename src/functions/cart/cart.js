@@ -4,10 +4,10 @@ const traverse = require("traverse");
 const { FoxyApi } = require("@foxy.io/node-api");
 
 const createError = require("http-errors");
-const express = require('express');
-const serverless = require('serverless-http');
+const express = require("express");
+const serverless = require("serverless-http");
 const app = express();
-const bodyParser = require('body-parser');
+const bodyParser = require("body-parser");
 
 let foxy;
 let store;
@@ -16,9 +16,11 @@ let store;
  * Validate configuration requirements
  */
 function validateConfig() {
-  return process.env.FOXY_API_CLIENT_ID
-    && process.env.FOXY_API_CLIENT_SECRET
-    && process.env.FOXY_API_REFRESH_TOKEN;
+  return (
+    process.env.FOXY_API_CLIENT_ID &&
+    process.env.FOXY_API_CLIENT_SECRET &&
+    process.env.FOXY_API_REFRESH_TOKEN
+  );
 }
 
 function validateCart(cart) {
@@ -35,7 +37,7 @@ function validateCart(cart) {
 function setup() {
   if (validateConfig()) {
     foxy = new FoxyApi();
-    store = foxy.follow('fx:store');
+    store = foxy.follow("fx:store");
   }
 }
 
@@ -43,7 +45,7 @@ function setup() {
 /** Default values */
 const defaultSubFrequency = process.env.DEFAULT_AUTOSHIP_FREQUENCY
   ? process.env.DEFAULT_AUTOSHIP_FREQUENCY
-  : '1m';
+  : "1m";
 
 /**
  * Retrieves a `cart` resource by ID.
@@ -53,12 +55,18 @@ const getCart = async (id) => {
   if (!id && !Number.isInteger(id)) {
     return {};
   }
-  const carts = await store.follow('fx:carts').fetch({
-    query: { id },
-    zoom: ['items', 'items:item_options', 'items:item_options:discount_details'],
-  })
-    .catch(() => Promise.reject(new Error('Error getting cart.')));
-  return carts._embedded['fx:carts'][0] || {};
+  const carts = await store
+    .follow("fx:carts")
+    .fetch({
+      query: { id },
+      zoom: [
+        "items",
+        "items:item_options",
+        "items:item_options:discount_details",
+      ],
+    })
+    .catch(() => Promise.reject(new Error("Error getting cart.")));
+  return carts._embedded["fx:carts"][0] || {};
 };
 
 /**
@@ -67,17 +75,21 @@ const getCart = async (id) => {
  * @param {Object} cart
  */
 const patchCart = async (id, cart) => {
-  return foxy.fetchRaw({
-    url: cart._links.self.href,
-    method: "PATCH",
-    zoom: ["items", "items:item_options", "items:item_options:discount_details"],
-    body: cart
-  })
+  return foxy
+    .fetchRaw({
+      url: cart._links.self.href,
+      method: "PATCH",
+      zoom: [
+        "items",
+        "items:item_options",
+        "items:item_options:discount_details",
+      ],
+      body: cart,
+    })
     .catch((e) => {
       return Promise.reject("Patching cart failed.");
     });
-}
-
+};
 
 /**
  * Strips all `sub_` parameters from all cart items.
@@ -99,14 +111,13 @@ const convertCartToOneOff = async (id, cart) => {
   }
 
   if (cart._embedded["fx:items"].length > 0) {
-    return patchCart(id, cart)
-      .catch((e) => {
-        return Promise.reject("ERROR patching cart.");
-      });
+    return patchCart(id, cart).catch((e) => {
+      return Promise.reject("ERROR patching cart.");
+    });
   } else {
     return cartOriginal;
   }
-}
+};
 
 /**
  * Converts
@@ -134,15 +145,13 @@ const convertCartToSubscription = async (
   }
 
   if (cart._embedded["fx:items"].length > 0) {
-    return patchCart(id, cart).catch(e => {
+    return patchCart(id, cart).catch((e) => {
       return Promise.reject("ERROR patching cart.");
-    })
+    });
   } else {
     return cartOriginal;
   }
 };
-
-
 
 /** Express Routing */
 
@@ -153,66 +162,68 @@ cartRouter.get("/", (req, res) => {
 });
 
 // TODO: Make it POST
-cartRouter.get("/:cartId(\\d+)/convert/recurring/:frequency", async (req, res, next) => {
-  if (!validateConfig()) {
-    res
-      .status(500)
-      .json('FOXY_API_CLIENT_ID is not configured;');
-    return;
+cartRouter.get(
+  "/:cartId(\\d+)/convert/recurring/:frequency",
+  async (req, res, next) => {
+    if (!validateConfig()) {
+      res.status(500).json("FOXY_API_CLIENT_ID is not configured;");
+      return;
+    }
+    setup();
+    if (!req.params.cartId) {
+      throw createError(400, `cartId not found.`);
+    }
+    await getCart(req.params.cartId)
+      .then(async (cart) => {
+        if (!validateCart(cart)) {
+          throw createError(404, "Cart not found");
+        }
+        return convertCartToSubscription(
+          req.params.cartId,
+          cart,
+          req.params.frequency
+        );
+      })
+      .then((data) => res.json(data))
+      .catch((err) => {
+        if (err.status) {
+          res.status(err.status).json(err.message);
+        } else {
+          res.status(500).json("Error fetching or modifying cart.");
+        }
+      });
   }
-  setup();
-  if (!req.params.cartId) {
-    throw createError(400, `cartId not found.`);
-  }
-  await getCart(req.params.cartId)
-    .then(async (cart) => {
-      if (!validateCart(cart)) {
-        throw createError(404, 'Cart not found');
-      }
-      return convertCartToSubscription(
-        req.params.cartId,
-        cart,
-        req.params.frequency
-      );
-    })
-    .then((data) => res.json(data))
-    .catch((err) => {
-      if (err.status) {
-        res.status(err.status).json(err.message);
-      } else {
-        res.status(500).json('Error fetching or modifying cart.');
-      }
-    });
-});
+);
 
 // TODO: Make it POST
-cartRouter.get("/:cartId(\\d+)/convert/nonrecurring", async (req, res, next) => {
-  if (!validateConfig()) {
-    res.status(500)
-      .json('FOXY_API_CLIENT_ID is not configured;');
-    return;
+cartRouter.get(
+  "/:cartId(\\d+)/convert/nonrecurring",
+  async (req, res, next) => {
+    if (!validateConfig()) {
+      res.status(500).json("FOXY_API_CLIENT_ID is not configured;");
+      return;
+    }
+    setup();
+    if (!req.params.cartId) {
+      throw createError(400, `cartId not found.`);
+    }
+    await getCart(req.params.cartId)
+      .then(async (cart) => {
+        if (!validateCart(cart)) {
+          throw createError(404, "Cart not found");
+        }
+        return convertCartToOneOff(req.params.cartId, cart);
+      })
+      .then((data) => res.json(data))
+      .catch((err) => {
+        if (err.status) {
+          res.status(err.status).json(err.message);
+        } else {
+          res.status(500).json("Error fetching or modifying cart.");
+        }
+      });
   }
-  setup();
-  if (!req.params.cartId) {
-    throw createError(400, `cartId not found.`);
-  }
-  await getCart(req.params.cartId)
-    .then(async (cart) => {
-      if (!validateCart(cart)) {
-        throw createError(404, 'Cart not found');
-      }
-      return convertCartToOneOff(req.params.cartId, cart);
-    })
-    .then((data) => res.json(data))
-    .catch((err) => {
-      if (err.status) {
-        res.status(err.status).json(err.message);
-      } else {
-        res.status(500).json('Error fetching or modifying cart.');
-      }
-    });
-});
-
+);
 
 app.use(bodyParser.json());
 
@@ -236,16 +247,13 @@ app.use(bodyParser.json());
 
 app.use("/.netlify/functions/cart", cartRouter); // path must route to lambda
 
-
-
-
 // CORS error
 app.use((err, req, res, next) => {
   if (err.message && err.message === "CORS_ERROR") {
     res.status(401).json({
       type: "cors",
       code: "401",
-      message: "Invalid origin header."
+      message: "Invalid origin header.",
     });
   } else {
     next();
@@ -260,7 +268,7 @@ app.use((err, req, res, next) => {
   res.status(502).json({
     type: "unknown",
     code: "0",
-    message: "Unknown error."
+    message: "Unknown error.",
   });
 });
 
