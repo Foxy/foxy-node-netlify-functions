@@ -1,6 +1,6 @@
 # Pre-payment webhook for Webflow-FoxyCart 
 
-This webhook asumes you are using a Webflow CMS Collection to store your products.
+This webhook assumes you are using a Webflow CMS Collection to store your products.
 
 It provides you with a function to validate the price and quantity submitted to FoxyCart before a payment is made, thus providing security against HTML modifications in the client side.
 
