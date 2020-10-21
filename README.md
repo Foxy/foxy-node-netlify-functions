@@ -2,7 +2,14 @@
 
 This repository allows for easily creating serverless functions to work with the Foxy.io API, deployed using Netlify. The goal is to make this as approachable as possible, so we're avoiding unnecessary
 
+## Functions
+
+The functions provided in this repository can be used independently, or as a reference for building your own functinos.
 Be sure to check the README for each function in the functions folder.
+
+- [cart](src/functions/cart): Converts a cart between recurring and non-recurring.
+- [idevaffiliate-marketplace](src/functions/idevaffiliate-marketplace): 
+- [pre-payment-webhook-webflow](src/functions/pre-payment-webhook-webflow): Validates the price and/or availability of items against Webflow CMS collections before a payment is processed.
 
 ## Localdev Setup
 
