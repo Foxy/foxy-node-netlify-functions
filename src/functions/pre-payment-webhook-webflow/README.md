@@ -66,7 +66,8 @@ Yup. That's it.
 ### Basic Example
 Here is a minimum example of a link button to add a product to the cart:
 
-```html <a class="button" href="https://YOURDOMAIN.foxycart.com/cart?name=A+great+product&price=5&code=123456&collection_id=123047812340791234">
+```html 
+<a class="button" href="https://YOURDOMAIN.foxycart.com/cart?name=A+great+product&price=5&code=123456&collection_id=123047812340791234">
  Buy this Great Product!
 </a>
 ```
