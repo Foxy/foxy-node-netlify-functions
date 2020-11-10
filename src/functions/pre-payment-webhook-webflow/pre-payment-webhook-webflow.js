@@ -1,13 +1,81 @@
-import Webflow from "webflow-api";
+const Webflow = require("webflow-api");
 
 const Config = {
   code_field: 'code',
-  inventory_field: 'inventory',
-  price_field: 'price',
+  inventory_field: 'Inventory',
+  price_field: 'Price',
   webflow: {
     limit: 100,
   },
 };
+
+/**
+ * @param event the request
+ * @param context context values
+ * @param callback function to callback upon response
+ */
+async function handleRequest(event, context, callback) {
+  // Validation
+  if (!validation.configuration.validate()) {
+    console.log('Configuration error: WEBFLOW_TOKEN not configured')
+    callback(null, validation.configuration.response());
+    return;
+  }
+  if (!validation.input.validate(event)) {
+    console.log('Input error: empty body');
+    callback(null, validation.input.response());
+    return;
+  }
+  const items = extractItems(event.body);
+  if (!validation.items.validate(items)) {
+    const invalidItems = validation.items.response(items);
+    callback(null, invalidItems);
+    return;
+  }
+
+  const values = [];
+  const cache = createCache();
+  // Fetch information needed to validate the cart
+  const concatenatedPromisses = items.reduce(
+    (p, i) => p.then(
+      (accum) => fetchItem(cache, i).then((fetched) => {
+        values.push(fetched);
+        return accum;
+      }),
+    ), Promise.resolve(values),
+  );
+
+  await concatenatedPromisses.then(() => {
+    const failed = findMismatch(values);
+    if (failed) {
+      console.log('Mismatch found: payment rejected')
+      callback(null, {
+        body: JSON.stringify({ details: failed, ok: false, }),
+        statusCode: 200,
+      });
+    } else {
+      console.log('OK: payment approved - no mismatch found')
+      callback(null, {
+        body: JSON.stringify({ details: '', ok: true, }),
+        statusCode: 200,
+      });
+    }
+  }).catch((e) => {
+    if (e.code && e.code.toString() === '429') {
+      console.log('Error: Webflow rate limit reached.')
+      callback(null, {
+        body: JSON.stringify({ details: 'Rate limit reached.', ok: false, }),
+        statusCode: 429,
+      });
+    } else {
+      console.log('Error', e.code, e.message);
+      callback(null, {
+        body: JSON.stringify({ details: e.message, ok: false, }),
+        statusCode: e.code ? e.code : 500,
+      });
+    }
+  });
+}
 
 /**
  * Get an option of an item.
@@ -18,16 +86,17 @@ const Config = {
  *  returns an empty object if the option is not available
  */
 function getOption(item, option) {
-  let found = item[option];
-  if (found) return { name: option, value: item[option] };
+  let found = iGet(item, option);
+  if (found) return { name: option, value: iGet(item, option) };
   if (item._embedded) {
     if (item._embedded['fx:item_options']) {
-      found = item._embedded['fx:item_options'].find((e) => e.name === option);
+      found = item._embedded['fx:item_options'].find((e) => e.name.toLowerCase() === option.toLowerCase());
       if (found && found.value) return found;
     }
   }
   return {};
 }
+
 
 /**
  * Returns the custom key for a given option, if it is set, or the default key.
@@ -60,8 +129,11 @@ function getCustomizableOption(item, option) {
 }
 
 /**
- * Creates a cache object to store collection items and avoid repeated requests
- * to webflow.
+ * Creates a cache object to store collection items and avoid repeated requests to webflow within the same execution.
+ *
+ * This cache is not intended to persist data between requests, but to simplify getting the Webflow Items in the same request.
+ *
+ * @returns {{addItems: Function, cache: object, findItem: Function}} a Cache object
  */
 function createCache() {
   return {
@@ -78,7 +150,9 @@ function createCache() {
       }
       return this.cache[collection].find(
         (e) => {
-            return getCustomizableOption(e, getCustomKey(item, 'code')).value.toString() === item.code.toString();
+            const itemCode = iGet(item, 'code');
+            const wfCode = getCustomizableOption(e, 'code').value;
+            return itemCode && wfCode && wfCode.toString() === itemCode.toString();
         },
       );
     },
@@ -88,7 +162,7 @@ function createCache() {
 /**
  * Extract items from payload received from FoxyCart
  *
- * @param {object.} body of the response received from Webflow
+ * @param {string} body of the response received from Webflow
  * @returns {Array} an array of items
  */
 function extractItems(body) {
@@ -153,7 +227,7 @@ function isPriceCorrect(enrichedItem) {
     // an item with no matched item is not to be checked
     return true;
   }
-  return parseFloat(enrichedItem.matchedFoxyItem.price) === parseFloat(getOption(enrichedItem, getCustomKey('price')).value);
+  return parseFloat(enrichedItem.matchedFoxyItem.price) === parseFloat(getOption(enrichedItem, getCustomKey(enrichedItem.matchedFoxyItem, 'price')).value);
 }
 
 /**
@@ -190,7 +264,7 @@ function sufficientInventory(enrichedItem) {
     return true;
   }
   const i = enrichedItem;
-  return !Config.inventory_field || i[Config.inventory_field] >= i.matchedFoxyItem.quantity;
+  return !Config.inventory_field || iGet(i, Config.inventory_field) >= i.matchedFoxyItem.quantity;
 }
 
 /**
@@ -242,7 +316,7 @@ function enrichFetchedItem(webflowItem, foxyItem) {
  */
 function fetchItem(cache, foxyItem, offset = 0) {
   if (offset > 1000) {
-    return Promise.reject(new Error('Infinete Loop'));
+    return Promise.reject(new Error('Item not found'));
   }
   const collectionId = getCustomizableOption(foxyItem, 'collection_id').value;
   const webflow = getWebflow();
@@ -258,7 +332,11 @@ function fetchItem(cache, foxyItem, offset = 0) {
       cache.addItems(collectionId, collection.items);
       const match = collection.items.find(
         (e) => {
-          return e[getCustomKey(foxyItem, 'code')].toString() === foxyItem.code.toString()
+          const wfItemCode = iGet(e, getCustomKey(foxyItem, 'code'));
+          if (!wfItemCode) {
+            reject(new Error('Could not find the code field in Webflow'));
+          }
+          return wfItemCode && foxyItem.code && wfItemCode.toString() === foxyItem.code.toString()
         }
       );
       if (match) {
@@ -303,7 +381,7 @@ function shouldEvaluate(enrichedItem) {
  * Searches for an invalid value applying a list of criteria
  *
  * @param values to find mismatches
- * @returns {boolean|Array} mismatches were found
+ * @returns {boolean|string} mismatches were found
  */
 function findMismatch(values) {
   const evaluations = [
@@ -324,71 +402,15 @@ function findMismatch(values) {
 }
 
 /**
- * @param event the request
- * @param context context values
- * @param callback function to callback upon response
+ * Returns a value from an object given a case-insensitive key
+ *
+ * @param {object} object the object to get the value from
+ * @param {string} key field to get the value from
+ * @returns {any} the value stored in the key
  */
-async function handleRequest(event, context, callback) {
-  // Validation
-  if (!validation.configuration.validate()) {
-    console.log('Configuration error: WEBFLOW_TOKEN not configured')
-    callback(null, validation.configuration.response());
-    return;
-  }
-  if (!validation.input.validate(event)) {
-    console.log('Input error: empty body');
-    callback(null, validation.input.response());
-    return;
-  }
-  const items = extractItems(event.body);
-  if (!validation.items.validate(items)) {
-    const invalidItems = validation.items.response(items);
-    callback(null, invalidItems);
-    return;
-  }
-
-  const values = [];
-  const cache = createCache();
-  // Fetch information needed to validate the cart
-  const concatenatedPromisses = items.reduce(
-    (p, i) => p.then(
-      (accum) => fetchItem(cache, i).then((fetched) => {
-        values.push(fetched);
-        return accum;
-      }),
-    ), Promise.resolve(values),
-  );
-
-  await concatenatedPromisses.then(() => {
-    const failed = findMismatch(values);
-    if (failed) {
-      console.log('Mismatch found: payment rejected')
-      callback(null, {
-        statusCode: 200,
-        body: JSON.stringify({ details: failed, ok: false, }),
-      });
-    } else {
-      console.log('OK: payment approved - no mismatch found')
-      callback(null, {
-        statusCode: 200,
-        body: JSON.stringify({ details: '', ok: true, }),
-      });
-    }
-  }).catch((e) => {
-    if (e.code && e.code.toString() === '429') {
-      console.log('Error: Webflow rate limit reached.')
-      callback(null, {
-        statusCode: 429,
-        body: JSON.stringify({ details: 'Rate limit reached.', ok: false, }),
-      });
-    } else {
-      console.log('Error', e.code, e.message);
-      callback(null, {
-        statusCode: e.code ? e.code : 500,
-        body: JSON.stringify({ details: e.message, ok: false, }),
-      });
-    }
-  });
+function iGet(object, key) {
+  const existingKey = Object.keys(object).find(k => k.toLowerCase() === key.toLowerCase());
+  return object[existingKey];
 }
 
 exports.handler = handleRequest;
