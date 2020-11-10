@@ -137,8 +137,8 @@ const validation = {
         ok: false,
       }),
       statusCode: 200,
+    }),
     validate: (items) => items.every(e => validItem(e)),
-    })
   }
 }
 
