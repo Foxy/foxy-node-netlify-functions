@@ -325,38 +325,25 @@ async function handleRequest(event, context, callback) {
     if (failed) {
       callback(null, {
         statusCode: 200,
-        body: JSON.stringify({
-          ok: false,
-          details: failed,
-        }),
+        body: JSON.stringify({ details: failed, ok: false, }),
       });
     } else {
       callback(null, {
         statusCode: 200,
-        body: JSON.stringify({
-          ok: true,
-          details: '',
-        }),
+        body: JSON.stringify({ details: '', ok: true, }),
       });
     }
   }).catch((e) => {
     if (e.code && e.code.toString() === '429') {
       callback(null, {
         statusCode: 429,
-        body: JSON.stringify({
-          details: 'Rate limit reached.',
-          ok: false,
-        }),
+        body: JSON.stringify({ details: 'Rate limit reached.', ok: false, }),
       });
-    } else if (e) {
-      callback(null,
-        {
-          statusCode: e.code ? e.code : 500,
-          body: JSON.stringify({
-            ok: false,
-            details: e.message,
-          }),
-        });
+    } else {
+      callback(null, {
+        statusCode: e.code ? e.code : 500,
+        body: JSON.stringify({ details: e.message, ok: false, }),
+      });
     }
   });
 }
