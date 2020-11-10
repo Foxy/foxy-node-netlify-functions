@@ -292,19 +292,28 @@ const responses = {
   configurationError: { ok: false, details: 'Webflow token not configured.' }
 }
 
+/**
+ * @param event
+ * @param context
+ * @param callback
+ */
 async function handleRequest(event, context, callback) {
   // Validation
   if (!validation.configuration.validate()) {
+    console.log('Configuration error: WEBFLOW_TOKEN not configured')
     callback(null, validation.configuration.response());
     return;
   }
   if (!validation.input.validate(event)) {
+    console.log('Input error: empty body');
     callback(null, validation.input.response());
     return;
   }
   const items = extractItems(event.body);
   if (!validation.items.validate(items)) {
-    callback(null, validation.items.response(items));
+    const invalidItems = validation.items.response(items);
+    console.log('Input error: invalid items: ', invalidItems);
+    callback(null, invalidItems);
     return;
   }
 
