@@ -1,20 +1,23 @@
-const Webflow = require('webflow-api');
+import Webflow from "webflow-api";
 
 const Config = {
+  code_field: 'code',
+  inventory_field: 'inventory',
+  price_field: 'price',
   webflow: {
     limit: 100,
   },
-  code_field: 'code',
-  price_field: 'price',
-  inventory_field: 'inventory',
 };
 
 /**
- * Retrieve a custom value from an item
+ * Get an option of an item.
+ *
  * @param {object} item the item that should have the option
- * @param {String} option to be retrieved
+ * @param {string} option to be retrieved
+ * @returns {{}|{name: string, value: string|number}} name and value of the option
+ *  returns an empty object if the option is not available
  */
-function getItemOption(item, option) {
+function getOption(item, option) {
   let found = item[option];
   if (found) return { name: option, value: item[option] };
   if (item._embedded) {
@@ -27,17 +30,31 @@ function getItemOption(item, option) {
 }
 
 /**
- * Retrieve a custom set field or a default field for a given option
+ * Returns the custom key for a given option, if it is set, or the default key.
  *
+ * @param {object} item where the key it to be searched (this is the item received from foxy)
+ * @param {string} default_key to be checked
+ * @returns {string} actual key to be used
  */
-function getCustomItemOption(item, option) {
-  const field = getItemOption(item, `${option}_field`);
-  let result;
-  if (field.value) {
-    result = getItemOption(item, field.value);
-  } else {
-    result = getItemOption(item, option);
+function getCustomKey(item, default_key) {
+  let config_key = default_key;
+  if (!default_key.endsWith('_field')) {
+    config_key = `${default_key}_field`;
   }
+  const custom_key = getOption(item, config_key).value;
+  return custom_key ? custom_key : default_key;
+}
+
+/**
+ * Retrieve an option from an item using it's custom key, if set, of the default key
+ *
+ * @param item the item to retrieve the custom option from
+ * @param option the option to retrieve
+ * @returns {{}|{name: string, value: string|number}} the retrieved option
+ */
+function getCustomizableOption(item, option) {
+  const custom_option = getCustomKey(item, option);
+  let result = getOption(item, custom_option);
   if (!result) result = {};
   return result;
 }
@@ -48,26 +65,20 @@ function getCustomItemOption(item, option) {
  */
 function createCache() {
   return {
-    cache: {},
     addItems(collection, items) {
       if (!this.cache[collection]) {
         this.cache[collection] = [];
       }
       this.cache[collection] = this.cache[collection].concat(items);
     },
+    cache: {},
     findItem(collection, item) {
       if (!this.cache[collection]) {
         return null;
       }
       return this.cache[collection].find(
         (e) => {
-          try {
-            return getCustomItemOption(e, 'code').value.toString() === item.code.toString();
-          } catch (err) {
-            err.message = 'Wrong code_field.';
-            err.code = 400;
-            throw err;
-          }
+            return getCustomizableOption(e, getCustomKey(item, 'code')).value.toString() === item.code.toString();
         },
       );
     },
@@ -78,23 +89,27 @@ function createCache() {
  * Extract items from payload received from FoxyCart
  *
  * @param {object.} body of the response received from Webflow
- * @return {array} an array of items
+ * @returns {Array} an array of items
  */
 function extractItems(body) {
-  if (body && body._embedded && body._embedded['fx:items']) {
-    return body._embedded['fx:items'];
+  const objBody = JSON.parse(body);
+  if (objBody && objBody._embedded && objBody._embedded['fx:items']) {
+    return objBody._embedded['fx:items'];
   }
   return [];
 }
 
 /**
  * Checks if item is valid
+ *
+ * @param item to be validated
+ * @returns {boolean} valid
  */
 function validItem(item) {
   return item.price
     && item.quantity
     && item.code
-    && getItemOption(item, 'collection_id').value;
+    && getOption(item, 'collection_id').value;
 }
 
 /**
@@ -102,45 +117,50 @@ function validItem(item) {
  */
 const validation = {
   configuration: {
-    validate: () => !!process.env.WEBFLOW_TOKEN,
     response: () => ({
+      body: JSON.stringify({ details: 'Webflow token not configured.', ok: false }),
       statusCode: 503,
-      body: JSON.stringify({ ok: false, details: 'Webflow token not configured.' }),
-    })
+    }),
+    validate: () => !!process.env.WEBFLOW_TOKEN,
   },
   input: {
-    validate: (event) => event && event.body,
     response: () => ({
+      body: JSON.stringify({ details: 'Empty request.', ok: false }),
       statusCode: 400,
-      body: JSON.stringify({ ok: false, details: 'Empty request.' }),
-    })
+    }),
+    validate: (event) => event && event.body,
   },
   items: {
-    validate: (items) => items.every(e => validItem(e)),
     response: (items) => ({
-      statusCode: 200,
       body: JSON.stringify({
-        ok: false,
         details: `Invalid items: ${items.filter(e => !validItem(e)).map((e) => e.name).join(',')}`,
+        ok: false,
       }),
+      statusCode: 200,
+    validate: (items) => items.every(e => validItem(e)),
     })
   }
 }
 
 /**
  * Checks if the price of the item is the same as found in WebFlow Collection
+ *
+ * @param enrichedItem item received from webflow with item received from foxy embedded
+ * @returns  {boolean} price is correct
  */
-function correctPrice(enrichedItem) {
+function isPriceCorrect(enrichedItem) {
   if (!enrichedItem.matchedFoxyItem) {
     // an item with no matched item is not to be checked
     return true;
   }
-  const i = enrichedItem;
-  return parseFloat(i.matchedFoxyItem.price) === parseFloat(getItemOption(i, 'price').value);
+  return parseFloat(enrichedItem.matchedFoxyItem.price) === parseFloat(getOption(enrichedItem, getCustomKey('price')).value);
 }
 
 /**
  * Checks if the category of the item is the same as found in WebFlow Collection
+ *
+ * @param enrichedItem the enriched item
+ * @returns {boolean} the categories match
  */
 function correctCategory(enrichedItem) {
   if (!enrichedItem.matchedFoxyItem) {
@@ -148,7 +168,7 @@ function correctCategory(enrichedItem) {
     return true;
   }
   // if no category is found in the collection item, ignore it
-  const category = getCustomItemOption(enrichedItem, 'category');
+  const category = getCustomizableOption(enrichedItem, 'category');
   const categoryExists = !!Object.keys(category).length;
   if (!categoryExists) return true;
   let matchedCategory;
@@ -161,6 +181,9 @@ function correctCategory(enrichedItem) {
 
 /**
  * Checks if there is sufficient inventory for this purchase.
+ *
+ * @param enrichedItem enriched item to be checked
+ * @returns {boolean} the inventory is sufficient
  */
 function sufficientInventory(enrichedItem) {
   if (!enrichedItem.matchedFoxyItem) {
@@ -172,6 +195,8 @@ function sufficientInventory(enrichedItem) {
 
 /**
  * Retrieve the Webflow Token
+ *
+ * @returns {string} the WEBFLOW_TOKEN
  */
 function getToken() {
   return process.env.WEBFLOW_TOKEN;
@@ -179,6 +204,8 @@ function getToken() {
 
 /**
  * Retrieve an instance of the Webflow API Client
+ *
+ * @returns {Webflow} the webflow api object
  */
 function getWebflow() {
   return new Webflow({ token: getToken() });
@@ -187,6 +214,10 @@ function getWebflow() {
 /**
  * Stores a reference to the matched item in the item itself.
  * returns an enriched item that can be easily validated.
+ *
+ * @param webflowItem the item received from Webflow
+ * @param foxyItem the item received from Foxy
+ * @returns {object} an enriched item
  */
 function enrichFetchedItem(webflowItem, foxyItem) {
   const enriched = webflowItem;
@@ -204,36 +235,31 @@ function enrichFetchedItem(webflowItem, foxyItem) {
  * Webflow does not provide a documented feature for retrieving filtered
  * results based on arbitrary field.
  *
- * @param object item: an item received it the request from foxycart
- * @offset number offet: the number of items already checked in this collection
+ * @param {object} cache object
+ * @param {object} foxyItem received from foxycart
+ * @param {number} offset number of items to skip
+ * @returns {Promise<{object}>} a promise for the item from Webflow
  */
 function fetchItem(cache, foxyItem, offset = 0) {
   if (offset > 1000) {
     return Promise.reject(new Error('Infinete Loop'));
   }
-  const collectionId = getCustomItemOption(foxyItem, 'collection_id').value;
+  const collectionId = getCustomizableOption(foxyItem, 'collection_id').value;
   const webflow = getWebflow();
   const found = cache.findItem(collectionId, foxyItem);
-
   if (found) {
     return Promise.resolve(enrichFetchedItem(found, foxyItem));
   }
   return new Promise((resolve, reject) => {
     webflow.items(
       { collectionId },
-      { sort: [getCustomItemOption(foxyItem, 'code').name, 'ASC'], limit: Config.webflow.limit, offset },
+      { sort: [getCustomKey(foxyItem, 'code'), 'ASC'], limit: Config.webflow.limit, offset },
     ).then((collection) => {
       cache.addItems(collectionId, collection.items);
       const match = collection.items.find(
         (e) => {
-          try {
-            return e[getCustomItemOption(foxyItem, 'code_field').value].toString() === foxyItem.code.toString();
-          } catch (err) {
-            err.code = 400;
-            err.message = 'Wrong code_field.';
-            throw err;
-          }
-        },
+          return e[getCustomKey(foxyItem, 'code')].toString() === foxyItem.code.toString()
+        }
       );
       if (match) {
         resolve(enrichFetchedItem(match, foxyItem));
@@ -250,6 +276,12 @@ function fetchItem(cache, foxyItem, offset = 0) {
   });
 }
 
+/**
+ * Checks if a particular enriched item should be evaluated or not
+ *
+ * @param enrichedItem enriched item to evaluate
+ * @returns {boolean} the item should be evaluated
+ */
 function shouldEvaluate(enrichedItem) {
   // Ignore past subscriptions
   if (
@@ -269,10 +301,13 @@ function shouldEvaluate(enrichedItem) {
 
 /**
  * Searches for an invalid value applying a list of criteria
+ *
+ * @param values to find mismatches
+ * @returns {boolean|Array} mismatches were found
  */
 function findMismatch(values) {
   const evaluations = [
-    [correctPrice, 'Prices do not match.'],
+    [isPriceCorrect, 'Prices do not match.'],
     [correctCategory, 'Mismatched category.'],
     [sufficientInventory, 'Insufficient inventory.'],
   ];
@@ -288,17 +323,12 @@ function findMismatch(values) {
   return false;
 }
 
-const responses = {
-  configurationError: { ok: false, details: 'Webflow token not configured.' }
-}
-
 /**
- * @param event
- * @param context
- * @param callback
+ * @param event the request
+ * @param context context values
+ * @param callback function to callback upon response
  */
 async function handleRequest(event, context, callback) {
-  console.log(event.body);
   // Validation
   if (!validation.configuration.validate()) {
     console.log('Configuration error: WEBFLOW_TOKEN not configured')
@@ -313,7 +343,6 @@ async function handleRequest(event, context, callback) {
   const items = extractItems(event.body);
   if (!validation.items.validate(items)) {
     const invalidItems = validation.items.response(items);
-    console.log('Input error: invalid items: ', invalidItems);
     callback(null, invalidItems);
     return;
   }
