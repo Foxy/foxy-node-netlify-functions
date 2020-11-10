@@ -4,9 +4,7 @@ module.exports = {
     commonjs: true,
     es2021: true,
   },
-  extends: [
-    'airbnb-base',
-  ],
+  extends: "@foxy.io",
   parserOptions: {
     ecmaVersion: 12,
   },

@@ -11,6 +11,8 @@ const Config = {
 
 /**
  * Retrieve a custom value from an item
+ * @param {object} item the item that should have the option
+ * @param {String} option to be retrieved
  */
 function getItemOption(item, option) {
   let found = item[option];
@@ -26,6 +28,7 @@ function getItemOption(item, option) {
 
 /**
  * Retrieve a custom set field or a default field for a given option
+ *
  */
 function getCustomItemOption(item, option) {
   const field = getItemOption(item, `${option}_field`);
@@ -72,14 +75,10 @@ function createCache() {
 }
 
 /**
- * Checks if the token is valid
- */
-function validToken() {
-  return !!process.env.WEBFLOW_TOKEN;
-}
-
-/**
  * Extract items from payload received from FoxyCart
+ *
+ * @param {object.} body of the response received from Webflow
+ * @return {array} an array of items
  */
 function extractItems(body) {
   if (body && body._embedded && body._embedded['fx:items']) {
@@ -96,6 +95,36 @@ function validItem(item) {
     && item.quantity
     && item.code
     && getItemOption(item, 'collection_id').value;
+}
+
+/**
+ * Validation checks
+ */
+const validation = {
+  configuration: {
+    validate: () => !!process.env.WEBFLOW_TOKEN,
+    response: () => ({
+      statusCode: 503,
+      body: JSON.stringify({ ok: false, details: 'Webflow token not configured.' }),
+    })
+  },
+  input: {
+    validate: (event) => event && event.body,
+    response: () => ({
+      statusCode: 400,
+      body: JSON.stringify({ ok: false, details: 'Empty request.' }),
+    })
+  },
+  items: {
+    validate: (items) => items.every(e => validItem(e)),
+    response: (items) => ({
+      statusCode: 200,
+      body: JSON.stringify({
+        ok: false,
+        details: `Invalid items: ${items.filter(e => !validItem(e)).map((e) => e.name).join(',')}`,
+      }),
+    })
+  }
 }
 
 /**
@@ -259,40 +288,23 @@ function findMismatch(values) {
   return false;
 }
 
+const responses = {
+  configurationError: { ok: false, details: 'Webflow token not configured.' }
+}
+
 async function handleRequest(event, context, callback) {
-  // Check if the function is ready to operate
-  if (!validToken()) {
-    callback(null, {
-      statusCode: 503,
-      body: JSON.stringify({
-        ok: false,
-        details: 'Webflow token not configured.',
-      }),
-    });
+  // Validation
+  if (!validation.configuration.validate()) {
+    callback(null, validation.configuration.response());
     return;
   }
-  // Parse the input data
-  if (!event || !event.body) {
-    callback(null, {
-      statusCode: 400,
-      body: JSON.stringify({
-        ok: false,
-        details: 'Empty request.',
-      }),
-    });
+  if (!validation.input.validate(event)) {
+    callback(null, validation.input.response());
     return;
   }
   const items = extractItems(event.body);
-  // Check if the input is valid
-  const invalidItems = items.filter((e) => !validItem(e));
-  if (invalidItems.length) {
-    callback(null, {
-      statusCode: 200,
-      body: JSON.stringify({
-        ok: false,
-        details: `Invalid items: ${invalidItems.map((e) => e.name).join(',')}`,
-      }),
-    });
+  if (!validation.items.validate(items)) {
+    callback(null, validation.items.response(items));
     return;
   }
 
