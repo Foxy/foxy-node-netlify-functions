@@ -323,11 +323,13 @@ async function handleRequest(event, context, callback) {
   await concatenatedPromisses.then(() => {
     const failed = findMismatch(values);
     if (failed) {
+      console.log('Mismatch found: payment rejected')
       callback(null, {
         statusCode: 200,
         body: JSON.stringify({ details: failed, ok: false, }),
       });
     } else {
+      console.log('OK: payment approved - no mismatch found')
       callback(null, {
         statusCode: 200,
         body: JSON.stringify({ details: '', ok: true, }),
@@ -335,11 +337,13 @@ async function handleRequest(event, context, callback) {
     }
   }).catch((e) => {
     if (e.code && e.code.toString() === '429') {
+      console.log('Error: Webflow rate limit reached.')
       callback(null, {
         statusCode: 429,
         body: JSON.stringify({ details: 'Rate limit reached.', ok: false, }),
       });
     } else {
+      console.log('Error', e.code, e.message);
       callback(null, {
         statusCode: e.code ? e.code : 500,
         body: JSON.stringify({ details: e.message, ok: false, }),
