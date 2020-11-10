@@ -298,6 +298,7 @@ const responses = {
  * @param callback
  */
 async function handleRequest(event, context, callback) {
+  console.log(event.body.json());
   // Validation
   if (!validation.configuration.validate()) {
     console.log('Configuration error: WEBFLOW_TOKEN not configured')
