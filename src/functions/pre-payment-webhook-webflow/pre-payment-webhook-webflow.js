@@ -264,7 +264,7 @@ function sufficientInventory(enrichedItem) {
     return true;
   }
   const i = enrichedItem;
-  return !Config.inventory_field || iGet(i, Config.inventory_field) >= i.matchedFoxyItem.quantity;
+  return !Config.inventory_field || !iGet(i, Config.inventory_field) || iGet(i, Config.inventory_field) >= i.matchedFoxyItem.quantity;
 }
 
 /**
