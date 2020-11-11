@@ -1,0 +1,23 @@
+name: SyncFork
+
+# Controls when the action will run. Triggers the workflow manually
+on:
+  workflow_dispatch:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Fork Sync
+        uses: tgymnich/fork-sync@v1.2.1
+        with:
+          # Owner of the forked repository
+          owner: Foxy
+          # Token for the github API
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Branch to track
+          head: main
+          # Branch to keep updated
+          base: main
