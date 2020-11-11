@@ -33,6 +33,7 @@ In order to use this webhook you'll need to set your Webflow collection, create 
 
 The webflow collection needs to have the following fields:
 
+
 | Parameter                                        | Description                                                                                                                  | Example                                |
 | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
 | `code` or the value set in `code_field`          | A unique code for each item. You can use your `slug` if you don't have a unique field.                                       | `code=896EYSA678`                      |
@@ -57,9 +58,9 @@ When adding your items to the cart,  beyond `price` and `quantity` that are need
 | ------------------------ | ----------------------------------------------------------------------------------------------------------- | -------------------------------------- |
 | `collection_id`          | **Required** The id of the item's collection.                                                               | `collectionId=5f74f169fbbb4b118497207a`|
 | `code`                   | **Required** The item's code. Must be unique.                                                               | `code=896EYSA678`                      |
-| `code_field`             | Optional. The field containing the code in the collection. Defaults to `code`                               | `codeField=sku`                        |
-| `price_field`            | Optional. The field containing the price in the collection. Default to `price`                              | `priceField=investment`                |
-| `inventoryField`         | Optional. The field containing the price in the collection. If not provided inventory is not checked.       | `priceField=investment`                |
+| `code_field`             | Optional. This field value is case insensitive. The field containing the code in the collection. Defaults to `code`                               | `code_field=sku`                        |
+| `price_field`            | Optional. This field value is case insensitive. The field containing the price in the collection. Default to `price`                              | `price_field=investment`                |
+| `inventory_field`        | Optional. This field value is case insensitive. The field containing the price in the collection. If not provided inventory is not checked.       | `inventory_field=investment`                |
 
 ### When configuring your webhook server
 
@@ -71,7 +72,7 @@ Yup. That's it.
 
 
 ### Basic Example
-Here is a minimum example of a link button to add a product to the cart:
+Here is a minimum example of a link button to add a product to the cart (the line breaks are for readability):
 
 ```html
 <a class="button" href="https://YOURDOMAIN.foxycart.com/cart?
@@ -101,7 +102,7 @@ This example assumes that:
 - you have a `inventory` field in your Webflow collection that you use to control your inventory. This field stores a numeric value.
 - your client is purchasing 2 units of this particular product.
 
-It will be necessary to customize the `code` and `value` fields.
+As you can see, it will be necessary to customize the `code` and `value` fields.
 
 Here is how that is done:
 
