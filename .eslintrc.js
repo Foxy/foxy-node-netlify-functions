@@ -4,14 +4,11 @@ module.exports = {
     commonjs: true,
     es2021: true,
   },
-  extends: [
-    'airbnb-base',
-    'prettier'
-  ],
+  extends: "@foxy.io",
   parserOptions: {
     ecmaVersion: 12,
   },
   rules: {
-    "no-underscore-dangle": false
+    "no-underscore-dangle": 0
   },
 };

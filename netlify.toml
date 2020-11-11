@@ -3,7 +3,7 @@
   functions = "src/functions"
 
 [template.environment]
-  FOXY_TIMEZONE = "Foxy store timezone, such as `America/Los_Angeles`. Complete list here: https://gist.github.com/diogocapela/12c6617fc87607d11fd62d2a4f42b02a"
+  FOXY_TIMEZONE = "Foxy store timezone, as in `America/Los_Angeles`. Full list: https://tinyurl.com/yxoaxbpz"
   FOXY_API_CLIENT_ID = "Enter your Foxy.io API Client ID here."
   FOXY_API_CLIENT_SECRET = "Enter your Foxy.io API Client Secret here."
   FOXY_API_REFRESH_TOKEN = "Enter your Foxy.io API Refresh Token here."
