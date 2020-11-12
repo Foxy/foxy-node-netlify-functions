@@ -112,10 +112,34 @@ Here is how that is done:
 </a>
 ```
 
-## Time to deploy your pre-payment webhook server
+# Deploy your webhook
 
-<a href="https://app.netlify.com/start/deploy?repository=https://github.com/Foxy/foxy-node-netlify-functions"><img
-src="https://www.netlify.com/img/deploy/button.svg"
-alt="Deploy to Netlify"></a>
+These are instructions for deploying the webhook to Netlify.
 
-[![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
+### First: clone this repository
+
+Click the fork button on the top right corner.
+
+Cloning the repository will create your own copy of this Webhook, allowing you to both customize it if you wish and to merge upgrades as they are published.
+
+### Second: create a new Netlify Site
+
+Go to your Netlify account and click the "New site from Git" button.
+
+- Choose your repository.
+- Click the "Advanced" button and then "New Variable"
+    - The key should be: `WEBFLOW_TOKEN`
+    - To get this token, go to Webflow's project settings, at the 'Integrations' tab."
+
+# Upgrade your webhook
+
+When new upgrades to this webhook are published, you can use the GitHub Action
+available in the "Actions" tab in your repository to upgrade your Webhook.
+
+- Click the "Actions" tab. Agree to use GitHub Actions.
+- Click the SyncFork workflow and then "run workflow"
+
+This will upgrade your repository.
+
+If you've made customizations, there may be conflicts. In this case you par pull the changes and resolve the conflicts manually.
+
