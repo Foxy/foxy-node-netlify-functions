@@ -80,6 +80,8 @@ async function handleRequest(event, context, callback) {
 /**
  * Get an option of an item.
  *
+ * The option may be set in the object itself or in the fx:item_options property of the _embedded attribute
+ *
  * @param {object} item the item that should have the option
  * @param {string} option to be retrieved
  * @returns {{}|{name: string, value: string|number}} name and value of the option
@@ -219,34 +221,38 @@ const validation = {
 /**
  * Checks if the price of the item is the same as found in WebFlow Collection
  *
- * @param enrichedItem item received from webflow with item received from foxy embedded
+ * @param comparable item received from webflow with item received from foxy embedded
  * @returns  {boolean} price is correct
  */
-function isPriceCorrect(enrichedItem) {
-  if (!enrichedItem.matchedFoxyItem) {
+function isPriceCorrect(comparable) {
+  const wfItem = comparable.wfItem;
+  const fxItem = comparable.fxItem;
+  if (!fxItem) {
     // an item with no matched item is not to be checked
     return true;
   }
-  return parseFloat(enrichedItem.matchedFoxyItem.price) === parseFloat(getOption(enrichedItem, getCustomKey(enrichedItem.matchedFoxyItem, 'price')).value);
+  return parseFloat(fxItem.price) === parseFloat(getOption(wfItem, getCustomKey(fxItem, 'price')).value);
 }
 
 /**
  * Checks if the category of the item is the same as found in WebFlow Collection
  *
- * @param enrichedItem the enriched item
+ * @param comparable the enriched item
  * @returns {boolean} the categories match
  */
-function correctCategory(enrichedItem) {
-  if (!enrichedItem.matchedFoxyItem) {
+function correctCategory(comparable) {
+  const wfItem = comparable.wfItem;
+  const fxItem = comparable.fxItem;
+  if (!fxItem) {
     // an item with no matched item is not to be checked
     return true;
   }
   // if no category is found in the collection item, ignore it
-  const category = getCustomizableOption(enrichedItem, 'category');
+  const category = getCustomizableOption(wfItem, 'category');
   const categoryExists = !!Object.keys(category).length;
   if (!categoryExists) return true;
   let matchedCategory;
-  const embedded = enrichedItem.matchedFoxyItem._embedded;
+  const embedded = fxItem._embedded;
   if (embedded && embedded['fx:item_category']) {
     matchedCategory = embedded['fx:item_category'].code;
   }
@@ -256,15 +262,17 @@ function correctCategory(enrichedItem) {
 /**
  * Checks if there is sufficient inventory for this purchase.
  *
- * @param enrichedItem enriched item to be checked
+ * @param comparable pair of matched items to be checked
  * @returns {boolean} the inventory is sufficient
  */
-function sufficientInventory(enrichedItem) {
-  if (!enrichedItem.matchedFoxyItem) {
+function sufficientInventory(comparable) {
+  const wfItem = comparable.wfItem;
+  const fxItem = comparable.fxItem;
+  if (!fxItem) {
     return true;
   }
-  const i = enrichedItem;
-  return !Config.inventory_field || !iGet(i, Config.inventory_field) || iGet(i, Config.inventory_field) >= i.matchedFoxyItem.quantity;
+  return !Config.inventory_field ||
+    Number(getOption(wfItem, getCustomKey(fxItem, 'inventory')).value) >= Number(fxItem.quantity);
 }
 
 /**
@@ -287,16 +295,14 @@ function getWebflow() {
 
 /**
  * Stores a reference to the matched item in the item itself.
- * returns an enriched item that can be easily validated.
+ * returns a pair of matched items that can be easily validated.
  *
  * @param webflowItem the item received from Webflow
  * @param foxyItem the item received from Foxy
- * @returns {object} an enriched item
+ * @returns {object} a pair of comparable items
  */
 function enrichFetchedItem(webflowItem, foxyItem) {
-  const enriched = webflowItem;
-  enriched.matchedFoxyItem = foxyItem;
-  return enriched;
+  return {wfItem: webflowItem, fxItem: foxyItem};
 }
 
 /**
@@ -357,16 +363,17 @@ function fetchItem(cache, foxyItem, offset = 0) {
 /**
  * Checks if a particular enriched item should be evaluated or not
  *
- * @param enrichedItem enriched item to evaluate
+ * @param comparable enriched item to evaluate
  * @returns {boolean} the item should be evaluated
  */
-function shouldEvaluate(enrichedItem) {
+function shouldEvaluate(comparable) {
   // Ignore past subscriptions
+  const fxItem = comparable.fxItem;
   if (
-    enrichedItem.matchedFoxyItem.subscription_frequency
-    && enrichedItem.matchedFoxyItem.subscription_start_date
+    fxItem.subscription_frequency
+    && fxItem.subscription_start_date
   ) {
-    const subscriptionStart = new Date(enrichedItem.matchedFoxyItem.subscription_start_date);
+    const subscriptionStart = new Date(fxItem.subscription_start_date);
     const stripTime = (v) => v.replace(/T.*$/, '');
     // Convert to UTC, strip time and compare
     if (stripTime(new Date().toISOString()) > stripTime(subscriptionStart.toISOString())) {
@@ -409,7 +416,7 @@ function findMismatch(values) {
  * @returns {any} the value stored in the key
  */
 function iGet(object, key) {
-  const existingKey = Object.keys(object).find(k => k.toLowerCase() === key.toLowerCase());
+  const existingKey = Object.keys(object).find(k => k.toLowerCase().trim() === key.toLowerCase().trim());
   return object[existingKey];
 }
 
