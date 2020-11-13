@@ -48,7 +48,7 @@ async function handleRequest(event, context, callback) {
   await concatenatedPromisses.then(() => {
     const failed = findMismatch(values);
     if (failed) {
-      console.log('Mismatch found: payment rejected')
+      console.log(`Mismatch found: ${failed}`)
       callback(null, {
         body: JSON.stringify({ details: failed, ok: false, }),
         statusCode: 200,
