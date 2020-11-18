@@ -63,17 +63,13 @@ async function handleRequest(event, context, callback) {
   }).catch((e) => {
     if (e.code && e.code.toString() === '429') {
       console.log('Error: Webflow rate limit reached.')
-      callback(null, {
-        body: JSON.stringify({ details: 'Rate limit reached.', ok: false, }),
-        statusCode: 429,
-      });
     } else {
       console.log('Error', e.code, e.message);
-      callback(null, {
-        body: JSON.stringify({ details: e.message, ok: false, }),
-        statusCode: e.code ? e.code : 500,
-      });
     }
+    callback(null, {
+      body: JSON.stringify({ details: "An internal error has occurred", ok: false, }),
+      statusCode: 500,
+    });
   });
 }
 

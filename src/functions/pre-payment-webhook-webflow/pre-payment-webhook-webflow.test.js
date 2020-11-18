@@ -8,6 +8,8 @@ const mockWebflow = require("./mock/webflow");
 
 let injectedWebflow;
 
+const internalErrorMessage = "An internal error has occurred";
+
 /**
  * @param number
  */
@@ -265,8 +267,8 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     });
     expect(response.statusCode).to.deep.equal(500);
     expect(JSON.parse(response.body)).to.deep.equal({
+      details: internalErrorMessage,
       ok: false,
-      details: "Could not find the code field in Webflow",
     });
   });
 
@@ -288,8 +290,8 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     });
     expect(response.statusCode).to.deep.equal(500);
     expect(JSON.parse(response.body)).to.deep.equal({
+      details: internalErrorMessage,
       ok: false,
-      details: "Could not find the code field in Webflow",
     });
   });
 
@@ -316,7 +318,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     const event = mockFoxyCart.request();
     event.body = JSON.stringify(event.body);
     const err = new Error();
-    err.code = 429;
+    err.code = 500;
     injectedWebflow.items = () => Promise.reject(err);
     const context = {};
     await prePayment.handler(event, context, (err, resp) => {
@@ -324,8 +326,8 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     });
     expect(response.statusCode).to.deep.equal(429);
     expect(JSON.parse(response.body)).to.deep.equal({
+      details: internalErrorMessage,
       ok: false,
-      details: "Rate limit reached.",
     });
   });
 
