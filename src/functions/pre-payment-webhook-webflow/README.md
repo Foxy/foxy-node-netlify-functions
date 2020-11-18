@@ -37,7 +37,7 @@ The webflow collection needs to have the following fields:
 | Parameter                                        | Description                                                                                                                  | Example                                |
 | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
 | `code` or the value set in `code_field`          | A unique code for each item. You can use your `slug` if you don't have a unique field.                                       | `code=896EYSA678`                      |
-| `price` or the value set in `price_field`        | The price to be validated.                                                                                                   | `price=256.88`                         |
+| `price`                                          | The price to be validated.                                                                                                   | `price=256.88`                         |
 | `inventory` or the value set in `inventory_field`| Optional. The field against with the quantity will be validated.                                                             | `inventory=3`                          |
 
 Please note that *you don't need to change your Webflow Collection* if you already have these fields with different names.
@@ -131,6 +131,18 @@ Go to your Netlify account and click the "New site from Git" button.
     - The key should be: `WEBFLOW_TOKEN`
     - To get this token, go to Webflow's project settings, at the 'Integrations' tab."
 
+#### Customize error messages
+
+This step is optional. You may want to customize the error message displayed for your costumers when a pre-payment error occurs:
+
+To set up custom error messages, simply create new variables as described above. Here are the possible variables:
+
+| Variable | Default Value | Description |
+| -------- | ----- | ----- |
+| FX_ERROR_CATEGORY_MISMATCH | Mismatched category. | Occurs if the category of the product does not correspond to the category in Webflow |
+| FX_ERROR_INSUFFICIENT_INVENTORY | Insufficient inventory. | Occurs when the quantity purchased is greater than the inventory available in Webflow |
+| FX_ERROR_PRICE_MISMATCH | Prices do not match. | Occurs when the price of any of the products does not match with the `price` field in Webflow |
+    
 # Upgrade your webhook
 
 When new upgrades to this webhook are published, you can use the GitHub Action

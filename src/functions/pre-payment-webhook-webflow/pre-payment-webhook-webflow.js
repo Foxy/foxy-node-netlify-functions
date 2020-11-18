@@ -9,6 +9,15 @@ const Config = {
   },
 };
 
+function getMessages() {
+  return {
+    categoryMismatch: process.env['FX_ERROR_CATEGORY_MISMATCH'] ?? 'Mismatched category.',
+    insufficientInventory: process.env['FX_ERROR_INSUFFICIENT_INVENTORY'] ?? 'Insufficient inventory.',
+    priceMismatch: process.env['FX_ERROR_PRICE_MISMATCH'] ?? 'Prices do not match.',
+  }
+}
+
+
 /**
  * @param event the request
  * @param context context values
@@ -227,7 +236,7 @@ function isPriceCorrect(comparable) {
     // an item with no matched item is not to be checked
     return true;
   }
-  return parseFloat(fxItem.price) === parseFloat(getOption(wfItem, getCustomKey(fxItem, 'price')).value);
+  return parseFloat(fxItem.price) === parseFloat(wfItem.price);
 }
 
 /**
@@ -321,6 +330,7 @@ function fetchItem(cache, foxyItem, offset = 0) {
     return Promise.reject(new Error('Item not found'));
   }
   const collectionId = getCustomizableOption(foxyItem, 'collection_id').value;
+
   const webflow = getWebflow();
   const found = cache.findItem(collectionId, foxyItem);
   if (found) {
@@ -388,9 +398,9 @@ function shouldEvaluate(comparable) {
  */
 function findMismatch(values) {
   const evaluations = [
-    [isPriceCorrect, 'Prices do not match.'],
-    [correctCategory, 'Mismatched category.'],
-    [sufficientInventory, 'Insufficient inventory.'],
+    [isPriceCorrect, getMessages().priceMismatch],
+    [correctCategory, getMessages().categoryMismatch],
+    [sufficientInventory, getMessages().insufficientInventory],
   ];
   for (let v = 0; v < values.length; v += 1) {
     if (shouldEvaluate(values[v])) {
