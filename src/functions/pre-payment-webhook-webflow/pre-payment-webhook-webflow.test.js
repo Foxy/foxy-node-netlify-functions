@@ -230,21 +230,16 @@ describe("Verifies the price of an item in a Webflow collection", () => {
   it("Rejects when any inventory is insufficient", async () => {
     const response = await insufficientInventoryRequest();
     expect(response.statusCode).to.deep.equal(200);
-    expect(JSON.parse(response.body)).to.deep.equal({
-      details: "Insufficient inventory.",
-      ok: false,
-    });
+    const body = JSON.parse(response.body);
+    expect(body.details).to.match(/^Insufficient inventory for these items:/);
   });
 
   it("Customizes the insufficient inventory response", async () => {
-    process.env.FX_ERROR_INSUFFICIENT_INVENTORY = 'foobar';
+    process.env.FX_ERROR_INSUFFICIENT_INVENTORY = 'foobar: ';
     const response = await insufficientInventoryRequest();
     expect(response.statusCode).to.deep.equal(200);
-    expect(JSON.parse(response.body)).to.deep.equal({
-      details: "foobar",
-      ok: false,
-    });
-
+    const body = JSON.parse(response.body);
+    expect(body.details).to.match(/^foobar: /);
   });
 
   it("Rejects when no code field exist", async () => {

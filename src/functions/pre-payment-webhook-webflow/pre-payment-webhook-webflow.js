@@ -12,7 +12,7 @@ const Config = {
 function getMessages() {
   return {
     categoryMismatch: process.env['FX_ERROR_CATEGORY_MISMATCH'] ?? 'Mismatched category.',
-    insufficientInventory: process.env['FX_ERROR_INSUFFICIENT_INVENTORY'] ?? 'Insufficient inventory.',
+    insufficientInventory: process.env['FX_ERROR_INSUFFICIENT_INVENTORY'] ?? 'Insufficient inventory for these items:',
     priceMismatch: process.env['FX_ERROR_PRICE_MISMATCH'] ?? 'Prices do not match.',
   }
 }
@@ -55,7 +55,13 @@ async function handleRequest(event, context, callback) {
   );
 
   await concatenatedPromisses.then(() => {
-    const failed = findMismatch(values);
+    let failed = findMismatch(values);
+    if (!failed) {
+      const outOfStock = outOfStockItems(values);
+      if (outOfStock) {
+        failed = getMessages().insufficientInventory + " " + outOfStock;
+      }
+    }
     if (failed) {
       console.log(`Mismatch found: ${failed}`)
       callback(null, {
@@ -307,7 +313,7 @@ function getWebflow() {
  * @returns {object} a pair of comparable items
  */
 function enrichFetchedItem(webflowItem, foxyItem) {
-  return {wfItem: webflowItem, fxItem: foxyItem};
+  return {fxItem: foxyItem, wfItem: webflowItem};
 }
 
 /**
@@ -400,7 +406,6 @@ function findMismatch(values) {
   const evaluations = [
     [isPriceCorrect, getMessages().priceMismatch],
     [correctCategory, getMessages().categoryMismatch],
-    [sufficientInventory, getMessages().insufficientInventory],
   ];
   for (let v = 0; v < values.length; v += 1) {
     if (shouldEvaluate(values[v])) {
@@ -412,6 +417,20 @@ function findMismatch(values) {
     }
   }
   return false;
+}
+
+/**
+ * Returns a list of names of products that are out of stock
+ *
+ * @param values comparable objects
+ * @returns {string} comma separated out of stock values
+ */
+function outOfStockItems(values) {
+  return values
+    .filter(v => !sufficientInventory(v))
+    .map(v => v.wfItem.name)
+    .join(', ')
+  ;
 }
 
 /**

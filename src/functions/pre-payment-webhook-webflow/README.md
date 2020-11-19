@@ -139,9 +139,9 @@ To set up custom error messages, simply create new variables as described above.
 
 | Variable | Default Value | Description |
 | -------- | ----- | ----- |
-| FX_ERROR_CATEGORY_MISMATCH | Mismatched category. | Occurs if the category of the product does not correspond to the category in Webflow |
-| FX_ERROR_INSUFFICIENT_INVENTORY | Insufficient inventory. | Occurs when the quantity purchased is greater than the inventory available in Webflow |
-| FX_ERROR_PRICE_MISMATCH | Prices do not match. | Occurs when the price of any of the products does not match with the `price` field in Webflow |
+| FX_ERROR_CATEGORY_MISMATCH | "Mismatched category." | Occurs if the category of the product does not correspond to the category in Webflow |
+| FX_ERROR_INSUFFICIENT_INVENTORY | "Insufficient inventory for these items:" | Occurs when the quantity purchased is greater than the inventory available in Webflow. A comma separated list of the names of the products out-of-stock will be appended to the end of the error message. |
+| FX_ERROR_PRICE_MISMATCH | "Prices do not match." | Occurs when the price of any of the products does not match with the `price` field in Webflow |
     
 # Upgrade your webhook
 
