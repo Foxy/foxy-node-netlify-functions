@@ -237,6 +237,20 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     expect(body.details).to.match(/^Insufficient inventory for these items:/);
   });
 
+  it("Ignores inventory checks if inventory_field is set to blank", async () => {
+    const event = mockFoxyCart.request({ price: 11, quantity: 1 });
+    function empty_inventory(e) {
+      const inventory_field = e._embedded["fx:item_options"].filter(item => item.name === "inventory_field");
+      if (inventory_field) {
+        inventory_field[0].value = ''
+      }
+    }
+    event.body._embedded["fx:items"].forEach(empty_inventory);
+    const response = await insufficientInventoryRequest(event);
+    expect(response.statusCode).to.exist.and.to.equal(200);
+    expect(JSON.parse(response.body)).to.deep.equal({ ok: true, details: "" });
+  });
+
   it("Customizes the insufficient inventory response", async () => {
     process.env.FX_ERROR_INSUFFICIENT_INVENTORY = 'foobar: ';
     const response = await insufficientInventoryRequest();
@@ -349,8 +363,10 @@ describe("Verifies the price of an item in a Webflow collection", () => {
  *
  * @returns {object} the insuficient inventory response
  */
-async function insufficientInventoryRequest() {
-  const event = mockFoxyCart.request({ price: 11, quantity: 1 });
+async function insufficientInventoryRequest(event = null) {
+  if (!event) {
+    event = mockFoxyCart.request({ price: 11, quantity: 1 });
+  }
   const items =  event.body._embedded["fx:items"];
   event.body = JSON.stringify(event.body);
   injectedWebflow.items = () =>
