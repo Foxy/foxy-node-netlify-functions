@@ -103,8 +103,8 @@ function getOption(item, option) {
   if (found) return { name: option, value: iGet(item, option) };
   if (item._embedded) {
     if (item._embedded['fx:item_options']) {
-      found = item._embedded['fx:item_options'].find((e) => e.name.toLowerCase() === option.toLowerCase());
-      if (found && found.value) return found;
+      found = item._embedded['fx:item_options'].find((e) => e.name.toLowerCase().trim() === option.toLowerCase().trim());
+      if (found) return found;
     }
   }
   return {};
@@ -282,7 +282,7 @@ function sufficientInventory(comparable) {
   if (!fxItem) {
     return true;
   }
-  return !Config.inventory_field ||
+  return getOption(fxItem, "inventory_field").value.trim() === "" ||
     Number(getOption(wfItem, getCustomKey(fxItem, 'inventory')).value) >= Number(fxItem.quantity);
 }
 
@@ -348,15 +348,25 @@ function fetchItem(cache, foxyItem, offset = 0) {
       { sort: [getCustomKey(foxyItem, 'code'), 'ASC'], limit: Config.webflow.limit, offset },
     ).then((collection) => {
       cache.addItems(collectionId, collection.items);
+      let code_exists = null;
       const match = collection.items.find(
         (e) => {
           const wfItemCode = iGet(e, getCustomKey(foxyItem, 'code'));
           if (!wfItemCode) {
-            reject(new Error('Could not find the code field in Webflow'));
+            if (code_exists === null) {
+              code_exists = false;
+            }
+            return false;
           }
+          code_exists = true;
           return wfItemCode && foxyItem.code && wfItemCode.toString() === foxyItem.code.toString()
         }
       );
+      if (code_exists === false) {
+        reject(new Error(`Could not find the code field (${getCustomKey(foxyItem, 'code')}) in Webflow.
+              this field must exist and not be empty for all items in the collection.`));
+        return;
+      }
       if (match) {
         resolve(enrichFetchedItem(match, foxyItem));
       } else if (collection.total > collection.offset + collection.count) {

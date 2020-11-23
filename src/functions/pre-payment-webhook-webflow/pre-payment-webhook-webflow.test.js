@@ -90,7 +90,10 @@ describe("Verifies the price of an item in a Webflow collection", () => {
   });
 
   /**
-   * @param startDate
+   * Creates a request for a subscrition with a given start date
+   *
+   * @param startDate the start date of the subscription
+   * @returns request event
    */
   function subscriptionsWithStartDate(startDate) {
     const nextMonth = ((d) => new Date(d.setDate(d.getMonth() + 1)))(
@@ -99,13 +102,13 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     const nextYear = ((d) => new Date(d.setDate(d.getYear() + 1)))(new Date());
     const event = mockFoxyCart.request(
       {
-        subscription_frequency: "1m",
-        subscription_start_date: startDate.toISOString(),
-        subscription_next_transaction_date: nextMonth.toISOString(),
-        subscription_end_date: nextYear.toISOString(),
-        sub_frequency: "1m",
         price: 21,
         quantity: 1,
+        sub_frequency: "1m",
+        subscription_end_date: nextYear.toISOString(),
+        subscription_frequency: "1m",
+        subscription_next_transaction_date: nextMonth.toISOString(),
+        subscription_start_date: startDate.toISOString()
       },
       mockFoxyCart.itemBuilders.subscriptionItem
     );
@@ -130,8 +133,8 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     });
     expect(response.statusCode).to.exist.and.to.equal(200);
     expect(JSON.parse(response.body)).to.deep.equal({
-      ok: false,
       details: "Prices do not match.",
+      ok: false,
     });
   });
 
@@ -155,9 +158,23 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     expect(JSON.parse(response.body)).to.deep.equal({ ok: true, details: "" });
   });
 
-  it(
-    "Reject when the price option modifier has no corresponded discount in Webflow."
-  );
+  it("Rejects invalid items.", async () => {
+    let response;
+    const event = mockFoxyCart.request({ price: false});
+    event.body = JSON.stringify(event.body);
+    // Make sure the response values matches
+    injectedWebflow.items = function () {
+      return Promise.resolve(mockWebflow.arbitrary(items)());
+    };
+    await prePayment.handler(event, {}, (err, resp) => {
+      response = resp;
+    });
+    expect(response.statusCode).to.equal(200);
+    const body = JSON.parse(response.body);
+    expect(body).to.exist;
+    expect(body.ok).to.equal(false);
+    expect(body.details).to.contain("Invalid items");
+  });
 
   it("Approves when all items are correct", async () => {
     let response;
@@ -198,8 +215,8 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     });
     expect(response.statusCode).to.deep.equal(200);
     expect(JSON.parse(response.body)).to.deep.equal({
-      ok: false,
       details: "Prices do not match.",
+      ok: false,
     });
   });
 
@@ -232,6 +249,19 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     expect(response.statusCode).to.deep.equal(200);
     const body = JSON.parse(response.body);
     expect(body.details).to.match(/^Insufficient inventory for these items:/);
+  });
+
+  it("Ignores inventory checks if inventory_field is set to blank", async () => {
+    const event = mockFoxyCart.request({ price: 11, quantity: 1 });
+    event.body._embedded["fx:items"].forEach(e => {
+      const inventory_field = e._embedded["fx:item_options"].filter(item => item.name === "inventory_field");
+      if (inventory_field) {
+        inventory_field[0].value = ''
+      }
+    });
+    const response = await insufficientInventoryRequest(event);
+    expect(response.statusCode).to.exist.and.to.equal(200);
+    expect(JSON.parse(response.body)).to.deep.equal({ ok: true, details: "" });
   });
 
   it("Customizes the insufficient inventory response", async () => {
@@ -346,8 +376,10 @@ describe("Verifies the price of an item in a Webflow collection", () => {
  *
  * @returns {object} the insuficient inventory response
  */
-async function insufficientInventoryRequest() {
-  const event = mockFoxyCart.request({ price: 11, quantity: 1 });
+async function insufficientInventoryRequest(event = null) {
+  if (!event) {
+    event = mockFoxyCart.request({ price: 11, quantity: 1 });
+  }
   const items =  event.body._embedded["fx:items"];
   event.body = JSON.stringify(event.body);
   injectedWebflow.items = () =>
