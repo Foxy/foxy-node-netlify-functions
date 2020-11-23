@@ -348,15 +348,25 @@ function fetchItem(cache, foxyItem, offset = 0) {
       { sort: [getCustomKey(foxyItem, 'code'), 'ASC'], limit: Config.webflow.limit, offset },
     ).then((collection) => {
       cache.addItems(collectionId, collection.items);
+      let code_exists = null;
       const match = collection.items.find(
         (e) => {
           const wfItemCode = iGet(e, getCustomKey(foxyItem, 'code'));
           if (!wfItemCode) {
-            reject(new Error('Could not find the code field in Webflow'));
+            if (code_exists === null) {
+              code_exists = false;
+            }
+            return false;
           }
+          code_exists = true;
           return wfItemCode && foxyItem.code && wfItemCode.toString() === foxyItem.code.toString()
         }
       );
+      if (code_exists === false) {
+        reject(new Error(`Could not find the code field (${getCustomKey(foxyItem, 'code')}) in Webflow.
+              this field must exist and not be empty for all items in the collection.`));
+        return;
+      }
       if (match) {
         resolve(enrichFetchedItem(match, foxyItem));
       } else if (collection.total > collection.offset + collection.count) {
