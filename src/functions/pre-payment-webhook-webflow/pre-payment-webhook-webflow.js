@@ -103,8 +103,8 @@ function getOption(item, option) {
   if (found) return { name: option, value: iGet(item, option) };
   if (item._embedded) {
     if (item._embedded['fx:item_options']) {
-      found = item._embedded['fx:item_options'].find((e) => e.name.toLowerCase() === option.toLowerCase());
-      if (found && found.name) return found;
+      found = item._embedded['fx:item_options'].find((e) => e.name.toLowerCase().trim() === option.toLowerCase().trim());
+      if (found) return found;
     }
   }
   return {};
@@ -282,7 +282,7 @@ function sufficientInventory(comparable) {
   if (!fxItem) {
     return true;
   }
-  return getOption(fxItem, "inventory_field").value === "" ||
+  return getOption(fxItem, "inventory_field").value.trim() === "" ||
     Number(getOption(wfItem, getCustomKey(fxItem, 'inventory')).value) >= Number(fxItem.quantity);
 }
 
