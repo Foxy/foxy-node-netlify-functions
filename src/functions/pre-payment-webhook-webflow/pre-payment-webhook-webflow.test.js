@@ -90,7 +90,10 @@ describe("Verifies the price of an item in a Webflow collection", () => {
   });
 
   /**
-   * @param startDate
+   * Creates a request for a subscrition with a given start date
+   *
+   * @param startDate the start date of the subscription
+   * @returns request event
    */
   function subscriptionsWithStartDate(startDate) {
     const nextMonth = ((d) => new Date(d.setDate(d.getMonth() + 1)))(
@@ -99,13 +102,13 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     const nextYear = ((d) => new Date(d.setDate(d.getYear() + 1)))(new Date());
     const event = mockFoxyCart.request(
       {
-        subscription_frequency: "1m",
-        subscription_start_date: startDate.toISOString(),
-        subscription_next_transaction_date: nextMonth.toISOString(),
-        subscription_end_date: nextYear.toISOString(),
-        sub_frequency: "1m",
         price: 21,
         quantity: 1,
+        sub_frequency: "1m",
+        subscription_end_date: nextYear.toISOString(),
+        subscription_frequency: "1m",
+        subscription_next_transaction_date: nextMonth.toISOString(),
+        subscription_start_date: startDate.toISOString()
       },
       mockFoxyCart.itemBuilders.subscriptionItem
     );
@@ -130,8 +133,8 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     });
     expect(response.statusCode).to.exist.and.to.equal(200);
     expect(JSON.parse(response.body)).to.deep.equal({
-      ok: false,
       details: "Prices do not match.",
+      ok: false,
     });
   });
 
@@ -198,8 +201,8 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     });
     expect(response.statusCode).to.deep.equal(200);
     expect(JSON.parse(response.body)).to.deep.equal({
-      ok: false,
       details: "Prices do not match.",
+      ok: false,
     });
   });
 
