@@ -158,9 +158,23 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     expect(JSON.parse(response.body)).to.deep.equal({ ok: true, details: "" });
   });
 
-  it(
-    "Reject when the price option modifier has no corresponded discount in Webflow."
-  );
+  it("Rejects invalid items.", async () => {
+    let response;
+    const event = mockFoxyCart.request({ price: false});
+    event.body = JSON.stringify(event.body);
+    // Make sure the response values matches
+    injectedWebflow.items = function () {
+      return Promise.resolve(mockWebflow.arbitrary(items)());
+    };
+    await prePayment.handler(event, {}, (err, resp) => {
+      response = resp;
+    });
+    expect(response.statusCode).to.equal(200);
+    const body = JSON.parse(response.body);
+    expect(body).to.exist;
+    expect(body.ok).to.equal(false);
+    expect(body.details).to.contain("Invalid items");
+  });
 
   it("Approves when all items are correct", async () => {
     let response;
