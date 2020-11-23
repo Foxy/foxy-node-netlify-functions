@@ -1,4 +1,4 @@
-# Pre-payment webhook for Webflow-FoxyCart 
+# Pre-payment webhook for Webflow-FoxyCart
 
 This webhook assumes you are using a Webflow CMS Collection to store your products.
 
@@ -19,7 +19,7 @@ It validates the prices of all products in a purchase, regardless of if they are
 ## Usage
 
 1. Read the short configuration section bellow to make sure your Webflow Collection and FoxyCart links are all set;
-    - **Important**: your webflow collection and your add to cart buttons/forms need to be properly configured for the webhook to work. Product items need a `code` field.
+   - **Important**: your webflow collection and your add to cart buttons/forms need to be properly configured for the webhook to work. Product items need a `code` field.
 1. Grab your Webflow token: https://university.webflow.com/lesson/intro-to-the-webflow-api#generating-an-api-access-token;
 1. Click the **deploy to Netlify** button at the end of this page. Netlify will provide you with a form for you to provide your configuration. The Webflow Prepayment Webhook requires only WEBFLOW_TOKEN. The other settings are used for the other services in this repository.
 1. Grab the URL for your webhook in Netlify. Be sure to get the correct URL for the webflow-prepayment-webhook. To do this, after the deploy is finished, click the "functions" tab, look for `pre-payment-webhook-webflow` function and copy the **Endpoint URL**.
@@ -33,14 +33,13 @@ In order to use this webhook you'll need to set your Webflow collection, create 
 
 The webflow collection needs to have the following fields:
 
+| Parameter                                         | Description                                                                            | Example           |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------- | ----------------- |
+| `code` or the value set in `code_field`           | A unique code for each item. You can use your `slug` if you don't have a unique field. | `code=896EYSA678` |
+| `price`                                           | The price to be validated.                                                             | `price=256.88`    |
+| `inventory` or the value set in `inventory_field` | Optional. The field against with the quantity will be validated.                       | `inventory=3`     |
 
-| Parameter                                        | Description                                                                                                                  | Example                                |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| `code` or the value set in `code_field`          | A unique code for each item. You can use your `slug` if you don't have a unique field.                                       | `code=896EYSA678`                      |
-| `price`                                          | The price to be validated.                                                                                                   | `price=256.88`                         |
-| `inventory` or the value set in `inventory_field`| Optional. The field against with the quantity will be validated.                                                             | `inventory=3`                          |
-
-Please note that *you don't need to change your Webflow Collection* if you already have these fields with different names.
+Please note that _you don't need to change your Webflow Collection_ if you already have these fields with different names.
 You'll only need to add a hidden field to inform the name that you already use in Webflow.
 
 These fields do not need to be shown to the user, but you will need to add them as parameters to foxy cart.
@@ -51,16 +50,15 @@ If you do have an `inventory` field in your Webflow Collection, but you don't wi
 
 ### When creating your FoxyCart Items
 
-When adding your items to the cart,  beyond `price` and `quantity` that are needed for the cart, you'll need to provide the following information for the validation to work:
+When adding your items to the cart, beyond `price` and `quantity` that are needed for the cart, you'll need to provide the following information for the validation to work:
 
-
-| Parameter                | Description                                                                                               | Example                                |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| `collection_id`          | **Required** The id of the item's collection.                                                               | `collectionId=5f74f169fbbb4b118497207a`|
-| `code`                   | **Required** The item's code. Must be unique.                                                               | `code=896EYSA678`                      |
-| `code_field`             | Optional. This field value is case insensitive. The field containing the code in the collection. Defaults to `code`                               | `code_field=sku`                        |
-| `price_field`            | Optional. This field value is case insensitive. The field containing the price in the collection. Default to `price`                              | `price_field=investment`                |
-| `inventory_field`        | Optional. This field value is case insensitive. The field containing the inventory in the collection..       | `inventory_field=investment`                |
+| Parameter         | Description                                                                                                          | Example                                 |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| `collection_id`   | **Required** The id of the item's collection.                                                                        | `collectionId=5f74f169fbbb4b118497207a` |
+| `code`            | **Required** The item's code. Must be unique.                                                                        | `code=896EYSA678`                       |
+| `code_field`      | Optional. This field value is case insensitive. The field containing the code in the collection. Defaults to `code`  | `code_field=sku`                        |
+| `price_field`     | Optional. This field value is case insensitive. The field containing the price in the collection. Default to `price` | `price_field=investment`                |
+| `inventory_field` | Optional. This field value is case insensitive. The field containing the inventory in the collection..               | `inventory_field=amount_in_stock`       |
 
 ### When configuring your webhook server
 
@@ -70,17 +68,20 @@ Yup. That's it.
 
 ## Examples
 
-
 ### Basic Example
+
 Here is a minimum example of a link button to add a product to the cart (the line breaks are for readability):
 
 ```html
-<a class="button" href="https://YOURDOMAIN.foxycart.com/cart?
+<a
+  class="button"
+  href="https://YOURDOMAIN.foxycart.com/cart?
                         name=A+great+product&
                         price=5&
                         code=123456&
-                        collection_id=123047812340791234">
- Buy this Great Product!
+                        collection_id=123047812340791234"
+>
+  Buy this Great Product!
 </a>
 ```
 
@@ -107,8 +108,11 @@ As you can see, it will be necessary to customize the `code` and `value` fields.
 Here is how that is done:
 
 ```html
-<a class="button" href="https://YOURDOMAIN.foxycart.com/cart?name=A+great+product&price=5&price_field=value&code=123456&code_field=sku&quantity=2&inventory_field=inventory&collection_id=123047812340791234">
- Buy this Great Product!
+<a
+  class="button"
+  href="https://YOURDOMAIN.foxycart.com/cart?name=A+great+product&price=5&price_field=value&code=123456&code_field=sku&quantity=2&inventory_field=inventory&collection_id=123047812340791234"
+>
+  Buy this Great Product!
 </a>
 ```
 
@@ -128,8 +132,8 @@ Go to your Netlify account and click the "New site from Git" button.
 
 - Choose your repository.
 - Click the "Advanced" button and then "New Variable"
-    - The key should be: `WEBFLOW_TOKEN`
-    - To get this token, go to Webflow's project settings, at the 'Integrations' tab."
+  - The key should be: `WEBFLOW_TOKEN`
+  - To get this token, go to Webflow's project settings, at the 'Integrations' tab."
 
 #### Customize error messages
 
@@ -137,12 +141,12 @@ This step is optional. You may want to customize the error message displayed for
 
 To set up custom error messages, simply create new variables as described above. Here are the possible variables:
 
-| Variable | Default Value | Description |
-| -------- | ----- | ----- |
-| FX_ERROR_CATEGORY_MISMATCH | "Mismatched category." | Occurs if the category of the product does not correspond to the category in Webflow |
+| Variable                        | Default Value                             | Description                                                                                                                                                                                               |
+| ------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FX_ERROR_CATEGORY_MISMATCH      | "Mismatched category."                    | Occurs if the category of the product does not correspond to the category in Webflow                                                                                                                      |
 | FX_ERROR_INSUFFICIENT_INVENTORY | "Insufficient inventory for these items:" | Occurs when the quantity purchased is greater than the inventory available in Webflow. A comma separated list of the names of the products out-of-stock will be appended to the end of the error message. |
-| FX_ERROR_PRICE_MISMATCH | "Prices do not match." | Occurs when the price of any of the products does not match with the `price` field in Webflow |
-    
+| FX_ERROR_PRICE_MISMATCH         | "Prices do not match."                    | Occurs when the price of any of the products does not match with the `price` field in Webflow                                                                                                             |
+
 # Upgrade your webhook
 
 When new upgrades to this webhook are published, you can use the GitHub Action
@@ -154,4 +158,3 @@ available in the "Actions" tab in your repository to upgrade your Webhook.
 This will upgrade your repository.
 
 If you've made customizations, there may be conflicts. In this case you par pull the changes and resolve the conflicts manually.
-
