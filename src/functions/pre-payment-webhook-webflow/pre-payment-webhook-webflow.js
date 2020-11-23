@@ -104,7 +104,7 @@ function getOption(item, option) {
   if (item._embedded) {
     if (item._embedded['fx:item_options']) {
       found = item._embedded['fx:item_options'].find((e) => e.name.toLowerCase() === option.toLowerCase());
-      if (found && found.value) return found;
+      if (found && found.name) return found;
     }
   }
   return {};
@@ -282,7 +282,7 @@ function sufficientInventory(comparable) {
   if (!fxItem) {
     return true;
   }
-  return !Config.inventory_field ||
+  return getOption(fxItem, "inventory_field").value === "" ||
     Number(getOption(wfItem, getCustomKey(fxItem, 'inventory')).value) >= Number(fxItem.quantity);
 }
 

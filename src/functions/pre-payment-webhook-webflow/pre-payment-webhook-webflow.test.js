@@ -239,13 +239,12 @@ describe("Verifies the price of an item in a Webflow collection", () => {
 
   it("Ignores inventory checks if inventory_field is set to blank", async () => {
     const event = mockFoxyCart.request({ price: 11, quantity: 1 });
-    function empty_inventory(e) {
+    event.body._embedded["fx:items"].forEach(e => {
       const inventory_field = e._embedded["fx:item_options"].filter(item => item.name === "inventory_field");
       if (inventory_field) {
         inventory_field[0].value = ''
       }
-    }
-    event.body._embedded["fx:items"].forEach(empty_inventory);
+    });
     const response = await insufficientInventoryRequest(event);
     expect(response.statusCode).to.exist.and.to.equal(200);
     expect(JSON.parse(response.body)).to.deep.equal({ ok: true, details: "" });
