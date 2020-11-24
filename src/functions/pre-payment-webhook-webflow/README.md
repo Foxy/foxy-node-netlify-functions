@@ -52,9 +52,7 @@ When adding your items to the cart, beyond `price` and `quantity` that are neede
 | ----------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
 | `collection_id`   | **Required** The id of the item's collection.                                                                        | `collectionId=5f74f169fbbb4b118497207a` |
 | `code`            | **Required** The item's code. Must be unique.                                                                        | `code=896EYSA678`                       |
-| `code_field`      | Optional. This field value is case insensitive. The field containing the code in the collection. Defaults to `code`  | `code_field=sku`                        |
-| `price_field`     | Optional. This field value is case insensitive. The field containing the price in the collection. Default to `price` | `price_field=investment`                |
-| `inventory_field` | Optional. This field value is case insensitive. The field containing the inventory in the collection..               | `inventory_field=amount_in_stock`       |
+
 
 ### When configuring your webhook server
 
