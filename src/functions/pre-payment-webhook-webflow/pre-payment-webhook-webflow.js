@@ -3,7 +3,7 @@ const Webflow = require("webflow-api");
 /**
  * Returns custom Options set as environment variables.
  *
- * @returns {{fields: {code: string, inventory: string, price: string}, skip: {inventory: array, prices: array}, webflow: {limit: number}}} custom options
+ * @returns {{webflow: {limit: number}, skip: {price: *[], inventory: *[]}, fields: {code: (*|string), price: (*|string), inventory: (*|string)}}} custom options
  */
 function customOptions() {
   return {
@@ -311,11 +311,12 @@ function sufficientInventory(comparable) {
     // The code is set to be ignored: ignore
     return true;
   }
-  if (Object.keys(wfItem).indexOf(getCustomKey('inventory')) === -1) {
-    // The Webflow collection does not have the propper inventory field: ignore
+  const inventoryField = Object.keys(wfItem).find(k => k.toLowerCase().trim() === field.toLowerCase().trim())
+  if (inventoryField === undefined) {
+    // The Webflow collection does not have the proper inventory field: ignore
     return true;
   }
-  return Number(getCustomizableOption(wfItem, 'inventory').value) >= Number(fxItem.quantity);
+  return Number(wfItem[inventoryField]) >= Number(fxItem.quantity);
 }
 
 /**
