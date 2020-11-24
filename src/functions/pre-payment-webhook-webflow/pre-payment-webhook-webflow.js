@@ -1,14 +1,32 @@
 const Webflow = require("webflow-api");
 
-const Config = {
-  code_field: 'code',
-  inventory_field: 'Inventory',
-  price_field: 'Price',
-  webflow: {
-    limit: 100,
-  },
-};
+/**
+ * Returns custom Options set as environment variables.
+ *
+ * @returns {{fields: {code: string, inventory: string, price: string}, skip: {inventory: array, prices: array}, webflow: {limit: number}}} custom options
+ */
+function customOptions() {
+  return {
+    fields: {
+      code: process.env['FX_FIELD_CODE'] || 'code',
+      inventory: process.env['FX_FIELD_INVENTORY'] || 'inventory',
+      price: process.env['FX_FIELD_PRICE'] || 'price'
+    },
+    skip: {
+      inventory: (process.env['FX_SKIP_INVENTORY_CODES'] || '').split(',').map(e => e.trim()).filter(e => !!e) || [],
+      price: (process.env['FX_SKIP_PRICE_CODES'] || '').split(',').map(e => e.trim()).filter(e => !!e) || [],
+    },
+    webflow: {
+      limit: 100,
+    },
+  }
+}
 
+/**
+ * Returns error messages available.
+ *
+ * @returns {Record<string, string>} error messages
+ */
 function getMessages() {
   return {
     categoryMismatch: process.env['FX_ERROR_CATEGORY_MISMATCH'] ? process.env['FX_ERROR_CATEGORY_MISMATCH'] : 'Mismatched category.',
@@ -16,7 +34,6 @@ function getMessages() {
     priceMismatch: process.env['FX_ERROR_PRICE_MISMATCH'] ? process.env['FX_ERROR_PRICE_MISMATCH'] : 'Prices do not match.',
   }
 }
-
 
 /**
  * @param event the request
@@ -118,24 +135,24 @@ function getOption(item, option) {
  * @param {string} default_key to be checked
  * @returns {string} actual key to be used
  */
-function getCustomKey(item, default_key) {
-  let config_key = default_key;
-  if (!default_key.endsWith('_field')) {
-    config_key = `${default_key}_field`;
+function getCustomKey(default_key) {
+  const options = customOptions();
+  if (Object.keys(options.fields).indexOf(default_key) >= 0) {
+    return options.fields[default_key];
+  } else {
+    return default_key;
   }
-  const custom_key = getOption(item, config_key).value;
-  return custom_key ? custom_key : default_key;
 }
 
 /**
- * Retrieve an option from an item using it's custom key, if set, of the default key
+ * Retrieve an option from an item using it's custom key, if set, or the default key
  *
  * @param item the item to retrieve the custom option from
  * @param option the option to retrieve
  * @returns {{}|{name: string, value: string|number}} the retrieved option
  */
 function getCustomizableOption(item, option) {
-  const custom_option = getCustomKey(item, option);
+  const custom_option = getCustomKey(option);
   let result = getOption(item, custom_option);
   if (!result) result = {};
   return result;
@@ -238,11 +255,14 @@ const validation = {
 function isPriceCorrect(comparable) {
   const wfItem = comparable.wfItem;
   const fxItem = comparable.fxItem;
-  if (!fxItem) {
-    // an item with no matched item is not to be checked
+  if (
+    !fxItem // an item with no matched item is not to be checked
+    || customOptions().skip.price.indexOf(wfItem[getCustomKey('code')]) >=0
+  ) {
     return true;
+  } else {
+    return parseFloat(fxItem.price) === parseFloat(wfItem.price);
   }
-  return parseFloat(fxItem.price) === parseFloat(wfItem.price);
 }
 
 /**
@@ -282,8 +302,20 @@ function sufficientInventory(comparable) {
   if (!fxItem) {
     return true;
   }
-  return getOption(fxItem, "inventory_field").value.trim() === "" ||
-    Number(getOption(wfItem, getCustomKey(fxItem, 'inventory')).value) >= Number(fxItem.quantity);
+  const field = getCustomKey('inventory');
+  if (field.toLowerCase() === "null" || field.toLowerCase() === "false") {
+    // The webhook is configured not to check the inventory: ignore
+    return true;
+  }
+  if (customOptions().skip.inventory.indexOf(getCustomizableOption(wfItem, 'code')) >= 0) {
+    // The code is set to be ignored: ignore
+    return true;
+  }
+  if (Object.keys(wfItem).indexOf(getCustomKey('inventory')) === -1) {
+    // The Webflow collection does not have the propper inventory field: ignore
+    return true;
+  }
+  return Number(getCustomizableOption(wfItem, 'inventory').value) >= Number(fxItem.quantity);
 }
 
 /**
@@ -345,13 +377,13 @@ function fetchItem(cache, foxyItem, offset = 0) {
   return new Promise((resolve, reject) => {
     webflow.items(
       { collectionId },
-      { sort: [getCustomKey(foxyItem, 'code'), 'ASC'], limit: Config.webflow.limit, offset },
+      { sort: [getCustomKey('code'), 'ASC'], limit: customOptions().webflow.limit, offset },
     ).then((collection) => {
       cache.addItems(collectionId, collection.items);
       let code_exists = null;
       const match = collection.items.find(
         (e) => {
-          const wfItemCode = iGet(e, getCustomKey(foxyItem, 'code'));
+          const wfItemCode = iGet(e, getCustomKey('code'));
           if (!wfItemCode) {
             if (code_exists === null) {
               code_exists = false;
@@ -363,14 +395,14 @@ function fetchItem(cache, foxyItem, offset = 0) {
         }
       );
       if (code_exists === false) {
-        reject(new Error(`Could not find the code field (${getCustomKey(foxyItem, 'code')}) in Webflow.
+        reject(new Error(`Could not find the code field (${getCustomKey('code')}) in Webflow.
               this field must exist and not be empty for all items in the collection.`));
         return;
       }
       if (match) {
         resolve(enrichFetchedItem(match, foxyItem));
       } else if (collection.total > collection.offset + collection.count) {
-        fetchItem(cache, foxyItem, ((offset / Config.webflow.limit) + 1) * Config.webflow.limit)
+        fetchItem(cache, foxyItem, ((offset / customOptions().webflow.limit) + 1) * customOptions().webflow.limit)
           .then((i) => resolve(i))
           .catch((e) => reject(e));
       } else {
