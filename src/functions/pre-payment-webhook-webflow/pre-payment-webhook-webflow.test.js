@@ -295,6 +295,30 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     expect(body.details).to.match(/^Insufficient inventory for these items:/);
   });
 
+  it("Inventory field is case insensitive", async () => {
+    const event = mockFoxyCart.request({ price: 11, quantity: 1 });
+    const items =  event.body._embedded["fx:items"];
+    event.body = JSON.stringify(event.body);
+    injectedWebflow.items = () =>
+      Promise.resolve(
+        mockWebflow.arbitrary(items, {
+          inventory: increaseFrom(0),
+        })({}, {})
+      );
+    const oldItems = await injectedWebflow.items();
+    oldItems.items.forEach(i => {
+      i.InVeNtOrY = i.inventory;
+      delete(i.inventory);
+    });
+    injectedWebflow.items = () => Promise.resolve(oldItems);
+    const context = {};
+    await prePayment.handler(event, context, (err, resp) => {
+      context.FX_RESPONSE = resp;
+    });
+    const body = JSON.parse(context.FX_RESPONSE.body);
+    expect(body.details).to.match(/^Insufficient inventory for these items:/);
+  });
+
   it("Customizes the insufficient inventory response", async () => {
     process.env.FX_ERROR_INSUFFICIENT_INVENTORY = 'foobar: ';
     const response = await insufficientInventoryRequest();
