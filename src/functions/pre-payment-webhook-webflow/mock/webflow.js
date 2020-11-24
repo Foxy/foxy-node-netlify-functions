@@ -10,9 +10,9 @@ function basicResponse(itemBuilder, limit = 10, total = 100) {
     const offset = options.offset ? options.offset : 0;
     const count = Math.min(defaultTotal - offset, actualLimit);
     return {
-      items: [...new Array(count)].map(itemBuilder),
-      count,
       actualLimit,
+      count,
+      items: [...new Array(count)].map(itemBuilder),
       offset,
       total: defaultTotal,
     };
@@ -22,17 +22,17 @@ function basicResponse(itemBuilder, limit = 10, total = 100) {
 function newWebflowBasicItem() {
   return {
     _archived: false,
+    _cid: '5f74f169fbbb4b118497207a',
     _draft: false,
-    price: 11,
+    _id: '5f7b82a51a262af451e86f8c',
+    category: randomString(),
+    category_field: 'category',
+    code_field: 'mysku',
     inventory: 3584,
     mysku: randomString(),
-    code_field: 'mysku',
-    category_field: 'category',
-    category: randomString(),
     name: randomString(),
+    price: 11,
     slug: randomString(),
-    _cid: '5f74f169fbbb4b118497207a',
-    _id: '5f7b82a51a262af451e86f8c',
   };
 }
 
@@ -44,10 +44,10 @@ exports.deterministic = basicResponse(
 
 exports.arbitrary = function arbitrary(items, customConfig = {}, without = []) {
   const defaultConfig = {
+    category: (v) => v,
+    code: (v) => v,
     price: (v) => v,
     quantity: (v) => v,
-    code: (v) => v,
-    category: (v) => v,
   };
   const config = { ...defaultConfig, ...customConfig };
   return (context, options) => {
