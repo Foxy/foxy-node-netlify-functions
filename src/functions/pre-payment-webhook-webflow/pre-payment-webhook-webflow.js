@@ -1,5 +1,7 @@
 const Webflow = require("webflow-api");
 
+let weblowApi;
+
 /**
  * Returns custom Options set as environment variables.
  *
@@ -345,7 +347,10 @@ function getToken() {
  * @returns {Webflow} the webflow api object
  */
 function getWebflow() {
-  return new Webflow({ token: getToken() });
+  if (!weblowApi) {
+    weblowApi = new Webflow({ token: getToken() });
+  }
+  return weblowApi;
 }
 
 /**
@@ -376,12 +381,10 @@ function enrichFetchedItem(webflowItem, foxyItem) {
  * @returns {Promise<{object}>} a promise for the item from Webflow
  */
 function fetchItem(cache, foxyItem, offset = 0) {
-  console.log("... Fetching data from Webflow. ", offset);
   if (offset > 1000) {
     return Promise.reject(new Error('Item not found'));
   }
   const collectionId = getCustomizableOption(foxyItem, 'collection_id').value;
-
   const webflow = getWebflow();
   const found = cache.findItem(collectionId, foxyItem);
   if (found) {
