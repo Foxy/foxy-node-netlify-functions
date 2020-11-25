@@ -130,7 +130,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
 
   describe("Configurable options", () => {
 
-    it("Ignores price verification for codes in Editable Prices", async () => {
+    it("Ignores price verification for codes in FX_SKIP_PRICES_FIELDS ", async () => {
       let response;
       process.env['FX_SKIP_PRICE_CODES'] = 'editable';
       const event = mockFoxyCart.request({ code: 'editable', price: 0.1, quantity: 1 });
@@ -327,6 +327,23 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     expect(body.details).to.match(/^foobar: /);
   });
 
+  it("Returns not found if the code is not in Webflow", async () => {
+    let response;
+    const event = mockFoxyCart.request({ price: 21, quantity: 1 });
+    const items =  event.body._embedded["fx:items"];
+    event.body = JSON.stringify(event.body);
+    const respContent = mockWebflow.arbitrary(items, {})({}, {})
+    respContent.items.forEach(i => i.mysku = 'WrongSku');
+    injectedWebflow.items = () => Promise.resolve(respContent);
+    await prePayment.handler(event, {}, (err, resp) => {
+      response = resp;
+    });
+    const body = JSON.parse(response.body);
+    expect(body).to.exist;
+    expect(body.ok).to.equal(false);
+    expect(body.details).to.contain("An internal error has occurred");
+  });
+
   it("Rejects when no code field exist", async () => {
     let response;
     const event = mockFoxyCart.request({ price: 21, quantity: 1 });
@@ -342,7 +359,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     await prePayment.handler(event, {}, (err, resp) => {
       response = resp;
     });
-    expect(response.statusCode).to.deep.equal(500);
+    expect(response.statusCode).to.equal(500);
     expect(JSON.parse(response.body)).to.deep.equal({
       details: internalErrorMessage,
       ok: false,
