@@ -212,7 +212,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
       'price': /has no price\.$/,
       'quantity': /has no quantity\.$/,
     }
-    const errorLog = sinon.stub(console, 'error');
+    const errorLog = sinon.stub(console, 'log');
     for (const [key, regex] of Object.entries(invalidItemOptions)) {
       errorLog.resetHistory();
       let response;

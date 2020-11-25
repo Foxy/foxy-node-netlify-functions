@@ -381,8 +381,12 @@ function enrichFetchedItem(webflowItem, foxyItem) {
  * @returns {Promise<{object}>} a promise for the item from Webflow
  */
 function fetchItem(cache, foxyItem, offset = 0) {
-  if (offset > 1000) {
+  if (offset > 500) {
+    console.log("   ... giving up.");
     return Promise.reject(new Error('Item not found'));
+  }
+  if (offset) {
+    console.log("   ... couldn't find the item in first", offset, "items.");
   }
   const collectionId = getCustomizableOption(foxyItem, 'collection_id').value;
   const webflow = getWebflow();
@@ -392,8 +396,7 @@ function fetchItem(cache, foxyItem, offset = 0) {
   }
   return new Promise((resolve, reject) => {
     webflow.items(
-      { collectionId },
-      { sort: [getCustomKey('code'), 'ASC'], limit: customOptions().webflow.limit, offset },
+      { collectionId }, { limit: customOptions().webflow.limit, offset, sort: [getCustomKey('code'), 'ASC'] },
     ).then((collection) => {
       cache.addItems(collectionId, collection.items);
       let code_exists = null;
@@ -407,22 +410,22 @@ function fetchItem(cache, foxyItem, offset = 0) {
             return false;
           }
           code_exists = true;
-          return wfItemCode && foxyItem.code && wfItemCode.toString() === foxyItem.code.toString()
+          return foxyItem.code && wfItemCode.toString() === foxyItem.code.toString()
         }
       );
       if (code_exists === false) {
         reject(new Error(`Could not find the code field (${getCustomKey('code')}) in Webflow.
               this field must exist and not be empty for all items in the collection.`));
-        return;
-      }
-      if (match) {
-        resolve(enrichFetchedItem(match, foxyItem));
-      } else if (collection.total > collection.offset + collection.count) {
-        fetchItem(cache, foxyItem, ((offset / customOptions().webflow.limit) + 1) * customOptions().webflow.limit)
-          .then((i) => resolve(i))
-          .catch((e) => {console.log(e); reject(e);});
       } else {
-        reject(new Error('Item not found'));
+        if (match) {
+          resolve(enrichFetchedItem(match, foxyItem));
+        } else if (collection.total > collection.offset + collection.count) {
+          fetchItem(cache, foxyItem, ((offset / customOptions().webflow.limit) + 1) * customOptions().webflow.limit)
+            .then((i) => resolve(i))
+            .catch((e) => {console.log(e); reject(e);});
+        } else {
+          reject(new Error('Item not found'));
+        }
       }
     }).catch((e) => {
       console.log(e);
