@@ -43,12 +43,12 @@ function getMessages() {
 async function handleRequest(event, context, callback) {
   // Validation
   if (!validation.configuration.validate()) {
-    console.log('Configuration error: WEBFLOW_TOKEN not configured')
+    console.error('Configuration error: WEBFLOW_TOKEN not configured')
     callback(null, validation.configuration.response());
     return;
   }
   if (!validation.input.validate(event)) {
-    console.log('Input error: empty body');
+    console.error('Input error: empty body');
     callback(null, validation.input.response());
     return;
   }
@@ -94,9 +94,9 @@ async function handleRequest(event, context, callback) {
     }
   }).catch((e) => {
     if (e.code && e.code.toString() === '429') {
-      console.log('Error: Webflow rate limit reached.')
+      console.error('Error: Webflow rate limit reached.')
     } else {
-      console.log('Error', e.code, e.message);
+      console.error('Unknown error:', e);
     }
     callback(null, {
       body: JSON.stringify({ details: "An internal error has occurred", ok: false, }),
@@ -210,10 +210,25 @@ function extractItems(body) {
  * @returns {boolean} valid
  */
 function validItem(item) {
-  return item.price
-    && item.quantity
-    && item.code
-    && getOption(item, 'collection_id').value;
+  const errors = [];
+  if (!(item.price || parseInt(item.price, 10) === 0)) {
+    errors.push(`${item.name} has no price.`)
+  }
+  if (!(item.quantity || parseInt(item.quantity, 10) === 0)) {
+    errors.push(`${item.name} has no quantity.`)
+  }
+  if (!(item.code || parseInt(item.code, 10) === 0)) {
+    errors.push(`${item.name} has no code.`)
+  }
+  const collection = getOption(item, 'collection_id').value;
+  if (!collection) {
+    errors.push(`${item.name} has no collection_id.`)
+  }
+  if (errors.length) {
+    console.error("Invalid item ", item.name, errors.join(' '));
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -405,11 +420,12 @@ function fetchItem(cache, foxyItem, offset = 0) {
       } else if (collection.total > collection.offset + collection.count) {
         fetchItem(cache, foxyItem, ((offset / customOptions().webflow.limit) + 1) * customOptions().webflow.limit)
           .then((i) => resolve(i))
-          .catch((e) => reject(e));
+          .catch((e) => {console.error(e); reject(e);});
       } else {
         reject(new Error('Item not found'));
       }
     }).catch((e) => {
+      console.error(e);
       reject(e);
     });
   });

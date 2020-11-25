@@ -1,4 +1,5 @@
 const rewire = require("rewire");
+const sinon = require("sinon");
 const { expect } = require("chai");
 const { describe, it, beforeEach } = require("mocha");
 
@@ -205,21 +206,42 @@ describe("Verifies the price of an item in a Webflow collection", () => {
   });
 
   it("Rejects invalid items.", async () => {
-    let response;
-    const event = mockFoxyCart.request({ price: false});
-    event.body = JSON.stringify(event.body);
-    // Make sure the response values matches
-    injectedWebflow.items = function () {
-      return Promise.resolve(mockWebflow.arbitrary(items)());
-    };
-    await prePayment.handler(event, {}, (err, resp) => {
-      response = resp;
-    });
-    expect(response.statusCode).to.equal(200);
-    const body = JSON.parse(response.body);
-    expect(body).to.exist;
-    expect(body.ok).to.equal(false);
-    expect(body.details).to.contain("Invalid items");
+    const invalidItemOptions = {
+      'code': /has no code\.$/,
+      'collection_id': /has no collection_id\.$/,
+      'price': /has no price\.$/,
+      'quantity': /has no quantity\.$/,
+    }
+    const errorLog = sinon.stub(console, 'error');
+    for (const [key, regex] of Object.entries(invalidItemOptions)) {
+      errorLog.resetHistory();
+      let response;
+      const changes = {};
+      if (key === 'collection_id') {
+        changes['options'] = {collection_id: false};
+      } else {
+        changes[key] = false;
+      }
+      const event = mockFoxyCart.request(changes);
+      event.body = JSON.stringify(event.body);
+      // Make sure the response values matches
+      injectedWebflow.items = function () {
+        return Promise.resolve(mockWebflow.arbitrary(items)());
+      };
+      await prePayment.handler(event, {}, (err, resp) => {
+        response = resp;
+      });
+      expect(response.statusCode).to.equal(200);
+      const body = JSON.parse(response.body);
+      expect(body).to.exist;
+      expect(body.ok).to.equal(false);
+      expect(body.details).to.contain("Invalid items");
+      const matchedError = errorLog.getCalls().find(c => c.args[2]);
+      expect(matchedError).to.exist;
+      expect(matchedError.args[2]).to.match(regex);
+    }
+    errorLog.restore();
+
   });
 
   it("Approves when all items are correct", async () => {

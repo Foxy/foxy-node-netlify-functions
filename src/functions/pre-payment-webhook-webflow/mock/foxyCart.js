@@ -80,9 +80,22 @@ function foxyRequest(changes, itemBuilder = basicItem) {
     items.forEach(functionToSet(key, value));
   }
 
+  function setItemsOption(items, option, value) {
+    items.forEach(i => {
+      i._embedded['fx:item_options'].forEach(o => {
+        if (o.name === option) o.value = value
+      })
+    });
+  }
+
   /** Set several values for all items in a collection */
-  function setItemsValuesAll(items, values) {
-    Object.entries(values).forEach(([k, v]) => {
+  function setItemsValuesAll(items, changes) {
+    Object.entries(changes).forEach(([k, v]) => {
+      if (k === 'options' && typeof v === 'object') {
+        for (const [option, optionValue] of Object.entries(v)) {
+          setItemsOption(items, option, optionValue);
+        }
+      }
       setItemsValue(items, k, v);
     });
   }
