@@ -29,9 +29,9 @@ function customOptions() {
  */
 function getMessages() {
   return {
-    categoryMismatch: process.env['FX_ERROR_CATEGORY_MISMATCH'] ? process.env['FX_ERROR_CATEGORY_MISMATCH'] : 'Mismatched category.',
-    insufficientInventory: process.env['FX_ERROR_INSUFFICIENT_INVENTORY'] ? process.env['FX_ERROR_INSUFFICIENT_INVENTORY'] : 'Insufficient inventory for these items:',
-    priceMismatch: process.env['FX_ERROR_PRICE_MISMATCH'] ? process.env['FX_ERROR_PRICE_MISMATCH'] : 'Prices do not match.',
+    categoryMismatch: process.env['FX_ERROR_CATEGORY_MISMATCH'] || 'Mismatched category.',
+    insufficientInventory: process.env['FX_ERROR_INSUFFICIENT_INVENTORY'] || 'Insufficient inventory for these items:',
+    priceMismatch: process.env['FX_ERROR_PRICE_MISMATCH'] || 'Prices do not match.',
   }
 }
 
