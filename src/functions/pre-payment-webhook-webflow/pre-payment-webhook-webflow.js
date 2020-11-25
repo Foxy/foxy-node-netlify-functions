@@ -43,12 +43,12 @@ function getMessages() {
 async function handleRequest(event, context, callback) {
   // Validation
   if (!validation.configuration.validate()) {
-    console.error('Configuration error: WEBFLOW_TOKEN not configured')
+    console.log('Configuration error: WEBFLOW_TOKEN not configured')
     callback(null, validation.configuration.response());
     return;
   }
   if (!validation.input.validate(event)) {
-    console.error('Input error: empty body');
+    console.log('Input error: empty body');
     callback(null, validation.input.response());
     return;
   }
@@ -93,7 +93,7 @@ async function handleRequest(event, context, callback) {
       });
     }
   }).catch((e) => {
-    console.error(e);
+    console.log(e);
     callback(null, {
       body: JSON.stringify({ details: "An internal error has occurred", ok: false, }),
       statusCode: 500,
@@ -221,7 +221,7 @@ function validItem(item) {
     errors.push(`${item.name} has no collection_id.`)
   }
   if (errors.length) {
-    console.error("Invalid item ", item.name, errors.join(' '));
+    console.log("Invalid item ", item.name, errors.join(' '));
     return false;
   }
   return true;
@@ -376,8 +376,8 @@ function enrichFetchedItem(webflowItem, foxyItem) {
  * @returns {Promise<{object}>} a promise for the item from Webflow
  */
 function fetchItem(cache, foxyItem, offset = 0) {
+  console.log("... Fetching data from Webflow. ", offset);
   if (offset > 1000) {
-    console.log("... Fetching data from Webflow. ", offset);
     return Promise.reject(new Error('Item not found'));
   }
   const collectionId = getCustomizableOption(foxyItem, 'collection_id').value;
@@ -417,12 +417,12 @@ function fetchItem(cache, foxyItem, offset = 0) {
       } else if (collection.total > collection.offset + collection.count) {
         fetchItem(cache, foxyItem, ((offset / customOptions().webflow.limit) + 1) * customOptions().webflow.limit)
           .then((i) => resolve(i))
-          .catch((e) => {console.error(e); reject(e);});
+          .catch((e) => {console.log(e); reject(e);});
       } else {
         reject(new Error('Item not found'));
       }
     }).catch((e) => {
-      console.error(e);
+      console.log(e);
       reject(e);
     });
   });
