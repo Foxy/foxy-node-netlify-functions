@@ -93,11 +93,7 @@ async function handleRequest(event, context, callback) {
       });
     }
   }).catch((e) => {
-    if (e.code && e.code.toString() === '429') {
-      console.error('Error: Webflow rate limit reached.')
-    } else {
-      console.error('Unknown error:', e);
-    }
+    console.error(e);
     callback(null, {
       body: JSON.stringify({ details: "An internal error has occurred", ok: false, }),
       statusCode: 500,
@@ -381,6 +377,7 @@ function enrichFetchedItem(webflowItem, foxyItem) {
  */
 function fetchItem(cache, foxyItem, offset = 0) {
   if (offset > 1000) {
+    console.log("... Fetching data from Webflow. ", offset);
     return Promise.reject(new Error('Item not found'));
   }
   const collectionId = getCustomizableOption(foxyItem, 'collection_id').value;
