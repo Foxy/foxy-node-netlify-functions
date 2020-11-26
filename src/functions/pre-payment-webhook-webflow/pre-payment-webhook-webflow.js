@@ -287,11 +287,6 @@ function isPriceCorrect(comparable) {
 function correctCategory(comparable) {
   const wfItem = comparable.wfItem;
   const fxItem = comparable.fxItem;
-  if (!fxItem) {
-    // an item with no matched item is not to be checked
-    return true;
-  }
-  // if no category is found in the collection item, ignore it
   const category = getCustomizableOption(wfItem, 'category');
   const categoryExists = !!Object.keys(category).length;
   if (!categoryExists) return true;
@@ -312,15 +307,12 @@ function correctCategory(comparable) {
 function sufficientInventory(comparable) {
   const wfItem = comparable.wfItem;
   const fxItem = comparable.fxItem;
-  if (!fxItem) {
-    return true;
-  }
   const field = getCustomKey('inventory');
   if (field.toLowerCase() === "null" || field.toLowerCase() === "false") {
     // The webhook is configured not to check the inventory: ignore
     return true;
   }
-  if (customOptions().skip.inventory.indexOf(getCustomizableOption(wfItem, 'code')) >= 0) {
+  if (customOptions().skip.inventory.indexOf(getCustomizableOption(wfItem, 'code').value) >= 0) {
     // The code is set to be ignored: ignore
     return true;
   }
@@ -403,7 +395,7 @@ function fetchItem(cache, foxyItem, offset = 0) {
       const match = collection.items.find(
         (e) => {
           const wfItemCode = iGet(e, getCustomKey('code'));
-          if (!wfItemCode) {
+          if (wfItemCode === undefined) {
             if (code_exists === null) {
               code_exists = false;
             }
