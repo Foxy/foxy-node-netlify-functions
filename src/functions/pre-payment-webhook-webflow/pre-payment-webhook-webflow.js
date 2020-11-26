@@ -308,6 +308,9 @@ function sufficientInventory(comparable) {
   const wfItem = comparable.wfItem;
   const fxItem = comparable.fxItem;
   const field = getCustomKey('inventory');
+  if (Number(fxItem.quantity) === 0) {
+    return true;
+  }
   if (field.toLowerCase() === "null" || field.toLowerCase() === "false") {
     // The webhook is configured not to check the inventory: ignore
     return true;
