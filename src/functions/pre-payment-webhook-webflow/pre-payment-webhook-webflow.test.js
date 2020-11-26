@@ -200,6 +200,14 @@ describe("Verifies the price of an item in a Webflow collection", () => {
       });
     });
 
+    it("Customizes the insufficient inventory response", async () => {
+      process.env.FX_ERROR_INSUFFICIENT_INVENTORY = 'foobar: ';
+      const response = await insufficientInventoryRequest();
+      expect(response.statusCode).to.deep.equal(200);
+      const body = JSON.parse(response.body);
+      expect(body.details).to.match(/^foobar: /);
+    });
+
   });
 
   it("Evaluates new subscriptions", async () => {
@@ -351,9 +359,32 @@ describe("Verifies the price of an item in a Webflow collection", () => {
   });
 
   it("Rejects when any inventory is insufficient", async () => {
-    const response = await insufficientInventoryRequest();
+    let response = await insufficientInventoryRequest();
     expect(response.statusCode).to.deep.equal(200);
-    const body = JSON.parse(response.body);
+    let body = JSON.parse(response.body);
+    expect(body.details).to.match(/^Insufficient inventory for these items:/);
+    const event = mockFoxyCart.request({ price: 11, quantity: "99999999" });
+    response = await insufficientInventoryRequest(event);
+    expect(response.statusCode).to.deep.equal(200);
+    body = JSON.parse(response.body);
+    expect(body.details).to.match(/^Insufficient inventory for these items:/);
+  });
+
+  it("Inventory field can be negative", async () => {
+    const event = mockFoxyCart.request({ price: 11, quantity: " 1 ", inventory: "0" });
+    const items =  event.body._embedded["fx:items"];
+    event.body = JSON.stringify(event.body);
+    injectedWebflow.items = () =>
+      Promise.resolve(
+        mockWebflow.arbitrary(items, {
+          inventory: () => " -2 ",
+        })({}, {})
+      );
+    const context = {};
+    await prePayment.handler(event, context, (err, resp) => {
+      context.FX_RESPONSE = resp;
+    });
+    const body = JSON.parse(context.FX_RESPONSE.body);
     expect(body.details).to.match(/^Insufficient inventory for these items:/);
   });
 
@@ -379,14 +410,6 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     });
     const body = JSON.parse(context.FX_RESPONSE.body);
     expect(body.details).to.match(/^Insufficient inventory for these items:/);
-  });
-
-  it("Customizes the insufficient inventory response", async () => {
-    process.env.FX_ERROR_INSUFFICIENT_INVENTORY = 'foobar: ';
-    const response = await insufficientInventoryRequest();
-    expect(response.statusCode).to.deep.equal(200);
-    const body = JSON.parse(response.body);
-    expect(body.details).to.match(/^foobar: /);
   });
 
   it("Returns not found if the code is not in Webflow", async () => {
