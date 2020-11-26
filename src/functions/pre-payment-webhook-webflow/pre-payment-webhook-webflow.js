@@ -45,12 +45,10 @@ function getMessages() {
 async function handleRequest(event, context, callback) {
   // Validation
   if (!validation.configuration.validate()) {
-    console.log('Configuration error: WEBFLOW_TOKEN not configured')
     callback(null, validation.configuration.response());
     return;
   }
   if (!validation.input.validate(event)) {
-    console.log('Input error: empty body');
     callback(null, validation.input.response());
     return;
   }
@@ -60,7 +58,6 @@ async function handleRequest(event, context, callback) {
     callback(null, invalidItems);
     return;
   }
-
   const values = [];
   const cache = createCache();
   // Fetch information needed to validate the cart
@@ -82,7 +79,6 @@ async function handleRequest(event, context, callback) {
       }
     }
     if (failed) {
-      console.log(`Mismatch found: ${failed}`)
       callback(null, {
         body: JSON.stringify({ details: failed, ok: false, }),
         statusCode: 200,
@@ -319,7 +315,11 @@ function sufficientInventory(comparable) {
     // The code is set to be ignored: ignore
     return true;
   }
-  const inventoryField = Object.keys(wfItem).find(k => k.toLowerCase().trim() === field.toLowerCase().trim())
+  let inventoryField = Object.keys(wfItem).find(k => k.toLowerCase().trim() === field.toLowerCase().trim())
+  if (!inventoryField) {
+    const numbered = new RegExp(field.toLowerCase().trim()+'-\\d+');
+    inventoryField = Object.keys(wfItem).find(k => k.toLowerCase().trim().match(numbered));
+  }
   if (inventoryField === undefined) {
     // The Webflow collection does not have the proper inventory field: ignore
     console.log(`Warning: the inventory field (${inventoryField}) does not exist in this webflow collection. Skipping inventory check.`);
@@ -505,8 +505,9 @@ function outOfStockItems(values) {
  * @returns {any} the value stored in the key
  */
 function iGet(object, key) {
-  const existingKey = Object.keys(object).find(k => k.toLowerCase().trim() === key.toLowerCase().trim());
-  return object[existingKey];
+  const numbered = new RegExp(key.toLowerCase().trim()+'(-\\d+)?');
+  const existingKey = Object.keys(object).filter(k => k.toLowerCase().trim().match(numbered)).sort();
+  return object[existingKey[0]];
 }
 
 exports.handler = handleRequest;
