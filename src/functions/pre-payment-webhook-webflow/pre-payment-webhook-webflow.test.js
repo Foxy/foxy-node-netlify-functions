@@ -359,29 +359,6 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     });
   });
 
-  it("Rejects when any category is incorrect", async () => {
-    let response;
-    const event = mockFoxyCart.request();
-    const items =  event.body._embedded["fx:items"];
-    event.body = JSON.stringify(event.body);
-    injectedWebflow.items = () =>
-      Promise.resolve(
-        mockWebflow.arbitrary(
-          items,
-          { category: () => "WrongCategory" },
-        )({}, {})
-      );
-    const context = {};
-    await prePayment.handler(event, context, (err, resp) => {
-      response = resp;
-    });
-    expect(response.statusCode).to.deep.equal(200);
-    expect(JSON.parse(response.body)).to.deep.equal({
-      ok: false,
-      details: "Mismatched category.",
-    });
-  });
-
   it("Rejects when any inventory is insufficient", async () => {
     let response = await insufficientInventoryRequest();
     expect(response.statusCode).to.deep.equal(200);

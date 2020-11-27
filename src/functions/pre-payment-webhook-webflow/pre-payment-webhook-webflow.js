@@ -31,7 +31,6 @@ function customOptions() {
  */
 function getMessages() {
   return {
-    categoryMismatch: process.env['FX_ERROR_CATEGORY_MISMATCH'] || 'Mismatched category.',
     insufficientInventory: process.env['FX_ERROR_INSUFFICIENT_INVENTORY'] || 'Insufficient inventory for these items:',
     priceMismatch: process.env['FX_ERROR_PRICE_MISMATCH'] || 'Prices do not match.',
   }
@@ -275,26 +274,6 @@ function isPriceCorrect(comparable) {
 }
 
 /**
- * Checks if the category of the item is the same as found in WebFlow Collection
- *
- * @param comparable the enriched item
- * @returns {boolean} the categories match
- */
-function correctCategory(comparable) {
-  const wfItem = comparable.wfItem;
-  const fxItem = comparable.fxItem;
-  const category = getCustomizableOption(wfItem, 'category');
-  const categoryExists = !!Object.keys(category).length;
-  if (!categoryExists) return true;
-  let matchedCategory;
-  const embedded = fxItem._embedded;
-  if (embedded && embedded['fx:item_category']) {
-    matchedCategory = embedded['fx:item_category'].code;
-  }
-  return matchedCategory && category.value.trim() === matchedCategory.trim();
-}
-
-/**
  * Checks if there is sufficient inventory for this purchase.
  *
  * @param comparable pair of matched items to be checked
@@ -469,7 +448,6 @@ function shouldEvaluate(comparable) {
 function findMismatch(values) {
   const evaluations = [
     [isPriceCorrect, getMessages().priceMismatch],
-    [correctCategory, getMessages().categoryMismatch],
   ];
   for (let v = 0; v < values.length; v += 1) {
     if (shouldEvaluate(values[v])) {
