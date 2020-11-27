@@ -270,7 +270,7 @@ function isPriceCorrect(comparable) {
   ) {
     return true;
   } else {
-    return parseFloat(fxItem.price) === parseFloat(wfItem.price);
+    return parseFloat(fxItem.price) === parseFloat(iGet(wfItem, 'price'));
   }
 }
 

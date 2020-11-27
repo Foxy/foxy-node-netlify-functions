@@ -313,6 +313,30 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     expect(JSON.parse(response.body)).to.deep.equal({ ok: true, details: "" });
   });
 
+  it("Understands numbered columns", async () => {
+    let response;
+    const event = mockFoxyCart.request({ price: 11, quantity: 1 });
+    const items =  event.body._embedded["fx:items"];
+    event.body = JSON.stringify(event.body);
+    injectedWebflow.items = () =>
+      Promise.resolve(
+        mockWebflow.arbitrary(items, {})({}, {})
+      );
+    const oldItems = await injectedWebflow.items();
+    oldItems.items.forEach(i => {
+      i['price-1'] = i.price;
+      delete(i.price);
+      i['inventory-1'] = i.inventory;
+      delete(i.inventory);
+    });
+    injectedWebflow.items = () => Promise.resolve(oldItems);
+    await prePayment.handler(event, {}, (err, resp) => {
+      response = resp;
+    });
+    expect(response.statusCode).to.exist.and.to.equal(200);
+    expect(JSON.parse(response.body)).to.deep.equal({ ok: true, details: "" });
+  });
+
   it("Rejects when any price is incorrect", async () => {
     let response;
     const event = mockFoxyCart.request({ price: 21, quantity: 1 });
