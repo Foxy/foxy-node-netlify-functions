@@ -72,9 +72,11 @@ You may have some items you don't want to be subject to price verification. This
 
 | Variable                        | Default Value                             | Description                                                                                                                                                                                               |
 | ------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| FX_EDITABLE_PRICE_CODES         | ""                                        | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter.                                                         |
+| FX_SKIP_PRICE_CODES         | ""                                        | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip price verification**.                                                        |
+| FX_SKIP_INVENTORY_CODES         | ""                                        | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip inventory verification**.                                                        |
+
 | FX_FIELD_CODE                   | "code"                                    | The name of the field that stores the code in the webflow collection.                                                                                                                                     |
-| FX_FIELD_INVENTORY              | "inventory"                               | The name of the field that stores the inventory in the webflow collection. Set this variable to "false" (without the quotes) to disable inventory verification.                                           |
+| FX_FIELD_INVENTORY              | "inventory"                               | The name of the field that stores the inventory in the webflow collection. Set this variable to "false" (without the quotes) to disable inventory verification for all items.                                           |
 
 ##### Error messages
 
@@ -85,7 +87,7 @@ To set up custom error messages, simply create new variables as described above.
 | Variable                        | Default Value                             | Description                                                                                                                                                                                               |
 | ------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | FX_ERROR_CATEGORY_MISMATCH      | "Mismatched category."                    | Occurs if the category of the product does not correspond to the category in Webflow                                                                                                                      |
-| FX_ERROR_INSUFFICIENT_INVENTORY | "Insufficient inventory for these items:" | Occurs when the quantity purchased is greater than the inventory available in Webflow. A comma separated list of the names of the products out-of-stock will be appended to the end of the error message. |
+| FX_ERROR_INSUFFICIENT_INVENTORY | "Insufficient inventory for these items:" | Occurs when the quantity purchased is greater than the inventory available in Webflow. **A comma separated list of the names of the products out-of-stock will be appended to the end of the error message**. |
 | FX_ERROR_PRICE_MISMATCH         | "Prices do not match."                    | Occurs when the price of any of the products does not match with the `price` field in Webflow                                                                                                             |
 
 ## Examples
