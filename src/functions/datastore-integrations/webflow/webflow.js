@@ -31,45 +31,41 @@ function customOptions() {
  */
 function getMessages() {
   return {
-    insufficientInventory: process.env['FX_ERROR_INSUFFICIENT_INVENTORY'] || 'Insufficient inventory for these items:',
-    priceMismatch: process.env['FX_ERROR_PRICE_MISMATCH'] || 'Prices do not match.',
+    insufficientInventory: process.env['FX_ERROR_INSUFFICIENT_INVENTORY'] ||
+      'Insufficient inventory for these items:',
+    priceMismatch: process.env['FX_ERROR_PRICE_MISMATCH'] || 
+      'Prices do not match.',
   }
 }
 
 /**
- * @param event the request
- * @param context context values
- * @param callback function to callback upon response
+ * @param {Object} requestEvent the request event built by Netlify Functions
+ * @returns {Promise<{statusCode: number, body: string}>} the response object
  */
-async function handleRequest(event, context, callback) {
+async function handleRequest(requestEvent) {
   // Validation
   if (!validation.configuration.validate()) {
-    callback(null, validation.configuration.response());
-    return;
+    return validation.configuration.response();
   }
-  if (!validation.input.validate(event)) {
-    callback(null, validation.input.response());
-    return;
+  if (!validation.input.validate(requestEvent)) {
+    return validation.input.response();
   }
-  const items = extractItems(event.body);
+  const items = extractItems(requestEvent.body);
   if (!validation.items.validate(items)) {
-    const invalidItems = validation.items.response(items);
-    callback(null, invalidItems);
-    return;
+    return validation.items.response(items);
   }
   const values = [];
   const cache = createCache();
   // Fetch information needed to validate the cart
-  const concatenatedPromisses = items.reduce(
-    (p, i) => p.then(
-      (accum) => fetchItem(cache, i).then((fetched) => {
-        values.push(fetched);
-        return accum;
-      }),
-    ), Promise.resolve(values),
-  );
-
-  await concatenatedPromisses.then(() => {
+  try {
+    await items.reduce(
+      (p, i) => p.then(
+        (accum) => fetchItem(cache, i).then((fetched) => {
+          values.push(fetched);
+          return accum;
+        }),
+      ), Promise.resolve(values),
+    );
     let failed = findMismatch(values);
     if (!failed) {
       const outOfStock = outOfStockItems(values);
@@ -78,24 +74,24 @@ async function handleRequest(event, context, callback) {
       }
     }
     if (failed) {
-      callback(null, {
+      return {
         body: JSON.stringify({ details: failed, ok: false, }),
         statusCode: 200,
-      });
+      };
     } else {
       console.log('OK: payment approved - no mismatch found')
-      callback(null, {
+      return {
         body: JSON.stringify({ details: '', ok: true, }),
         statusCode: 200,
-      });
+      };
     }
-  }).catch((e) => {
-    console.log(e);
-    callback(null, {
+  } catch (e) {
+    console.error(e);
+    return {
       body: JSON.stringify({ details: "An internal error has occurred", ok: false, }),
       statusCode: 500,
-    });
-  });
+    };
+  }
 }
 
 /**
@@ -124,7 +120,6 @@ function getOption(item, option) {
 /**
  * Returns the custom key for a given option, if it is set, or the default key.
  *
- * @param {object} item where the key it to be searched (this is the item received from foxy)
  * @param {string} default_key to be checked
  * @returns {string} actual key to be used
  */
@@ -240,7 +235,7 @@ const validation = {
       body: JSON.stringify({ details: 'Empty request.', ok: false }),
       statusCode: 400,
     }),
-    validate: (event) => event && event.body,
+    validate: (requestEvent) => requestEvent && requestEvent.body,
   },
   items: {
     response: (items) => ({
@@ -465,7 +460,7 @@ function findMismatch(values) {
 /**
  * Returns a list of names of products that are out of stock
  *
- * @param values comparable objects
+ * @param {Array<Object>} values comparable objects
  * @returns {string} comma separated out of stock values
  */
 function outOfStockItems(values) {

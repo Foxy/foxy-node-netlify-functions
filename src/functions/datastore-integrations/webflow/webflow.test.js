@@ -1,9 +1,9 @@
 const rewire = require("rewire");
 const sinon = require("sinon");
 const { expect } = require("chai");
-const { describe, it, beforeEach } = require("mocha");
+const { after, afterEach, before, beforeEach, describe, it } = require("mocha");
 
-const prePayment = rewire("./pre-payment-webhook-webflow");
+const prePayment = rewire("./webflow");
 const mockFoxyCart = require("./mock/foxyCart");
 const mockWebflow = require("./mock/webflow");
 
@@ -24,6 +24,7 @@ function increaseFrom(number) {
 }
 
 describe("Initialize and validate the webhook", () => {
+
   it("Validate the request is from FoxyCart.");
 
   it("Gets the webflow api instance with the token from the environment variable", () => {
@@ -82,6 +83,20 @@ describe("Initialize and validate the webhook", () => {
 });
 
 describe("Verifies the price of an item in a Webflow collection", () => {
+  let log;
+  let logError;
+
+  beforeEach(function() {
+    log = sinon.stub(console, 'log');
+    logError = sinon.stub(console, 'error');
+  });
+
+  afterEach( function () {
+    log.restore();
+    logError.restore();
+  });
+
+
   beforeEach(() => {
     injectedWebflow = {
       items: () => Promise.reject(new Error("Mocked function")),
@@ -147,7 +162,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
             price: false
           })({}, {})
         );
-      await prePayment.handler(event, {}, (err, resp) => {response = resp;});
+      response = await prePayment.handler(event, {});
       expect(response.statusCode).to.deep.equal(200);
       expect(JSON.parse(response.body)).to.deep.equal({
         details: "",
@@ -172,7 +187,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
         Promise.resolve(
           mockWebflow.arbitrary(items, {}, ['inventory'])({}, {})
         );
-      await prePayment.handler(event, {}, (err, resp) => {response = resp;});
+      response = await prePayment.handler(event, {});
       expect(response.statusCode).to.deep.equal(200);
       expect(JSON.parse(response.body)).to.deep.equal({
         details: "",
@@ -192,7 +207,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
             inventory: () => 1
           })({}, {})
         );
-      await prePayment.handler(event, {}, (err, resp) => {response = resp;});
+      response = await prePayment.handler(event, {});
       expect(response.statusCode).to.deep.equal(200);
       expect(JSON.parse(response.body)).to.deep.equal({
         details: "",
@@ -223,9 +238,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
         })({}, {})
       );
     const context = {};
-    await prePayment.handler(event, context, (err, resp) => {
-      response = resp;
-    });
+    response = await prePayment.handler(event, context);
     expect(response.statusCode).to.exist.and.to.equal(200);
     expect(JSON.parse(response.body)).to.deep.equal({
       details: "Prices do not match.",
@@ -246,9 +259,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
           price: false,
         })({}, {})
       );
-    await prePayment.handler(event, {}, (err, resp) => {
-      response = resp;
-    });
+    response = await prePayment.handler(event, {});
     expect(response.statusCode).to.exist.and.to.equal(200);
     expect(JSON.parse(response.body)).to.deep.equal({ ok: true, details: "" });
   });
@@ -260,9 +271,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
       'price': /has no price\.$/,
       'quantity': /has no quantity\.$/,
     }
-    const errorLog = sinon.stub(console, 'log');
     for (const [key, regex] of Object.entries(invalidItemOptions)) {
-      errorLog.resetHistory();
       let response;
       const changes = {};
       if (key === 'collection_id') {
@@ -271,25 +280,23 @@ describe("Verifies the price of an item in a Webflow collection", () => {
         changes[key] = false;
       }
       const event = mockFoxyCart.request(changes);
+      const items =  event.body._embedded["fx:items"];
       event.body = JSON.stringify(event.body);
       // Make sure the response values matches
+      console.debug(items);
       injectedWebflow.items = function () {
-        return Promise.resolve(mockWebflow.arbitrary(items)());
+        return Promise.resolve(mockWebflow.arbitrary(items, {}, [key])());
       };
-      await prePayment.handler(event, {}, (err, resp) => {
-        response = resp;
-      });
+      response = await prePayment.handler(event, {});
       expect(response.statusCode).to.equal(200);
       const body = JSON.parse(response.body);
       expect(body).to.exist;
       expect(body.ok).to.equal(false);
       expect(body.details).to.contain("Invalid items");
-      const matchedError = errorLog.getCalls().find(c => c.args[2]);
+      const matchedError = log.getCalls().find(c => c.args[2]);
       expect(matchedError).to.exist;
       expect(matchedError.args[2]).to.match(regex);
     }
-    errorLog.restore();
-
   });
 
   it("Approves when all items are correct", async () => {
@@ -306,9 +313,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
       );
     };
     const context = {};
-    await prePayment.handler(event, context, (err, resp) => {
-      response = resp;
-    });
+    response = await prePayment.handler(event, context);
     expect(response.statusCode).to.exist.and.to.equal(200);
     expect(JSON.parse(response.body)).to.deep.equal({ ok: true, details: "" });
   });
@@ -330,9 +335,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
       delete(i.inventory);
     });
     injectedWebflow.items = () => Promise.resolve(oldItems);
-    await prePayment.handler(event, {}, (err, resp) => {
-      response = resp;
-    });
+    response = await prePayment.handler(event, {});
     expect(response.statusCode).to.exist.and.to.equal(200);
     expect(JSON.parse(response.body)).to.deep.equal({ ok: true, details: "" });
   });
@@ -349,9 +352,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
         })({}, {})
       );
     const context = {};
-    await prePayment.handler(event, context, (err, resp) => {
-      response = resp;
-    });
+    response = await prePayment.handler(event, context);
     expect(response.statusCode).to.deep.equal(200);
     expect(JSON.parse(response.body)).to.deep.equal({
       details: "Prices do not match.",
@@ -382,9 +383,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
         })({}, {})
       );
     const context = {};
-    await prePayment.handler(event, context, (err, resp) => {
-      context.FX_RESPONSE = resp;
-    });
+    context.FX_RESPONSE = await prePayment.handler(event, context);
     const body = JSON.parse(context.FX_RESPONSE.body);
     expect(body.details).to.match(/^Insufficient inventory for these items:/);
   });
@@ -406,9 +405,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     });
     injectedWebflow.items = () => Promise.resolve(oldItems);
     const context = {};
-    await prePayment.handler(event, context, (err, resp) => {
-      context.FX_RESPONSE = resp;
-    });
+    context.FX_RESPONSE = await prePayment.handler(event, context);
     const body = JSON.parse(context.FX_RESPONSE.body);
     expect(body.details).to.match(/^Insufficient inventory for these items:/);
   });
@@ -421,9 +418,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     const respContent = mockWebflow.arbitrary(items, {})({}, {})
     respContent.items.forEach(i => i.mysku = 'WrongSku');
     injectedWebflow.items = () => Promise.resolve(respContent);
-    await prePayment.handler(event, {}, (err, resp) => {
-      response = resp;
-    });
+    response = await prePayment.handler(event, {});
     const body = JSON.parse(response.body);
     expect(body).to.exist;
     expect(body.ok).to.equal(false);
@@ -434,7 +429,6 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     let response;
     const event = mockFoxyCart.request({ price: 21, quantity: 1 });
     const items =  event.body._embedded["fx:items"];
-    const logStub = sinon.stub(console, 'log');
     let hundred = [];
     for (let i = 0; i<10; i++) {
       hundred = hundred.concat(items);
@@ -446,16 +440,14 @@ describe("Verifies the price of an item in a Webflow collection", () => {
           "mysku",
         ])({}, {})
       );
-    await prePayment.handler(event, {}, (err, resp) => {
-      response = resp;
-    });
+    response = await prePayment.handler(event, {});
     expect(response.statusCode).to.equal(500);
     expect(JSON.parse(response.body)).to.deep.equal({
       details: internalErrorMessage,
       ok: false,
     });
-    expect(logStub.getCalls()[0].args[0]).to.match(/Could not find the code field/);
-    logStub.restore();
+    expect(logError.getCalls()[0].args[0]).to.match(/Could not find the code field/);
+
   });
 
   it("Rejects when provided custom field does not exist", async () => {
@@ -471,9 +463,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
         )
       );
     const context = {};
-    await prePayment.handler(event, context, (err, resp) => {
-      response = resp;
-    });
+    response = await prePayment.handler(event, context);
     expect(response.statusCode).to.deep.equal(500);
     expect(JSON.parse(response.body)).to.deep.equal({
       details: internalErrorMessage,
@@ -489,13 +479,11 @@ describe("Verifies the price of an item in a Webflow collection", () => {
         mockWebflow.arbitrary(event.body._embedded["fx:items"])({}, {})
       );
     const context = {};
-    await prePayment.handler(event, context, (err, resp) => {
-      response = resp;
-    });
-    expect(response.statusCode).to.deep.equal(400);
+    response = await prePayment.handler(event, context);
+    expect(response.statusCode).to.equal(400);
     expect(JSON.parse(response.body)).to.deep.equal({
-      ok: false,
       details: "Empty request.",
+      ok: false,
     });
   });
 
@@ -507,9 +495,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     err.code = 500;
     injectedWebflow.items = () => Promise.reject(err);
     const context = {};
-    await prePayment.handler(event, context, (err, resp) => {
-      response = resp;
-    });
+    response = await prePayment.handler(event, context);
     expect(response.statusCode).to.deep.equal(500);
     expect(JSON.parse(response.body)).to.deep.equal({
       details: internalErrorMessage,
@@ -529,7 +515,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
       );
     };
     const context = {};
-    await prePayment.handler(event, context, () => {});
+    await prePayment.handler(event, context);
     expect(counting).to.equal(1);
   });
 });
@@ -553,8 +539,6 @@ async function insufficientInventoryRequest(event = null) {
     );
   const context = {};
 
-  await prePayment.handler(event, context, (err, resp) => {
-    context.FX_RESPONSE = resp;
-  });
+  context.FX_RESPONSE = await prePayment.handler(event, context);
   return context.FX_RESPONSE;
 }
