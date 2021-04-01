@@ -4,7 +4,10 @@ module.exports = {
     commonjs: true,
     es2021: true,
   },
-  extends: "@foxy.io",
+  extends: [
+    "@foxy.io",
+    "plugin:jsdoc/recommended"
+  ],
   parserOptions: {
     ecmaVersion: 12,
   },
