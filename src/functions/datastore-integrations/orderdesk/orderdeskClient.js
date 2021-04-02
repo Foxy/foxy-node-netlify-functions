@@ -9,8 +9,11 @@
  * @property {string} code Item SKU or product code
  * @property {('ship'|'noship'|'download'|'future')} delivery_type Defaults to ship
  * @property {string} category_code Further details about the type of item, freeform text
- * @property {string} variation_list Array with a list of variations in key => value format. Ex: ['Size': 'Large', 'Color': 'Red']
+ * @property {Array} variation_list Array with a list of variations in key => value format. Ex: ['Size': 'Large', 'Color': 'Red']
  * @property {Array} metadata Array with a list of extra (hidden) order details in key => value format
+ * @property {string} date_added date the item was added to the collection
+ * @property {string} date_updated date the item was updated in the collection 
+ *
  */
 
 class OrderDeskClient {
