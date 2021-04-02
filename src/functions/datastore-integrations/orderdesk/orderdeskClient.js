@@ -60,6 +60,21 @@ class OrderDeskClient {
     return response.json();
   }
 
+  /**
+   * Converts an order desk intem into a CartValidados Canonical Item.
+   *
+   * @param {OrderDeskItem} orderDeskItem to be converted to CanonicalItem
+   * @returns {import('../CartValidator.js').CanonicalItem} the resulting Canonical Item.
+   */
+  convertToCanonical(orderDeskItem) {
+    return {
+      name: orderDeskItem.name,
+      price: orderDeskItem.price,
+      inventory: orderDeskItem.stock,
+      code: orderDeskItem.code
+    }
+  }
+
 }
 
 module.exports = OrderDeskClient;
