@@ -11,8 +11,32 @@ function env(envVar) {
 }
 
 module.exports = {
+  datastore: {
+    error: {
+      insufficientInventory: env('FOXY_ERROR_INSUFFICIENT_INVENTORY') || env('FX_ERROR_INSUFFICIENT_INVENTORY'),
+      priceMismatch: env('FOXY_ERROR_PRICE_MISMATCH') || env('FX_ERROR_PRICE_MISMATCH')
+    },
+    field: {
+      code: env('FOXY_FIELD_CODE') || env('FX_FIELD_CODE'),
+      inventory: env('FOXY_FIELD_INVENTORY') || env('FX_FIELD_INVENTORY'),
+      price: env('FOXY_FIELD_PRICE') || env('FX_FIELD_PRICE')
+    },
+    provider: {
+      orderDesk: {
+        apiKey: env("FOXY_ORDERDESK_API_KEY"),
+        storeId: env("FOXY_ORDERDESK_STORE_ID")
+      },
+      webflow: {
+        token: env('FOXY_WEBFLOW_TOKEN') || env('WEBFLOW_TOKEN'),
+      }
+    },
+    skipCode: {
+      inventory: env('FOXY_SKIP_INVENTORY_CODES') || env('FX_SKIP_INVENTORY_CODES'),
+      price: env('FOXY_SKIP_PRICE_CODES') || env('FX_SKIP_PRICE_CODES')
+    },
+  },
   default: {
-    autoshipFrequency: env('DEFAULT_AUTOSHIP_FREQUENCY')
+    autoshipFrequency: env('FOXY_DEFAULT_AUTOSHIP_FREQUENCY') || env('DEFAULT_AUTOSHIP_FREQUENCY')
   },
   foxy: {
     api: {
@@ -22,35 +46,10 @@ module.exports = {
     },
     webhook: {
       encryptionKey: env('FOXY_WEBHOOK_ENCRYPTION_KEY'),
-      encryptionKey: env('FOXY_ENCRYPTION_KEY')
     }
   },
-  idev: {
-    apiUrl: env('IDEV_API_URL'),
-    secretKey: env('IDEV_SECRET_KEY'),
-  },
-  datastore: {
-    field: {
-      code: env('FX_FIELD_CODE'),
-      inventory: env('FX_FIELD_INVENTORY'),
-      price: env('FX_FIELD_PRICE'),
-    },
-    skipCode: {
-      inventory: env('FX_SKIP_INVENTORY_CODES'),
-      price: env('FX_SKIP_PRICE_CODES'),
-    },
-    error: {
-      insufficientInventory: env('FX_ERROR_INSUFFICIENT_INVENTORY'),
-      priceMismatch: env('FX_ERROR_PRICE_MISMATCH')
-    },
-    provider: {
-      webflow: {
-        token: env('WEBFLOW_TOKEN'),
-      },
-      orderDesk: {
-        apiKey: env("ORDERDESK_API_KEY"),
-        storeId: env("ORDERDESK_STORE_ID")
-      }
-    }
+  idevAffiliate: {
+    apiUrl: env('FOXY_IDEV_API_URL') || env('IDEV_API_URL'),
+    secretKey: env('FOXY_IDEV_SECRET_KEY') || env('IDEV_SECRET_KEY'),
   },
 }
