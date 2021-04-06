@@ -6,9 +6,9 @@ const { FoxyApi } = require("@foxy.io/node-api");
 const foxy = new FoxyApi();
 const store = foxy.follow("fx:store");
 
-const idevApiUrl = process.env.IDEV_API_URL ? process.env.IDEV_API_URL : "";
-const idevSecretKey = process.env.IDEV_SECRET_KEY
-  ? process.env.IDEV_SECRET_KEY
+const idevApiUrl = process.env.FOXY_IDEV_API_URL ? process.env.FOXY_IDEV_API_URL : "";
+const idevSecretKey = process.env.FOXY_IDEV_SECRET_KEY
+  ? process.env.FOXY_IDEV_SECRET_KEY
   : "";
 const foxyWebhookEncryptionKey = process.env.FOXY_WEBHOOK_ENCRYPTION_KEY
   ? process.env.FOXY_WEBHOOK_ENCRYPTION_KEY

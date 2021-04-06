@@ -43,8 +43,8 @@ function setup() {
 
 /** Functions and Variables */
 /** Default values */
-const defaultSubFrequency = process.env.DEFAULT_AUTOSHIP_FREQUENCY
-  ? process.env.DEFAULT_AUTOSHIP_FREQUENCY
+const defaultSubFrequency = process.env.FOXY_DEFAULT_AUTOSHIP_FREQUENCY
+  ? process.env.FOXY_DEFAULT_AUTOSHIP_FREQUENCY
   : "1m";
 
 /**

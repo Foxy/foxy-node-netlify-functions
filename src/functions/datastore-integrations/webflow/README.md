@@ -35,14 +35,14 @@ The webflow collection needs to have the following fields:
 
 | Parameter                                         | Description                                                                                                                                                     | Example value in a Webflow Item |
 | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| `code` or the parameter set in `FX_FIELD_CODE`    | for each item. You can use your `slug` if you don't have a unique field, simply set `FX_FIELD_CODE` to slug (see configuration bellow)                          | `code=896EYSA678`               |
+| `code` or the parameter set in `FOXY_FIELD_CODE`    | for each item. You can use your `slug` if you don't have a unique field, simply set `FOXY_FIELD_CODE` to slug (see configuration bellow)                          | `code=896EYSA678`               |
 | `price`                                           | The price to be validated.                                                                                                                                      | `price=256.88`                  |
 | `inventory`                                       | Optional. The field against which the quantity will be validated. If this value does not exist in a collection, inventory won't be checked for that collection. | `inventory=3`                   |
 
 
 If you don't use Webflow to control your inventory, and you don't have an `inventory` field in your collection, the inventory verification will be ignored. The validation will pass.
 
-If you do have an `inventory` field in your Webflow Collection, but you don't wish this to be validated, you will need to configure the `FX_FIELD_INVENTORY` to "false" (see "Configuration" bellow).
+If you do have an `inventory` field in your Webflow Collection, but you don't wish this to be validated, you will need to configure the `FOXY_FIELD_INVENTORY` to "false" (see "Configuration" bellow).
 
 ### When creating your FoxyCart Items
 
@@ -72,11 +72,11 @@ You may have some items you don't want to be subject to price verification. This
 
 | Variable                        | Default Value                             | Description                                                                                                                                                                                                        |
 | ------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| FX_SKIP_PRICE_CODES             | ""                                        | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip price verification**.     |
-| FX_SKIP_INVENTORY_CODES         | ""                                        | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip inventory verification**. |
-| FX_FIELD_CODE                   | "code"                                    | The name of the field that stores the code in the webflow collection.                                                                                                                                              |
-| FX_FIELD_PRICE                  | "price"                                   | The name of the field that stores the price in the webflow collection.                                                                                                                                             |
-| FX_FIELD_INVENTORY              | "inventory"                               | The name of the field that stores the inventory in the webflow collection. Set this variable to "false" (without the quotes) to disable inventory verification for all items.                                      |
+| FOXY_SKIP_PRICE_CODES             | ""                                        | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip price verification**.     |
+| FOXY_SKIP_INVENTORY_CODES         | ""                                        | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip inventory verification**. |
+| FOXY_FIELD_CODE                   | "code"                                    | The name of the field that stores the code in the webflow collection.                                                                                                                                              |
+| FOXY_FIELD_PRICE                  | "price"                                   | The name of the field that stores the price in the webflow collection.                                                                                                                                             |
+| FOXY_FIELD_INVENTORY              | "inventory"                               | The name of the field that stores the inventory in the webflow collection. Set this variable to "false" (without the quotes) to disable inventory verification for all items.                                      |
 
 ##### Error messages
 
@@ -86,8 +86,8 @@ To set up custom error messages, simply create new variables as described above.
 
 | Variable                        | Default Value                             | Description                                                                                                                                                                                               |
 | ------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| FX_ERROR_INSUFFICIENT_INVENTORY | "Insufficient inventory for these items:" | Occurs when the quantity purchased is greater than the inventory available in Webflow. **A comma separated list of the names of the products out-of-stock will be appended to the end of the error message**. |
-| FX_ERROR_PRICE_MISMATCH         | "Prices do not match."                    | Occurs when the price of any of the products does not match with the `price` field in Webflow                                                                                                             |
+| FOXY_ERROR_INSUFFICIENT_INVENTORY | "Insufficient inventory for these items:" | Occurs when the quantity purchased is greater than the inventory available in Webflow. **A comma separated list of the names of the products out-of-stock will be appended to the end of the error message**. |
+| FOXY_ERROR_PRICE_MISMATCH         | "Prices do not match."                    | Occurs when the price of any of the products does not match with the `price` field in Webflow                                                                                                             |
 
 ## Examples
 
@@ -122,7 +122,7 @@ This example assumes that:
 
 - you have a `sku` field in your Webflow collection that you want to use as `code` for FoxyCart.
 
-In this scenario you need to create an environment variable in Netlify with the key `FX_FIELD_CODE` and value `sku`
+In this scenario you need to create an environment variable in Netlify with the key `FOXY_FIELD_CODE` and value `sku`
 
 Here is how that is done:
 

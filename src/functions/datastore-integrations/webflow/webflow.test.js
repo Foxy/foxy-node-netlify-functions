@@ -28,14 +28,14 @@ describe("Initialize and validate the webhook", () => {
   it("Validate the request is from FoxyCart.");
 
   it("Gets the webflow api instance with the token from the environment variable", () => {
-    prePayment.__set__("process.env", { WEBFLOW_TOKEN: "foobar" });
+    prePayment.__set__("process.env", { FOXY_WEBFLOW_TOKEN: "foobar" });
     const getToken = prePayment.__get__("getToken");
     expect(getToken()).to.equal("foobar");
     const getWebflow = prePayment.__get__("getWebflow");
     expect(getWebflow().token).to.equal("foobar");
   });
 
-  it("Only executes if there is a WEBFLOW_TOKEN set", async () => {
+  it("Only executes if there is a FOXY_WEBFLOW_TOKEN set", async () => {
     /**
      * @param error
      * @param response
@@ -55,7 +55,7 @@ describe("Initialize and validate the webhook", () => {
     }
     prePayment.__set__("process.env", {});
     await prePayment.handler(null, null, noToken);
-    prePayment.__set__("process.env.WEBFLOW_TOKEN", "FOOBAR");
+    prePayment.__set__("process.env.FOXY_WEBFLOW_TOKEN", "FOOBAR");
     await prePayment.handler(null, null, withToken);
   });
 
@@ -102,21 +102,21 @@ describe("Verifies the price of an item in a Webflow collection", () => {
       items: () => Promise.reject(new Error("Mocked function")),
     };
     prePayment.__set__("getWebflow", () => injectedWebflow);
-    prePayment.__set__("process.env.WEBFLOW_TOKEN", "FOOBAR");
-    process.env['FX_FIELD_CODE'] = 'mysku';
+    prePayment.__set__("process.env.FOXY_WEBFLOW_TOKEN", "FOOBAR");
+    process.env['FOXY_FIELD_CODE'] = 'mysku';
   });
 
   afterEach(() => {
     const toReset = [
-      'FX_EDITABLE_PRICE_CODES',
-      'FX_ERROR_CATEGORY_MISMATCH',
-      'FX_ERROR_INSUFFICIENT_INVENTORY',
-      'FX_ERROR_PRICE_MISMATCH',
-      'FX_FIELD_CODE',
-      'FX_FIELD_PRICE',
-      'FX_SKIP_INVENTORY_CODES',
-      'FX_SKIP_PRICE_CODES',
-      'FX_FIELD_INVENTORY',
+      'FOXY_EDITABLE_PRICE_CODES',
+      'FOXY_ERROR_CATEGORY_MISMATCH',
+      'FOXY_ERROR_INSUFFICIENT_INVENTORY',
+      'FOXY_ERROR_PRICE_MISMATCH',
+      'FOXY_FIELD_CODE',
+      'FOXY_FIELD_PRICE',
+      'FOXY_SKIP_INVENTORY_CODES',
+      'FOXY_SKIP_PRICE_CODES',
+      'FOXY_FIELD_INVENTORY',
     ];
     toReset.forEach(e => process.env[e] = '');
   });
@@ -151,7 +151,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
 
     it("Ignores price verification for codes in FX_SKIP_PRICES_FIELDS ", async () => {
       let response;
-      process.env['FX_SKIP_PRICE_CODES'] = 'editable';
+      process.env['FOXY_SKIP_PRICE_CODES'] = 'editable';
       const event = mockFoxyCart.request({ code: 'editable', price: 0.1, quantity: 1 });
       const items =  event.body._embedded["fx:items"];
       event.body = JSON.stringify(event.body);
@@ -170,9 +170,9 @@ describe("Verifies the price of an item in a Webflow collection", () => {
       });
     });
 
-    it("Ignores inventory checks if FX_FIELD_INVENTORY is set to null or false", async () => {
+    it("Ignores inventory checks if FOXY_FIELD_INVENTORY is set to null or false", async () => {
       const event = mockFoxyCart.request({ price: 11, quantity: 11 });
-      process.env['FX_FIELD_INVENTORY'] = 'Null';
+      process.env['FOXY_FIELD_INVENTORY'] = 'Null';
       const response = await insufficientInventoryRequest(event);
       expect(response.statusCode).to.exist.and.to.equal(200);
       expect(JSON.parse(response.body)).to.deep.equal({ ok: true, details: "" });
@@ -195,9 +195,9 @@ describe("Verifies the price of an item in a Webflow collection", () => {
       });
     });
 
-    it("Ignores inventory checks for codes excluded with FX_SKIP_INVENTORY_CODES", async () => {
+    it("Ignores inventory checks for codes excluded with FOXY_SKIP_INVENTORY_CODES", async () => {
       let response;
-      process.env['FX_SKIP_INVENTORY_CODES'] = 'limitless';
+      process.env['FOXY_SKIP_INVENTORY_CODES'] = 'limitless';
       const event = mockFoxyCart.request({ code: 'limitless', price: 11, quantity: 100 });
       const items =  event.body._embedded["fx:items"];
       event.body = JSON.stringify(event.body);
@@ -216,7 +216,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     });
 
     it("Customizes the insufficient inventory response", async () => {
-      process.env.FX_ERROR_INSUFFICIENT_INVENTORY = 'foobar: ';
+      process.env.FOXY_ERROR_INSUFFICIENT_INVENTORY = 'foobar: ';
       const response = await insufficientInventoryRequest();
       expect(response.statusCode).to.deep.equal(200);
       const body = JSON.parse(response.body);
@@ -283,7 +283,6 @@ describe("Verifies the price of an item in a Webflow collection", () => {
       const items =  event.body._embedded["fx:items"];
       event.body = JSON.stringify(event.body);
       // Make sure the response values matches
-      console.debug(items);
       injectedWebflow.items = function () {
         return Promise.resolve(mockWebflow.arbitrary(items, {}, [key])());
       };

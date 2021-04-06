@@ -10,13 +10,13 @@ let weblowApi;
 function customOptions() {
   return {
     fields: {
-      code: process.env['FX_FIELD_CODE'] || 'code',
-      inventory: process.env['FX_FIELD_INVENTORY'] || 'inventory',
-      price: process.env['FX_FIELD_PRICE'] || 'price'
+      code: process.env['FOXY_FIELD_CODE'] || 'code',
+      inventory: process.env['FOXY_FIELD_INVENTORY'] || 'inventory',
+      price: process.env['FOXY_FIELD_PRICE'] || 'price'
     },
     skip: {
-      inventory: (process.env['FX_SKIP_INVENTORY_CODES'] || '').split(',').map(e => e.trim()).filter(e => !!e) || [],
-      price: (process.env['FX_SKIP_PRICE_CODES'] || '').split(',').map(e => e.trim()).filter(e => !!e) || [],
+      inventory: (process.env['FOXY_SKIP_INVENTORY_CODES'] || '').split(',').map(e => e.trim()).filter(e => !!e) || [],
+      price: (process.env['FOXY_SKIP_PRICE_CODES'] || '').split(',').map(e => e.trim()).filter(e => !!e) || [],
     },
     webflow: {
       limit: 100,
@@ -31,9 +31,9 @@ function customOptions() {
  */
 function getMessages() {
   return {
-    insufficientInventory: process.env['FX_ERROR_INSUFFICIENT_INVENTORY'] ||
+    insufficientInventory: process.env['FOXY_ERROR_INSUFFICIENT_INVENTORY'] ||
       'Insufficient inventory for these items:',
-    priceMismatch: process.env['FX_ERROR_PRICE_MISMATCH'] || 
+    priceMismatch: process.env['FOXY_ERROR_PRICE_MISMATCH'] || 
       'Prices do not match.',
   }
 }
@@ -228,7 +228,7 @@ const validation = {
       body: JSON.stringify({ details: 'Webflow token not configured.', ok: false }),
       statusCode: 503,
     }),
-    validate: () => !!process.env.WEBFLOW_TOKEN,
+    validate: () => !!process.env.FOXY_WEBFLOW_TOKEN,
   },
   input: {
     response: () => ({
@@ -312,10 +312,10 @@ function sufficientInventory(comparable) {
 /**
  * Retrieve the Webflow Token
  *
- * @returns {string} the WEBFLOW_TOKEN
+ * @returns {string} the FOXY_WEBFLOW_TOKEN
  */
 function getToken() {
-  return process.env.WEBFLOW_TOKEN;
+  return process.env.FOXY_WEBFLOW_TOKEN;
 }
 
 /**
@@ -399,13 +399,12 @@ function fetchItem(cache, foxyItem, offset = 0) {
         } else if (collection.total > collection.offset + collection.count) {
           fetchItem(cache, foxyItem, ((offset / customOptions().webflow.limit) + 1) * customOptions().webflow.limit)
             .then((i) => resolve(i))
-            .catch((e) => {console.log(e); reject(e);});
+            .catch((e) => {reject(e);});
         } else {
           reject(new Error('Item not found'));
         }
       }
     }).catch((e) => {
-      console.log(e);
       reject(e);
     });
   });
