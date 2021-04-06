@@ -1,8 +1,15 @@
+/**
+ * @file Manages the configuration settings
+ */
 
-
+/**
+ * @param {string} envVar the environment variable to get
+ * @returns {string} the environment variable value
+ */
 function env(envVar) {
   return process.env[envVar];
 }
+
 module.exports = {
   default: {
     autoshipFrequency: env('DEFAULT_AUTOSHIP_FREQUENCY')
