@@ -8,8 +8,54 @@ The functions provided in this repository can be used independently, or as a ref
 Be sure to check the README for each function in the functions folder.
 
 - [cart](src/functions/cart): Converts a cart between recurring and non-recurring.
-- [idevaffiliate-marketplace](src/functions/idevaffiliate-marketplace): 
-- [pre-payment-webhook-webflow](src/functions/pre-payment-webhook-webflow): Validates the price and/or availability of items against Webflow CMS collections before a payment is processed.
+- [idevaffiliate-marketplace](src/functions/idevaffiliate-marketplace): Integration with iDev Affiliate.
+- Datastore integrations: 
+    - [pre-payment-webhook-webflow](src/functions/pre-payment-webhook-webflow): Validates the price and/or availability of items against Webflow CMS collections before a payment is processed.
+    - [datastore-integration-orderdesk](src/functions/datastore-integration-orderdesk): Validates the cart against OrderDesk and updates the inventory upon successful transaction.
+
+### Data store integrations
+
+Data store integrations allow you to verify the cart against a third-party Data
+Store.
+
+## Available DataStores
+
+- OrderDesk
+- Webflow CMS
+
+## Pre-payment
+
+It provides you with a function to validate the price and quantity submitted to
+FoxyCart before a payment is made, thus providing security against HTML
+modifications in the client side.
+
+**It ignores existing subscriptions**. If a subscription start date is current,
+price will be checked. If it is in the past, the price is not checked.
+
+#### Limitations
+
+- It does not handle discounts.
+- It does not handle item options, such as `price_mod`.
+- Due to netlify time limit, and the need to make requests to the datastore, it
+  may break against large product databases if the Datastore do not allow for
+  requesting specific items directly. Check the README for your datastore
+  integration about this issue.
+
+
+## Usage
+
+1. Read the short **Configuration** section in the datastore integration page.
+  - **Important**: your datastore need to meet some criteria for the webhook to work. Product items need a `code` field.
+1. Grab the credentials needed for integrating with your datastore. Check the details in your datastore integration page.
+1. Click the **deploy to Netlify** button at the end of this page.
+  - Netlify will provide you with a form for you to provide your configuration.
+  - The Webflow Prepayment Webhook requires only FOXY_WEBFLOW_TOKEN. The other settings are used for the other services in this repository.
+1. Grab the URL for your webhook in Netlify. Be sure to get the correct URL for your specific webhook.
+  - To do this, after the deploy is finished, click the "functions" tab, look for your webhook function and copy the **Endpoint URL**.
+1. Configure your prepayment webhook using your endpoint. Check the docs here: https://wiki.foxycart.com/v/2.0/pre_payment_webhook
+
+
+# Development
 
 ## Localdev Setup
 

@@ -1,4 +1,4 @@
-const DataStoreBase = require('../DataStoreBase.js');
+const DataStoreBase = require('../datastore-integrations/DataStoreBase.js');
 
 /**
  * @typedef {Object} OrderDeskItem
@@ -112,7 +112,7 @@ class DataStore extends DataStoreBase {
    * Converts an order desk intem into a CartValidados Canonical Item.
    *
    * @param {OrderDeskItem} orderDeskItem to be converted to CanonicalItem
-   * @returns {import('../CartValidator.js').CanonicalItem} the resulting Canonical Item.
+   * @returns {import('../datastore-integrations/CartValidator.js').CanonicalItem} the resulting Canonical Item.
    */
   convertToCanonical(orderDeskItem) {
     return {

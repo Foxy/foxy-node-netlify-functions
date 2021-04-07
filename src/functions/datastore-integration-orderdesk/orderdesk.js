@@ -1,6 +1,6 @@
-const FoxyClient = require('../../../foxy/pre-payment-webhook.js');
-const webhook = require('./webhook.js');
-const config = require("../../../../config.js");
+const FoxyClient = require('../../foxy/FoxyWebhook.js');
+const webhook = require('../datastore-integrations/orderdesk/webhook.js');
+const config = require("../../../config.js");
 
 /**
  * @callback requestCallback
@@ -37,7 +37,11 @@ async function handleRequest(requestEvent) {
   return response;
 }
 
-function validSignature(req, key = config.foxy.webhook.encryptionKey) {
+/**
+ * @param req
+ */
+function validSignature(req) {
+  const key = config.foxy.webhook.encryptionKey;
   const payload = req.body;
   const signature = req.headers['Foxy-Webhook-Signature'];
   return FoxyClient.verifyWebhookSignature(payload, signature, key);

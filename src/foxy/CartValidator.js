@@ -19,6 +19,11 @@ class CartValidator {
     price: [],
   }
 
+  /** 
+   * Configure the Cart Validator to skip validating a code.
+   *
+   * @param {string} code
+   */
   skipInventory(code) {
     this.skipCodes.inventory.push(code);
   }
@@ -27,7 +32,11 @@ class CartValidator {
     this.skipCodes.price.push(code);
   }
 
-  skipFromEnv(pricesEnvVar, codesEnvVar) {
+  /**
+   * Autoconfigures the instance to skip the validation of prices and inventory
+   * of items with codes listed in the configured environment variables.
+   */
+  skipFromEnv() {
     (config.datastore.skipCode.price || '').split(',').forEach(this.skipPrice.bind(this));
     (config.datastore.skipCode.inventory || '').split(',').forEach(this.skipPrice.bind(this));
   }
@@ -50,7 +59,7 @@ class CartValidator {
   /**
    * Validates a cartItem has the correct price according to a canonical item.
    *
-   * @param {import('../../foxy/pre-payment-webhook.js').PrepaymentItem} cartItem the cart item to be validated.
+   * @param {import('../../foxy/FoxyWebhook.js').PrepaymentItem} cartItem the cart item to be validated.
    * @param {CanonicalItem} canonicalItem the canonical against which the cart
    * item will be validated.
    * @returns {boolean} the inventory is sufficient for this purchase.

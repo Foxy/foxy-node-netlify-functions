@@ -3,7 +3,7 @@ const { describe, it, beforeEach } = require("mocha");
 const rewire = require('rewire');
 const DataStore = rewire("./DataStore.js");
 const { expect } = require("chai");
-const MockOrderDesk = require("./mockOrderDesk.js");
+const MockOrderDesk = require("../datastore-integrations/orderdesk/mockOrderDesk.js");
 
 const mockOD = new MockOrderDesk();
 DataStore.__set__('fetch', mockOD.fetch);

@@ -1,5 +1,5 @@
 const Webflow = require("webflow-api");
-const config = require("../../../../config.js");
+const config = require("../../../config.js");
 
 let weblowApi;
 
