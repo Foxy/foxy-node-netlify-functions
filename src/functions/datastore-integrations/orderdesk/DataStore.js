@@ -1,3 +1,5 @@
+const DataStoreBase = require('../DataStoreBase.js');
+
 /**
  * @typedef {Object} OrderDeskItem
  * 
@@ -16,7 +18,7 @@
  *
  */
 
-class OrderDeskClient {
+class DataStore extends DataStoreBase {
 
   /**
    *
@@ -25,15 +27,39 @@ class OrderDeskClient {
    * @param {string} apiKey from OrderDesk
    */
   constructor(id, apiKey) {
+    super();
     this.domain = "app.orderdesk.me";
     this.api = "api/v2/";
-    this.id = id;
-    this.key = apiKey;
-    this.defaultHeader = {
-      "Content-Type": "application/json",
-      "ORDERDESK-API-KEY": this.key,
-      "ORDERDESK-STORE-ID": this.id,
+    this.credentials = {
+      id,
+      key: apiKey
     }
+  }
+
+  /**
+   * Creates the header needed to issue requests to OrderDesk.
+   *
+   * @returns {Object} default header
+   */
+  getDefaultHeader() {
+    return {
+      "Content-Type": "application/json",
+      "ORDERDESK-API-KEY": this.credentials.key,
+      "ORDERDESK-STORE-ID": this.credentials.id,
+    }
+  }
+
+  /**
+   * @inheritdoc
+   */
+  setCredentials(credentials) {
+    if (!credentials.key || !credentials.id) {
+      throw new Error("Provide Orderdesk API Key and Store id as the key and id attributes of the credentials object.");
+    }
+    this.credentials = {
+      id: credentials.id,
+      key: credentials.key
+    };
   }
 
   /**
@@ -47,6 +73,8 @@ class OrderDeskClient {
   }
 
   /**
+   * Fetch inventory items from OrderDesk.
+   *
    * @param {Array<string>} items codes to be fetched
    * @returns {Array<OrderDeskItem>} items retrieved from OrderDesk
    */
@@ -54,11 +82,31 @@ class OrderDeskClient {
     const response = await fetch(this.buildEndpoint('inventory-items') + '?' + new URLSearchParams({
       code: items.join(',')
     }), {
-      headers: this.defaultHeader,
+      headers: this.getDefaultHeader(),
       method: 'GET'
-    })
+    });
+    return (await response.json()).inventory_items;
+  }
+
+  /**
+   * Update inventory items in OrderDesk
+   *
+   * @param {Array<Object>} items to be updated
+   */
+  async updateInventoryItems(items) {
+    const invalid = items.filter(!validateInventoryItem);
+    if (invalid.length) {
+      throw new Error("Invalid inventory items for update", invalid.join(','));
+    }
+    const response = await fetch(this.buildEndpoint('batch-inventory-items'), {
+      body: JSON.stringify(items),
+      headers: this.getDefaultHeader(),
+      method: 'PUT'
+    });
     return response.json();
   }
+
+
 
   /**
    * Converts an order desk intem into a CartValidados Canonical Item.
@@ -75,6 +123,14 @@ class OrderDeskClient {
     }
   }
 
+  validateInventoryItem(item) {
+    return item.id &&
+      item.name &&
+      item.code &&
+      (item.price || item.price === 0) &&
+      (item.stock || item.stock === 0)
+  }
+
 }
 
-module.exports = OrderDeskClient;
+module.exports = DataStore;
