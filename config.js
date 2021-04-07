@@ -12,6 +12,7 @@ function env(envVar) {
 
 module.exports = {
   datastore: {
+    credentials: env('FOXY_DATASTORE_CREDENTIALS'),
     error: {
       insufficientInventory: env('FOXY_ERROR_INSUFFICIENT_INVENTORY') || env('FX_ERROR_INSUFFICIENT_INVENTORY'),
       priceMismatch: env('FOXY_ERROR_PRICE_MISMATCH') || env('FX_ERROR_PRICE_MISMATCH')
