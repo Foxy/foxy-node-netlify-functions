@@ -1,18 +1,16 @@
 require("dotenv").config();
+const config = require("../../config.js");
 const fetch = require("node-fetch");
-const { URLSearchParams } = require("url");
 
+const { URLSearchParams } = require("url");
 const { FoxyApi } = require("@foxy.io/node-api");
+
 const foxy = new FoxyApi();
 const store = foxy.follow("fx:store");
 
-const idevApiUrl = process.env.FOXY_IDEV_API_URL ? process.env.FOXY_IDEV_API_URL : "";
-const idevSecretKey = process.env.FOXY_IDEV_SECRET_KEY
-  ? process.env.FOXY_IDEV_SECRET_KEY
-  : "";
-const foxyWebhookEncryptionKey = process.env.FOXY_WEBHOOK_ENCRYPTION_KEY
-  ? process.env.FOXY_WEBHOOK_ENCRYPTION_KEY
-  : "";
+const idevApiUrl = config.idevAffiliate.apiUrl || "";
+const idevSecretKey = config.idevAffiliate.secretKey || "";
+const foxyWebhookEncryptionKey = config.foxy.webhook.encryptionKey || "";
 
 const getAffiliateIdFromProduct = (productCode) => {
   if (productCode.match(/\-a(\d+)$/i)) {
@@ -68,7 +66,7 @@ exports.handler = async (event, context) => {
   const foxyWebhookIsVerified = FoxyApi.webhook.verify({
     signature: event.headers["foxy-webhook-signature"],
     payload: event.body,
-    key: process.env.FOXY_WEBHOOK_ENCRYPTION_KEY,
+    key: config.foxy.webhook.encryptionKey,
   });
 
   // Parse the body

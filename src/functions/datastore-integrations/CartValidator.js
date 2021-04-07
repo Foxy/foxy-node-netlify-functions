@@ -1,4 +1,4 @@
-
+const config = require('../../../config.js');
 
 
 /**
@@ -10,7 +10,6 @@
  * @property {string|undefined} parent_code the code of the parent product if
  *  it exists.
  */
-
 
 
 class CartValidator {
@@ -28,13 +27,18 @@ class CartValidator {
     this.skipCodes.price.push(code);
   }
 
-  pairItems(cartItems, canonicalItems) {
-    return cartItems.map(cartI => [cartI, canonicalItems.find(c => c.code === cartI.code)]);
+  skipFromEnv(pricesEnvVar, codesEnvVar) {
+    (config.datastore.skipCode.price || '').split(',').forEach(this.skipPrice.bind(this));
+    (config.datastore.skipCode.inventory || '').split(',').forEach(this.skipPrice.bind(this));
   }
 
   /**
    * Validates a cartItem has the correct inventory according to a canonical
    * item.
+   *
+   * @param {Object} cartItem to be validated against a canonical item.
+   * @param {CanonicalItem} canonicalItem to validate the cartItem.
+   * @returns {boolean} price is valid.
    *
    */
   validPrice(cartItem, canonicalItem) {

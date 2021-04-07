@@ -4,23 +4,6 @@ const { expect } = require("chai");
 
 describe("Cart Validator", function() {
 
-  it("Should be able to create pairs of items", function () {
-    const cartItems = [{code: 1234}, {code: 'foo'}, {code: 'bar'}];
-    const canoItems = [
-      {code: 'foo', type: 'canonical'},
-      {code: 134, type: 'canonical'},
-      {code: 'oo', type: 'canonical'},
-      {code: 'bar', type: 'canonical'},
-      {code: 1234, type: 'canonical'},
-      {code: 'ar', type: 'canonical'},
-    ];
-    const cartValidator = new CartValidator();
-    const pairs = cartValidator.pairItems(cartItems, canoItems);
-    expect(pairs.length).to.equal(3);
-    expect(pairs.every(p => p[1].type === 'canonical')).to.be.true;
-    expect(pairs.every(p => p[0].type === undefined)).to.be.true;
-  });
-
   describe("Validate prices", function() {
     let cartValidator;
 

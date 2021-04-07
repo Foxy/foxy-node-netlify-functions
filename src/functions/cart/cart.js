@@ -1,4 +1,5 @@
 require("dotenv").config();
+const config = require('../../config.js');
 const traverse = require("traverse");
 
 const { FoxyApi } = require("@foxy.io/node-api");
@@ -14,15 +15,23 @@ let store;
 
 /**
  * Validate configuration requirements
+ *
+ * @returns {boolean} the configuration is valid
  */
 function validateConfig() {
   return (
-    process.env.FOXY_API_CLIENT_ID &&
-    process.env.FOXY_API_CLIENT_SECRET &&
-    process.env.FOXY_API_REFRESH_TOKEN
+    config.foxy.api.clientId &&
+    config.foxy.api.clientSecret &&
+    config.foxy.api.refreshToken
   );
 }
 
+/**
+ * Validate the cart has the propper attributes.
+ *
+ * @param {Object} cart to be validated.
+ * @returns {boolean} the cart attributes are valid.
+ */
 function validateCart(cart) {
   if (!cart) return false;
   if (!cart._embedded || !Array.isArray(cart._embedded["fx:items"])) {
@@ -43,9 +52,7 @@ function setup() {
 
 /** Functions and Variables */
 /** Default values */
-const defaultSubFrequency = process.env.FOXY_DEFAULT_AUTOSHIP_FREQUENCY
-  ? process.env.FOXY_DEFAULT_AUTOSHIP_FREQUENCY
-  : "1m";
+const defaultSubFrequency = config.default.autoshipFrequency || "1m";
 
 /**
  * Retrieves a `cart` resource by ID.
@@ -71,20 +78,22 @@ const getCart = async (id) => {
 
 /**
  * Updates the cart and its contents
+ *
  * @param {number} id
  * @param {Object} cart
+ * @returns {Promise}
  */
 const patchCart = async (id, cart) => {
   return foxy
     .fetchRaw({
-      url: cart._links.self.href,
+      body: cart,
       method: "PATCH",
+      url: cart._links.self.href,
       zoom: [
         "items",
         "items:item_options",
         "items:item_options:discount_details",
       ],
-      body: cart,
     })
     .catch((e) => {
       return Promise.reject("Patching cart failed.");

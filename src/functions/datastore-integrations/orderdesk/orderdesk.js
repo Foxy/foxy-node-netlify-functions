@@ -1,5 +1,6 @@
-const prepaymentWebhook = require('../../foxy/prepaymentWebhook.js');
-const OrderDeskClient = require('./orderdeskClient.js');
+const FoxyClient = require('../../../foxy/pre-payment-webhook.js');
+const webhook = require('./webhook.js');
+const config = require("../../../../config.js");
 
 /**
  * @callback requestCallback
@@ -12,25 +13,34 @@ const OrderDeskClient = require('./orderdeskClient.js');
  * @param {Object} requestEvent the event built by Netlify upon receiving the request.
  * @returns {Promise<{statusCode: number, body: string}>} the response object
  */
-function handleRequest(requestEvent) {
+async function handleRequest(requestEvent) {
   // Validation
   if (!validation.configuration.validate()) {
     return validation.configuration.response();
   }
-  if (!validation.input.validate(requestEvent)) {
-    return validation.input.response();
+  const inputError = validation.input.getError(requestEvent); 
+  if (inputError) {
+    return validation.input.response(inputError);
   }
-  const foxyItems = prepaymentWebhook.getItems(requestEvent.body);
-  const odClient = getOrderDeskClient();
-  const codes = foxyItems.map(i => i.code);
-  const orderDeskItems = odClient.fetchInventoryItems(codes);
+  const foxyEvent = requestEvent.headers['foxy-webhook-event'];
+  let response;
+  switch (foxyEvent) {
+    case 'validation/payment':
+      response = webhook.prePayment(requestEvent.body);
+      break;
+    case 'transaction/created':
+      response = webhook.transactionCreated(requestEvent.body);
+      break;
+    default:
+      response = BadRequest;
+  }
+  return response;
 }
 
-function getOrderDeskClient() {
-  return new OrderDeskClient(
-    process.env["ORDERDESK_API_KEY"],
-    process.env["ORDERDESK_STORE_ID"]
-  );
+function validSignature(req, key = config.foxy.webhook.encryptionKey) {
+  const payload = req.body;
+  const signature = req.headers['Foxy-Webhook-Signature'];
+  return FoxyClient.verifyWebhookSignature(payload, signature, key);
 }
 
 /**
@@ -44,24 +54,44 @@ function getOrderDeskClient() {
 // @type {Object<string, Validation>}
 const validation = {
   configuration: {
-    response: () => ({
-      body: prepaymentWebhook.buildResponseBody(
-        false,
-        "Service Unavailable. Check the webhook error logs."
-      ),
-      statusCode: 503
-    }),
+    response: () => webhook.response(
+      "Service Unavailable. Check the webhook error logs.",
+      503
+    )
+    ,
     validate: () => {
-      if (!process.env.ORDERDESK_STORE_ID) {
-        console.error("ORDERDESK_STORE_ID is not configured");
+      const credentials = config.datastore.provider.orderDesk;
+      if (!credentials.storeId) {
+        console.error("FOXY_ORDERDESK_STORE_ID is not configured");
       }
-      if (!process.env.ORDERDESK_API_KEY) {
-        console.error("ORDERDESK_API_KEY is not configured");
+      if (!credentials.apiKey) {
+        console.error("FOXY_ORDERDESK_API_KEY is not configured");
       }
-      return process.env.ORDERDESK_STORE_ID &&
-        process.env.ORDERDESK_API_KEY 
+      return credentials.storeId && credentials.apiKey
+    },
+  },
+  input: {
+    errorMessage: "Bad Request",
+    response: (message) => webhook.response(message, 400),
+    getError: (requestEvent) => {
+      let err = false;
+      if (!requestEvent) {
+        err = 'Request Event does not Exist';
+      } else if (!requestEvent.httpMethod || requestEvent.httpMethod !== 'POST') {
+        err = 'Method Not Allowed';
+      } else if (!requestEvent.headers) {
+        err = 'Invalid request headers';
+      } else if (
+        !validSignature(requestEvent)
+      ) {
+        err = 'Forbidden';
+      }
+      return err;
     },
   }
+
 };
+
+const BadRequest = webhook.response('Bad Request', 400);
 
 exports.handler = handleRequest;

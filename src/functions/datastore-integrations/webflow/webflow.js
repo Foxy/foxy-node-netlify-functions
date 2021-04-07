@@ -1,4 +1,5 @@
 const Webflow = require("webflow-api");
+const config = require("../../../../config.js");
 
 let weblowApi;
 
@@ -10,13 +11,13 @@ let weblowApi;
 function customOptions() {
   return {
     fields: {
-      code: process.env['FOXY_FIELD_CODE'] || 'code',
-      inventory: process.env['FOXY_FIELD_INVENTORY'] || 'inventory',
-      price: process.env['FOXY_FIELD_PRICE'] || 'price'
+      code: config.datastore.field.code || 'code',
+      inventory: config.datastore.field.inventory || 'inventory',
+      price: config.datastore.field.price || 'price'
     },
     skip: {
-      inventory: (process.env['FOXY_SKIP_INVENTORY_CODES'] || '').split(',').map(e => e.trim()).filter(e => !!e) || [],
-      price: (process.env['FOXY_SKIP_PRICE_CODES'] || '').split(',').map(e => e.trim()).filter(e => !!e) || [],
+      inventory: (config.datastore.skipCode.inventory || '').split(',').map(e => e.trim()).filter(e => !!e) || [],
+      price: (config.datastore.skipCode.price || '').split(',').map(e => e.trim()).filter(e => !!e) || [],
     },
     webflow: {
       limit: 100,
@@ -31,9 +32,9 @@ function customOptions() {
  */
 function getMessages() {
   return {
-    insufficientInventory: process.env['FOXY_ERROR_INSUFFICIENT_INVENTORY'] ||
+    insufficientInventory: config.datastore.error.insufficientInventory ||
       'Insufficient inventory for these items:',
-    priceMismatch: process.env['FOXY_ERROR_PRICE_MISMATCH'] || 
+    priceMismatch: config.datastore.error.priceMismatch ||
       'Prices do not match.',
   }
 }
@@ -228,7 +229,7 @@ const validation = {
       body: JSON.stringify({ details: 'Webflow token not configured.', ok: false }),
       statusCode: 503,
     }),
-    validate: () => !!process.env.FOXY_WEBFLOW_TOKEN,
+    validate: () => !!config.datastore.provider.webflow.token,
   },
   input: {
     response: () => ({
@@ -315,7 +316,7 @@ function sufficientInventory(comparable) {
  * @returns {string} the FOXY_WEBFLOW_TOKEN
  */
 function getToken() {
-  return process.env.FOXY_WEBFLOW_TOKEN;
+  return config.datastore.provider.webflow.token;
 }
 
 /**
