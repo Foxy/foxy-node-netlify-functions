@@ -1,5 +1,5 @@
 const FoxyClient = require('../../foxy/FoxyWebhook.js');
-const webhook = require('../datastore-integrations/orderdesk/webhook.js');
+const webhook = require('./webhook.js');
 const config = require("../../../config.js");
 
 /**
