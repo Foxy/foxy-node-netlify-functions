@@ -1,4 +1,4 @@
-const config = require('../../../config.js');
+const config = require('../../config.js');
 
 
 /**
@@ -59,7 +59,7 @@ class CartValidator {
   /**
    * Validates a cartItem has the correct price according to a canonical item.
    *
-   * @param {import('../../foxy/FoxyWebhook.js').PrepaymentItem} cartItem the cart item to be validated.
+   * @param {import('./FoxyWebhook.js').PrepaymentItem} cartItem the cart item to be validated.
    * @param {CanonicalItem} canonicalItem the canonical against which the cart
    * item will be validated.
    * @returns {boolean} the inventory is sufficient for this purchase.

@@ -1,4 +1,5 @@
-const DataStoreBase = require('../datastore-integrations/DataStoreBase.js');
+const DataStoreBase = require('../../foxy/DataStoreBase.js');
+const config = require('../../../config.js');
 
 /**
  * @typedef {Object} OrderDeskItem
@@ -20,20 +21,11 @@ const DataStoreBase = require('../datastore-integrations/DataStoreBase.js');
 
 class DataStore extends DataStoreBase {
 
-  /**
-   *
-   * @class
-   * @param {string} id OrderDesk id
-   * @param {string} apiKey from OrderDesk
-   */
-  constructor(id, apiKey) {
+  constructor() {
     super();
     this.domain = "app.orderdesk.me";
     this.api = "api/v2/";
-    this.credentials = {
-      id,
-      key: apiKey
-    }
+    this.setCredentials();
   }
 
   /**
@@ -52,14 +44,31 @@ class DataStore extends DataStoreBase {
   /**
    * @inheritdoc
    */
-  setCredentials(credentials) {
+  setCredentials() {
+    const credentials = this.parseConfigCredentials(config);
     if (!credentials.key || !credentials.id) {
-      throw new Error("Provide Orderdesk API Key and Store id as the key and id attributes of the credentials object.");
+      throw new Error("Environment variables for OrderDesk store id and/or API key are missing.");
     }
-    this.credentials = {
-      id: credentials.id,
-      key: credentials.key
-    };
+    this.credentials = credentials;
+  }
+
+  parseConfigCredentials(config) {
+    const rawCredentials = config.datastore.credentials;
+    let matched;
+    if (rawCredentials) {
+      matched = rawCredentials.match(/Store ID (\d{5}) API Key ([A-Za-z0-9]+)$/);
+    }
+    if (matched && matched.length === 3) {
+      return {
+        id: matched[1],
+        key: matched[2]
+      }
+    } else {
+      return {
+        id: config.datastore.provider.orderDesk.storeId,
+        key: config.datastore.provider.orderDesk.apiKey
+      }
+    }
   }
 
   /**
