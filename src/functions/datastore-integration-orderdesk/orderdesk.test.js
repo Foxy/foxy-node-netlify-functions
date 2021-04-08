@@ -8,12 +8,32 @@ const odHandler = rewire("./orderdesk.js");
 const config = odHandler.__get__('config');
 
 describe("Order Desk Pre-payment Webhook", function() {
-  before(
+  beforeEach(
     function () {
       config.datastore.provider.orderDesk.storeId = 'foo';
       config.datastore.provider.orderDesk.apiKey =  'bar';
+      config.foxy.webhook.encryptionKey =  'key';
     }
   );
+
+
+  describe("Orderdesk webhook configuration.", function() {
+    describe ("Should warn about configuration errors", function () {
+      const cases = [
+        ["Orderdesk store id", () => config.datastore.provider.orderDesk.storeId = undefined],
+        ["Orderdesk API key", () => config.datastore.provider.orderDesk.apiKey = undefined],
+        ["Foxy encryption key", () => config.foxy.webhook.encryptionKey = undefined],
+      ];
+      for (let c of cases) {
+        it(`Warns about ${c[0]}`, async function() {
+          c[1]();
+          const response = await odHandler.handler();
+          expect(response.statusCode).to.equal(503);
+          expect(JSON.parse(response.body).details).to.match(/Service Unavailable/);
+        });
+      }
+    });
+  });
 
   it ("Should return a Foxy Prepayment Webhook Response", async function () {
     const responsePromise = odHandler.handler();
