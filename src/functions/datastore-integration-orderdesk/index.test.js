@@ -4,7 +4,7 @@ const {expect} = require("chai");
 const crypto = require("crypto");
 const rewire = require("rewire");
 
-const odHandler = rewire("./orderdesk.js");
+const odHandler = rewire("./index.js");
 const config = odHandler.__get__('config');
 
 describe("Order Desk Pre-payment Webhook", function() {
