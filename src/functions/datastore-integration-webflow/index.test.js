@@ -3,7 +3,7 @@ const sinon = require("sinon");
 const { expect } = require("chai");
 const { after, afterEach, before, beforeEach, describe, it } = require("mocha");
 
-const prePayment = rewire("./webflow");
+const prePayment = rewire("./index.js");
 const mockFoxyCart = require("./mock/foxyCart");
 const mockWebflow = require("./mock/webflow");
 const config = prePayment.__get__('config');
