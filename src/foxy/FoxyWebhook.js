@@ -68,7 +68,7 @@ const FoxySdk = require('@foxy.io/sdk');
  */
 function getItems(payload) {
   try {
-    return payload._embedded['fx:items'];
+    return payload._embedded['fx:items'] || [];
   } catch (e) {
     if (e.name == 'TypeError') {
       return [];
@@ -87,7 +87,7 @@ function getItems(payload) {
  */
 function response(details, code=200) {
   if (code !== 200 && (!details || details.match(/^\s*$/))) {
-    throw new Error("An error response need to specify details.");
+    throw new Error("An error response needs to specify details.");
   }
   return {
     body: JSON.stringify({
