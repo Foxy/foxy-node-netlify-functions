@@ -100,10 +100,10 @@ class DataStore extends DataStoreBase {
   /**
    * Update inventory items in OrderDesk
    *
-   * @param {Array<Object>} items to be updated
+   * @param {Array<OrderDeskItem>} items to be updated
    */
   async updateInventoryItems(items) {
-    const invalid = items.filter(!validateInventoryItem);
+    const invalid = items.filter((i) => !this.validateInventoryItem(i));
     if (invalid.length) {
       throw new Error("Invalid inventory items for update", invalid.join(','));
     }
@@ -115,13 +115,11 @@ class DataStore extends DataStoreBase {
     return response.json();
   }
 
-
-
   /**
    * Converts an order desk intem into a CartValidados Canonical Item.
    *
    * @param {OrderDeskItem} orderDeskItem to be converted to CanonicalItem
-   * @returns {import('../datastore-integrations/CartValidator.js').CanonicalItem} the resulting Canonical Item.
+   * @returns {import('../../foxy/CartValidator.js').CanonicalItem} the resulting Canonical Item.
    */
   convertToCanonical(orderDeskItem) {
     return {
@@ -133,11 +131,7 @@ class DataStore extends DataStoreBase {
   }
 
   validateInventoryItem(item) {
-    return item.id &&
-      item.name &&
-      item.code &&
-      (item.price || item.price === 0) &&
-      (item.stock || item.stock === 0)
+    return !!(item.id && item.name && item.code && (item.price || item.price === 0) && (item.stock || item.stock === 0));
   }
 
 }
