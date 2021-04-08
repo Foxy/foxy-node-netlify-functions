@@ -4,7 +4,8 @@ class MockOrderDesk {
   fetch(endpoint) {
     let data = {};
     const Router = [
-      [/inventory-items/, items]
+      [/inventory-items/, items],
+      [/batch-inventory-items/, items]
     ]
     for (let route of Router) {
       if (endpoint.match(route[0])) {
