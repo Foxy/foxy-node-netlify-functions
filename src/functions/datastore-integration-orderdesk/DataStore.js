@@ -28,7 +28,7 @@ class DataStore extends DataStoreBase {
     this.setCredentials();
   }
 
-  /**
+  /**:
    * Creates the header needed to issue requests to OrderDesk.
    *
    * @returns {Object} default header

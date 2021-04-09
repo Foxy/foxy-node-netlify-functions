@@ -48,6 +48,17 @@ describe("Order Desk Pre-payment Webhook", function() {
 
   describe("Validates Foxy Requests", async function () {
 
+    it("Should reject requests with the wrong method", async function() {
+      const valid = validRequest();
+      const cases = ['GET', 'PUT', 'DELETE', 'PATCH'];
+      for (let c of cases) {
+        valid.httpMethod = c;
+        const response = await odHandler.handler(valid);
+        expect(response.statusCode).to.equal(400);
+        expect(JSON.parse(response.body).details).to.equal('Method not allowed');
+      }
+    });
+
     it("Should reject invalid Foxy Requests", async function () {
       config.foxy.webhook.encryptionKey = 'foo';
       const responsePromise = odHandler.handler({

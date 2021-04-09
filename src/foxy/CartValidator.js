@@ -52,7 +52,7 @@ class CartValidator {
    */
   validPrice(cartItem, canonicalItem) {
     return this.skipCodes.price.includes(cartItem.code) ||
-      canonicalItem.price === undefined ||
+      !canonicalItem.price ||
       parseFloat(cartItem.price) === parseFloat(canonicalItem.price);
   }
 
@@ -66,6 +66,7 @@ class CartValidator {
    */
   validInventory(cartItem, canonicalItem) {
     return this.skipCodes.inventory.includes(cartItem.code) ||
+      !cartItem.quantity ||
       canonicalItem.inventory === undefined ||
       Number(cartItem.quantity) <= Number(canonicalItem.inventory);
   }

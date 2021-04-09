@@ -85,9 +85,7 @@ const validation = {
       if (!requestEvent) {
         err = 'Request Event does not Exist';
       } else if (!requestEvent.httpMethod || requestEvent.httpMethod !== 'POST') {
-        err = 'Method Not Allowed';
-      } else if (!requestEvent.headers) {
-        err = 'Invalid request headers';
+        err = 'Method not allowed';
       } else if (
         !validSignature(requestEvent)
       ) {

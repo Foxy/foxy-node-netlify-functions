@@ -70,29 +70,25 @@ function getItems(payload) {
   try {
     return payload._embedded['fx:items'] || [];
   } catch (e) {
-    if (e.name == 'TypeError') {
-      return [];
-    } else {
-      throw e;
-    }
+    return [];
   }
 }
 
 /**
  * Builds a response as expected by the prepayment webhook.
  *
- * @param {boolean} ok whether the request was successful
  * @param {string} details about the error, if it happened.
+ * @param {number} code the HTTP status code
  * @returns {string} a string to be used as the body of the response.
  */
-function response(details, code=200) {
+function response(details="", code=200) {
   if (code !== 200 && (!details || details.match(/^\s*$/))) {
     throw new Error("An error response needs to specify details.");
   }
   return {
     body: JSON.stringify({
       details: details || "",
-      ok: (code >= 200 && code <300),
+      ok: details === ""
     }),
     statusCode: code
   }

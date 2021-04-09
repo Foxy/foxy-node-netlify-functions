@@ -10,7 +10,7 @@ const config = require("../../../config.js");
  *
  * https://wiki.foxycart.com/v/2.0/pre_payment_webhook
  *
- * @params {Object} body
+ * @params {string} body of the request received from Foxy
  */
 async function prePayment(body) {
   const datastore = getDataStore();
@@ -31,10 +31,7 @@ async function prePayment(body) {
     invalidInventory.map(p => `${p[1].name}: only ${p[1].inventory} available`).join(';')
   }` : ""
   if (invalidInventory.length || invalidPrice.length) {
-    return {
-      details: [inventoryDetail, priceDetail].filter(m => m.length > 0).join('\n'),
-      ok: false,
-    }
+    return response([inventoryDetail, priceDetail].filter(m => m.length > 0).join('\n'));
   } else {
     return response();
   }
