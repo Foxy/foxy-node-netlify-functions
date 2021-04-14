@@ -1,5 +1,6 @@
 const DataStoreBase = require('../../foxy/DataStoreBase.js');
 const config = require('../../../config.js');
+const fetch = require('node-fetch');
 
 /**
  * @typedef {Object} OrderDeskItem
