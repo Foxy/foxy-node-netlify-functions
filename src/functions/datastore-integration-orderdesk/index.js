@@ -42,9 +42,15 @@ async function handleRequest(requestEvent) {
  * @param req
  */
 function validSignature(req) {
+  const foxyEvent = req.headers['foxy-webhook-event'];
+  const signature = req.headers['foxy-webhook-signature'];
+  if (foxyEvent === 'validation/payment') {
+    if (!signature) {
+      return true;
+    }
+  }
   const key = config.foxy.webhook.encryptionKey;
   const payload = req.body;
-  const signature = req.headers['foxy-webhook-signature'];
   return FoxyClient.verifyWebhookSignature(payload, signature, key);
 }
 
