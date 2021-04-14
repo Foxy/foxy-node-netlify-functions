@@ -24,12 +24,13 @@ async function handleRequest(requestEvent) {
   }
   const foxyEvent = requestEvent.headers['foxy-webhook-event'];
   let response;
+  const body = JSON.parse(requestEvent.body);
   switch (foxyEvent) {
     case 'validation/payment':
-      response = webhook.prePayment(requestEvent.body);
+      response = webhook.prePayment(body);
       break;
     case 'transaction/created':
-      response = webhook.transactionCreated(requestEvent.body);
+      response = webhook.transactionCreated(body);
       break;
     default:
       response = BadRequest;
@@ -86,6 +87,8 @@ const validation = {
         err = 'Request Event does not Exist';
       } else if (!requestEvent.httpMethod || requestEvent.httpMethod !== 'POST') {
         err = 'Method not allowed';
+      } else if (requestEvent.headers['content-type'] !== 'application/json') {
+        err = 'Content type should be application/json';
       } else if (
         !validSignature(requestEvent)
       ) {
