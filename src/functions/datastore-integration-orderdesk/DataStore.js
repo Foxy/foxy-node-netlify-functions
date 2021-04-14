@@ -119,15 +119,16 @@ class DataStore extends DataStoreBase {
   /**
    * Converts an order desk intem into a CartValidados Canonical Item.
    *
+   * Does not change any field that does not need to be changed.
+   * For OrderDesk, simply create an inventory field which is equal to stock.
+   *
    * @param {OrderDeskItem} orderDeskItem to be converted to CanonicalItem
    * @returns {import('../../foxy/CartValidator.js').CanonicalItem} the resulting Canonical Item.
    */
   convertToCanonical(orderDeskItem) {
-    return {
-      name: orderDeskItem.name,
-      price: orderDeskItem.price,
+    return {...orderDeskItem,
+      update_source: 'Foxy-Orderdesk-Webhook',
       inventory: orderDeskItem.stock,
-      code: orderDeskItem.code
     }
   }
 
