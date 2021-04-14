@@ -44,7 +44,7 @@ async function handleRequest(requestEvent) {
 function validSignature(req) {
   const key = config.foxy.webhook.encryptionKey;
   const payload = req.body;
-  const signature = req.headers['Foxy-Webhook-Signature'];
+  const signature = req.headers['foxy-webhook-signature'];
   return FoxyClient.verifyWebhookSignature(payload, signature, key);
 }
 
