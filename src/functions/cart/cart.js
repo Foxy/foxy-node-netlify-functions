@@ -1,5 +1,5 @@
 require("dotenv").config();
-const config = require('../../config.js');
+const config = require('../../../config.js');
 const traverse = require("traverse");
 
 const { FoxyApi } = require("@foxy.io/node-api");

@@ -1,5 +1,5 @@
 require("dotenv").config();
-const config = require("../../config.js");
+const config = require("../../../config.js");
 const fetch = require("node-fetch");
 
 const { URLSearchParams } = require("url");
