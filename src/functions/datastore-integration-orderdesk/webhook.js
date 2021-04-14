@@ -39,11 +39,11 @@ async function prePayment(body) {
 
 async function transactionCreated(body) {
   const datastore = getDataStore();
-  const pairs = buildPairs(body, FoxyWebhook, datastore);
+  const pairs = await buildPairs(body, FoxyWebhook, datastore);
   const updated = pairs.map(p => ({...p[1],
-     stock: p[1].stock - p[0].quantity,
+    stock: Number(p[1].inventory) - Number(p[0].quantity), // Notice that OrderDesk inventory field is "stock"
   }));
-  const result = datastore.updateInventoryItems(updated);
+  const result = await datastore.updateInventoryItems(updated);
   if (result.status === 'success') {
     return response();
   } else {
@@ -62,7 +62,7 @@ async function transactionCreated(body) {
  * @returns {Array<Array<Object,Object>>} Array of paired cart and canonical items.
  */
 async function buildPairs(body, foxyWebhook, datastore) {
-  const cartItems = foxyWebhook.getItems(body, datastore);
+  const cartItems = foxyWebhook.getItems(body);
   let canonicalItems = await datastore.fetchInventoryItems(cartItems.map(i => i.code));
   canonicalItems = canonicalItems.map(datastore.convertToCanonical.bind(datastore));
   return codePairs(cartItems, canonicalItems);

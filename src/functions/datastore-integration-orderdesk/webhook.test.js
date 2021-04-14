@@ -18,11 +18,18 @@ webhook.__set__('FoxyWebhook', MockFoxyWebhook);
 
 const MockDatastore = {
   item: {},
+  updateResponse: {
+    status: 'success'
+  }, 
   differences: [],
   fetchInventoryItems:  async function() {
     return [arbitraryCanonicalItem(
       this.item, this.differences
     )]
+  },
+  updateInventoryItems: async function(i) {
+    this.item = i[0];
+    return this.updateResponse;
   },
   convertToCanonical: (i) => i
 }
@@ -179,12 +186,27 @@ describe("Pre-payment Webhook", function() {
 
 describe("Transaction Created Webhook", function() {
   describe("Updates the datastore", function() {
-    it("Deduces the quantity from the inventory.");
+    it("Deduces the quantity from the inventory.", async function () {
+      resetMocks();
+      let result = await webhook.transactionCreated('foo');
+      expect(MockDatastore.item.stock).to.equal(0);
+      resetMocks();
+      MockDatastore.item.inventory = 5;
+      MockFoxyWebhook.item.quantity = 3;
+      result = await webhook.transactionCreated('foo');
+      expect(MockDatastore.item.stock).to.equal(2);
+    });
     it("Sets Foxy.io OrderDesk Webhook as the update method");
   });
 
   describe("Responds useful messages", function() {
-    it("Informs Foxy.io that the update was not successful.");
+    it("Informs Foxy.io that the update was not successful.", async function () {
+      const prevResponse = MockDatastore.updateResponse;
+      MockDatastore.updateResponse = {
+        status: 'fail'
+      };
+      let result = await webhook.transactionCreated('foo');
+    });
   });
 
 });
