@@ -69,6 +69,9 @@ async function transactionCreated(body) {
  */
 async function buildPairs(body, foxyWebhook, datastore) {
   const cartItems = foxyWebhook.getItems(body);
+  if (!cartItems || !cartItems.length) {
+    return [];
+  }
   let canonicalItems = await datastore.fetchInventoryItems(cartItems.map(i => i.code));
   canonicalItems = canonicalItems.map(datastore.convertToCanonical.bind(datastore));
   return codePairs(cartItems, canonicalItems);
