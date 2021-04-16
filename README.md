@@ -18,6 +18,20 @@ Be sure to check the README for each function in the functions folder.
 Data store integrations allow you to verify the cart against a third-party Data
 Store.
 
+Your customer workflow is basically unchanged.
+
+The workflow bellow shows in gray steps that are invisible to your customers.
+Notice that upon cart submit the pre-payment validation is triggered. It is get
+the inventory and price information from your data store (Webflow and OrderDesk
+are available) and check if the cart is valid.
+
+![Data Store Integration workflow](/images/datastore-integration-workflow.png)
+
+- You may choose not to validate prices at all or for specific items.
+- You may choose not to validate the inventory
+- Depending on your data store, you may have other configuration available.
+
+
 ## Available DataStores
 
 - OrderDesk
@@ -40,7 +54,6 @@ price will be checked. If it is in the past, the price is not checked.
   may break against large product databases if the Datastore do not allow for
   requesting specific items directly. Check the README for your datastore
   integration about this issue.
-
 
 ## Usage
 
