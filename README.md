@@ -25,7 +25,7 @@ Notice that upon cart submit the pre-payment validation is triggered. It is get
 the inventory and price information from your data store (Webflow and OrderDesk
 are available) and check if the cart is valid.
 
-![Data Store Integration workflow](/images/datastore-integration-workflow.png)
+![Data Store Integration workflow](https://github.com/Foxy/foxy-node-netlify-functions/blob/feat/datastore-orderdesk/images/datastore-integrations-workflow.png?raw=true)
 
 - You may choose not to validate prices at all or for specific items.
 - You may choose not to validate the inventory
