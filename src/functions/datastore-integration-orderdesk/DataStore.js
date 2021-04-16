@@ -117,48 +117,6 @@ class DataStore extends DataStoreBase {
   }
 
   /**
-   * Creates an order in OrderDesk
-   *
-   */
-  async createOrder(body) {
-    const fxCustomer = body._embedded['fx:customer'];
-    const fxShipment = body._embedded['fx:shipments']? body._embedded['fx:shipments'][0] : {};
-    const fxPayment = body._embedded['fx:payments']? body._embedded['fx:payments'][0]: {};
-    const fxItems = body._embedded['fx:items'];
-    const customer = {
-      first_name: fxCustomer.first_name,
-      last_name: fxCustomer.last_name,
-    };
-    const shipping = {...fxShipment};
-    delete shipping._links;
-
-    const order = {}
-    order.id = body.id;
-    order.email = body.customer_email;
-    order.customer = customer;
-    order.shipping = shipping;
-    order.source_name = 'Foxy.io';
-    order.customer_id = fxCustomer.id;
-    order.product_total = body.total_item_price;
-    order.shipping_total = body.total_shipping;
-    order.tax_total = body.total_tax;
-    order.discount_total = body.total_discount;
-    order.order_total = body.total_order;
-    order.cc_number_masked = fxPayment.cc_number_masked;
-    order.cc_exp = `${fxPayment.cc_exp_month}/${fxPayment.cc_exp_year}`;
-    order.processor_response = fxPayment.processor_response;
-    order.payment_sattus = order.status;
-    order.payment_type = fxPayment.cc_type;
-    order.order_items = fxItems;
-    const response = await fetch(this.buildEndpoint('orders'), {
-      body: JSON.stringify(order),
-      headers: this.getDefaultHeader(),
-      method: 'POST'
-    });
-    return response.json();
-  }
-
-  /**
    * Converts an order desk intem into a CartValidados Canonical Item.
    *
    * Does not change any field that does not need to be changed.
