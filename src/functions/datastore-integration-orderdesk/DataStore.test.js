@@ -162,7 +162,7 @@ describe("OrderDesk Datastore", function() {
             id:1,
             name: 'foo',
             price: 1,
-            stock: 1
+            stock: 1,
           })).to.be.true;
     });
 
@@ -171,9 +171,9 @@ describe("OrderDesk Datastore", function() {
   it ("Should convert order desk items to canonical items", function () {
     const odClient = new DataStore();
     const cases = [
-      [{}, {name: undefined, price: undefined, inventory: undefined, code: undefined}],
-      [{name: 'foo', price: 0, stock: 1, code: '1'}, {name: 'foo', price: 0, inventory: 1, code: '1'}],
-      [{price: 0, code: '1'}, {name: undefined, price: 0, inventory: undefined, code: '1'}],
+      [{}, {name: undefined, price: undefined, inventory: undefined, code: undefined, update_source: 'Foxy-OrderDesk-Webhook'}],
+      [{name: 'foo', price: 0, stock: 1, code: '1'}, {name: 'foo', price: 0, inventory: 1, code: '1', update_source: 'Foxy-OrderDesk-Webhook'}],
+      [{price: 0, code: '1'}, {name: undefined, price: 0, inventory: undefined, code: '1', update_source: 'Foxy-OrderDesk-Webhook'}],
     ];
     for (let c of cases) {
       expect(odClient.convertToCanonical(c[0]))

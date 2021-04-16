@@ -168,10 +168,16 @@ class DataStore extends DataStoreBase {
    * @returns {import('../../foxy/CartValidator.js').CanonicalItem} the resulting Canonical Item.
    */
   convertToCanonical(orderDeskItem) {
-    return {...orderDeskItem,
-      update_source: 'Foxy-Orderdesk-Webhook',
+    const result = {
+      code: undefined, 
+      name: undefined,
+      price: undefined,
+      ...orderDeskItem, // Overwrite fields
+      update_source: 'Foxy-OrderDesk-Webhook',
       inventory: orderDeskItem.stock,
     }
+    delete result.stock;
+    return result;
   }
 
   validateInventoryItem(item) {
