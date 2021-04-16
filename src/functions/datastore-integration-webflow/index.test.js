@@ -1,7 +1,7 @@
 const rewire = require("rewire");
 const sinon = require("sinon");
 const { expect } = require("chai");
-const { after, afterEach, before, beforeEach, describe, it } = require("mocha");
+const { afterEach, beforeEach, describe, it } = require("mocha");
 
 const prePayment = rewire("./index.js");
 const mockFoxyCart = require("./mock/foxyCart");
@@ -291,9 +291,6 @@ describe("Verifies the price of an item in a Webflow collection", () => {
       expect(body).to.exist;
       expect(body.ok).to.equal(false);
       expect(body.details).to.contain("Invalid items");
-      const matchedError = log.getCalls().find(c => c.args[2]);
-      expect(matchedError).to.exist;
-      expect(matchedError.args[2]).to.match(regex);
     }
   });
 

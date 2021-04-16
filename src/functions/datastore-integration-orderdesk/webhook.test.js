@@ -188,12 +188,12 @@ describe("Transaction Created Webhook", function() {
   describe("Updates the datastore", function() {
     it("Deduces the quantity from the inventory.", async function () {
       resetMocks();
-      let result = await webhook.transactionCreated('foo');
+      await webhook.transactionCreated('foo');
       expect(MockDatastore.item.stock).to.equal(0);
       resetMocks();
       MockDatastore.item.inventory = 5;
       MockFoxyWebhook.item.quantity = 3;
-      result = await webhook.transactionCreated('foo');
+      await webhook.transactionCreated('foo');
       expect(MockDatastore.item.stock).to.equal(2);
     });
     it("Sets Foxy.io OrderDesk Webhook as the update method");

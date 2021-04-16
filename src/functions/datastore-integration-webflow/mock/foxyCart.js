@@ -1,5 +1,6 @@
 function randomString() {
-  return Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
+  return Math.random().toString(36)
+    .replace(/[^a-z]+/g, '').substr(0, 5);
 }
 
 function basicRequest(itemBuilder, qty = 10) {
@@ -96,18 +97,11 @@ function foxyRequest(changes, itemBuilder = basicItem) {
 }
 
 exports.itemBuilders = {
-  basicItem,
   subscriptionItem,
 };
 
 exports.basic = function () {
   return basicRequest(basicItem);
-};
-
-exports.subscription = function () {
-  return basicRequest(
-    () => basicSubscription(basicItem()),
-  );
 };
 
 exports.longCollection = function () {
