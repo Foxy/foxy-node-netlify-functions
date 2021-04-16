@@ -37,6 +37,12 @@ async function prePayment(body) {
   }
 }
 
+/**
+ * Process a transaction/created Foxy Webhook.
+ *
+ * @param {Object} body the parsed body of the Foxy request.
+ * @returns {}
+ */
 async function transactionCreated(body) {
   const datastore = getDataStore();
   const pairs = await buildPairs(body, FoxyWebhook, datastore);

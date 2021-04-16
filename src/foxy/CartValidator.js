@@ -22,12 +22,17 @@ class CartValidator {
   /** 
    * Configure the Cart Validator to skip validating a code.
    *
-   * @param {string} code
+   * @param {string} code the code to be skipped during inventory validation.
    */
   skipInventory(code) {
     this.skipCodes.inventory.push(code);
   }
 
+  /**
+   * Configure the Cart Validator to skip validating a code.
+   *
+   * @param {string} code the code to be skipped during price validation.
+   */
   skipPrice(code) {
     this.skipCodes.price.push(code);
   }

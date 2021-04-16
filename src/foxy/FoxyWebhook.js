@@ -79,7 +79,7 @@ function getItems(payload) {
  *
  * @param {string} details about the error, if it happened.
  * @param {number} code the HTTP status code
- * @returns {string} a string to be used as the body of the response.
+ * @returns {{body: string, statusCode: number}} a string to be used as the body of the response.
  */
 function response(details="", code=200) {
   if (code !== 200 && (!details || details.match(/^\s*$/))) {

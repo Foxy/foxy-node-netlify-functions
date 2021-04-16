@@ -13,7 +13,10 @@ let injectedWebflow;
 const internalErrorMessage = "An internal error has occurred";
 
 /**
- * @param number
+ * Creates a function that, starting with a given number, increases 1 unit for each invocation.
+ *
+ * @param {number} number initial value
+ * @returns {Function} a function that returns a number that is one unit larger than the number returned in previous invocation.
  */
 function increaseFrom(number) {
   let count = number;
@@ -38,8 +41,8 @@ describe("Initialize and validate the webhook", () => {
 
   it("Only executes if there is a FOXY_WEBFLOW_TOKEN set", async () => {
     /**
-     * @param error
-     * @param response
+     * @param error the errors received.
+     * @param response the response received.
      */
     function noToken(error, response) {
       expect(JSON.parse(response.body).ok).to.equal(false);
