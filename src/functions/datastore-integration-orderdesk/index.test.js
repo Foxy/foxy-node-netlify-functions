@@ -64,6 +64,7 @@ describe("Order Desk Pre-payment Webhook", function() {
       const responsePromise = odHandler.handler({
         httpMethod: 'POST',
         headers: {
+          'content-type': 'application/json',
           'Foxy-Webhook-Signature': 'wrong'
         },
         body: '{"foo": "bar"}'
@@ -128,7 +129,8 @@ function validRequest(payload = null) {
   return {
         body: payload,
         headers: {
-          'Foxy-Webhook-Signature': foxySignature,
+          'content-type': 'application/json',
+          'foxy-webhook-signature': foxySignature,
           'foxy-webhook-event': 'validation/payment'
         },
         httpMethod: 'POST'
