@@ -1,7 +1,7 @@
 const Webflow = require("webflow-api");
 const config = require("../../../config.js");
 
-let weblowApi;
+let webflowApi;
 
 /**
  * Returns custom Options set as environment variables.
@@ -325,10 +325,10 @@ function getToken() {
  * @returns {Webflow} the webflow api object
  */
 function getWebflow() {
-  if (!weblowApi) {
-    weblowApi = new Webflow({ token: getToken() });
+  if (!webflowApi) {
+    webflowApi = new Webflow({ token: getToken() });
   }
-  return weblowApi;
+  return webflowApi;
 }
 
 /**
