@@ -97,6 +97,35 @@ function response(details="", code=200) {
 }
 
 /**
+ * Creates a details message about insufficient inventory.
+ *
+ * @param {Array} pairs with insufficient inventory.
+ * @returns {string} a configurable message.
+ */
+function messageInsufficientInventory(pairs) {
+  if (!pairs.length) return '';
+  const message = config.datastore.error.insufficientInventory ||
+    'Insufficient inventory for these items';
+  return message + ' ' + pairs
+    .map(p => `${p[1].name}: only ${p[1].inventory} available`).join(';')
+}
+
+/**
+ * Creates a details message about invalid price.
+ *
+ * @param {Array} pairs with invalid price.
+ * @returns {string} a configurable message.
+ */
+function messagePriceMismatch(pairs) {
+  if (!pairs.length) return '';
+  const message = config.datastore.error.priceMismatch ||
+    'Prices do not match:';
+  return message + ' ' + pairs
+    .map(p => p[0].name)
+    .join(', ');
+}
+
+/**
  * Verifies a Foxy Signature in a Webhook.
  *
  * @param {string} payload received in the Foxy Webhook request.
@@ -135,9 +164,10 @@ function verifyWebhookSignature(req) {
 /**
  * Validates a Foxy request.
  *
- * It must be a Signed POST request with content-type application/json
- * @param request
- * @returns {boolean}
+ * It must be a Signed POST request with content-type application/json.
+ *
+ * @param {Request} requestEvent to be evaluated as valid.
+ * @returns {string|boolean} the error with this request.
  */
 function validFoxyRequest(requestEvent) {
   let err = false;
@@ -157,9 +187,11 @@ function validFoxyRequest(requestEvent) {
 
 module.exports = {
   getItems,
+  messageInsufficientInventory,
+  messagePriceMismatch,
   response,
-  verifyWebhookSignature,
+  validFoxyRequest,
   validSignature,
-  validFoxyRequest
+  verifyWebhookSignature,
 }
 

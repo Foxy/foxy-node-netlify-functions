@@ -1,6 +1,7 @@
-const {afterEach, beforeEach, describe, it } = require("mocha");
+const {after, afterEach, before, beforeEach, describe, it } = require("mocha");
 const {expect} = require("chai");
 const MockFoxyRequest = require("../../MockFoxyRequests.js");
+const sinon = require("sinon");
 
 const crypto = require("crypto");
 const rewire = require("rewire");
@@ -8,7 +9,22 @@ const rewire = require("rewire");
 const odHandler = rewire("../../../src/functions/datastore-integration-orderdesk/index.js");
 const config = odHandler.__get__('config');
 
+function silenceLog() {
+  log = sinon.stub(console, 'log');
+  logError = sinon.stub(console, 'error');
+}
+
+function restoreLog() {
+  log.restore();
+  logError.restore();
+}
+
 describe("Order Desk Pre-payment Webhook", function() {
+  let log;
+  let logError;
+
+  before(silenceLog);
+  after(restoreLog);
   beforeEach(
     function () {
       config.datastore.provider.orderDesk.storeId = 'foo';

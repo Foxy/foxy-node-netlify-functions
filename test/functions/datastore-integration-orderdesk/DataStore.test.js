@@ -178,7 +178,6 @@ describe("OrderDesk Datastore", function() {
       [{price: 0, code: '1'}, {name: undefined, price: 0, inventory: undefined, code: '1', update_source: 'Foxy-OrderDesk-Webhook'}],
     ];
     for (let c of cases) {
-      console.debug(c);
       expect(odClient.convertToCanonical(c[0]))
         .to.deep.equal(c[1]);
     }

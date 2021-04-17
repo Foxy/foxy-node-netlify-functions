@@ -18,18 +18,10 @@ async function prePayment(body) {
   cartValidator.skipFromEnv();
   const pairs = await buildPairs(body, FoxyWebhook, datastore);
   // Check Prices
-  const invalidPrice = pairs.filter(
-    p => !cartValidator.validPrice(...p)
-  );
-  const priceDetail = invalidPrice.length ? `Invalid items: ${
-    invalidPrice.map(p => p[0].name).join(',')
-  }` : "";
-  const invalidInventory = pairs.filter(
-    p => !cartValidator.validInventory(...p)
-  );
-  const inventoryDetail = invalidInventory.length ? `Insufficient inventory for these items: ${
-    invalidInventory.map(p => `${p[1].name}: only ${p[1].inventory} available`).join(';')
-  }` : ""
+  const invalidPrice = pairs.filter(p => !cartValidator.validPrice(...p));
+  const priceDetail = FoxyWebhook.messagePriceMismatch(invalidPrice);
+  const invalidInventory = pairs.filter(p => !cartValidator.validInventory(...p));
+  const inventoryDetail = FoxyWebhook.messageInsufficientInventory(invalidInventory);
   if (invalidInventory.length || invalidPrice.length) {
     return response([inventoryDetail, priceDetail].filter(m => m.length > 0).join('\n'));
   } else {

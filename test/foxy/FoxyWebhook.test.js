@@ -1,12 +1,26 @@
 const crypto = require("crypto");
 const FoxyWebhook = require('../../src/foxy/FoxyWebhook.js');
+const sinon = require("sinon");
 
 const { expect } = require("chai");
-const { describe, it } = require("mocha");
+const { after, before, describe, it } = require("mocha");
 
+function silenceLog() {
+  log = sinon.stub(console, 'log');
+  logError = sinon.stub(console, 'error');
+}
 
+function restoreLog() {
+  log.restore();
+  logError.restore();
+}
 
 describe("Handles Foxy Webhook Requests", function() {
+  let log;
+  let logError;
+
+  before(silenceLog);
+  after(restoreLog);
 
   describe("Should retrieve items from a Webhook Request", function() {
     it("Should retrieve items when they are present.", function() {
@@ -22,6 +36,11 @@ describe("Handles Foxy Webhook Requests", function() {
 });
 
 describe("Builds Foxy Webhook Responses", function() {
+  let log;
+  let logError;
+
+  before(silenceLog);
+  after(restoreLog);
 
   it ("Should not accept error responses without details", function () {
     expect(() => FoxyWebhook.response("", 500)).to.throw(Error, /An error response needs to specify details/);
@@ -31,6 +50,11 @@ describe("Builds Foxy Webhook Responses", function() {
 });
 
 describe("Verifies Foxy Webhook Signatures", function () {
+  let log;
+  let logError;
+
+  before(silenceLog);
+  after(restoreLog);
   it("Accepts the correct signature",function () {
     const foxySignature = crypto.createHmac('sha256', 'foo').update('bar').digest('hex');
     expect(FoxyWebhook.validSignature('bar', foxySignature, 'foo')).to.be.true;
@@ -46,5 +70,33 @@ describe("Verifies Foxy Webhook Signatures", function () {
       values[c] = undefined;
       expect(FoxyWebhook.validSignature(...values)).to.be.false;
     }
+  });
+});
+
+describe("Builds useful error messages", function() {
+  let log;
+  let logError;
+
+  before(silenceLog);
+  after(restoreLog);
+
+  describe("Responds useful messages", function () {
+    it("Informs the invalid items when the price is wrong.", async function () {
+      const message = FoxyWebhook.messagePriceMismatch([
+        [{name: 'foo'}, {name: 'foo'}],
+        [{name: 'bar'}, {name: 'bar'}],
+      ])
+      expect(message).to.match(/foo/);
+      expect(message).to.match(/bar/);
+    });
+
+    it("Informs the items with insufficient inventory and the current available inventory.", async function () {
+      const message = FoxyWebhook.messageInsufficientInventory([
+        [{name: 'foo', quantity:3}, {inventory: 2, name: 'foo'}],
+        [{name: 'bar', quantity:3}, {inventory: 1, name: 'bar'}],
+      ])
+      expect(message).to.match(/2 available/);
+      expect(message).to.match(/1 available/);
+    });
   });
 });

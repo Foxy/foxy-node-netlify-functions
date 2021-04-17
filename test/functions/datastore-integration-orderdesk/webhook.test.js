@@ -1,16 +1,15 @@
 const rewire = require("rewire");
 const { expect } = require("chai");
-const { describe, it } = require("mocha");
+const { describe, it, before, after } = require("mocha");
+const sinon = require("sinon");
 const webhook = rewire("../../../src/functions/datastore-integration-orderdesk/webhook.js");
 
 const oldFoxyWebhook = webhook.__get__('FoxyWebhook');
 const MockFoxyWebhook = {
+  getItems: function() {return [this.item];},
   item: {},
-  getItems: function() {
-    return [
-      this.item
-    ];
-  },
+  messageInsufficientInventory: () => 'insufficientInventory',
+  messagePriceMismatch: () => 'priceMismatch',
   response: oldFoxyWebhook.response
 }
 
@@ -100,6 +99,23 @@ async function prePaymentExpectInvalid(reg) {
 }
 
 describe("OrderDesk Pre-payment Webhook", function() {
+  let log;
+  let logError;
+
+  before(
+    function() {
+      log = sinon.stub(console, 'log');
+      logError = sinon.stub(console, 'error');
+    }
+  );
+
+  after(
+    function() {
+      log.restore();
+      logError.restore();
+    }
+  );
+
   describe("Validates the cart items prices against a datastore", function() {
     it("Accepts if the prices are the same", async function () {
       resetMocks();
@@ -126,13 +142,13 @@ describe("OrderDesk Pre-payment Webhook", function() {
       expect(result.statusCode).to.equal(200);
       expect(result.body).to.exist;
       expect(JSON.parse(result.body).ok).to.be.false;
-      expect(JSON.parse(result.body).details).to.match(/Invalid items/);
+      expect(JSON.parse(result.body).details).to.match(/priceMismatch/);
     });
 
     it("Rejects if the cart has no price and the datastore does", async function() {
       resetMocks();
       MockFoxyWebhook.item.price = undefined;
-      await prePaymentExpectInvalid(/Invalid items/);
+      await prePaymentExpectInvalid(/priceMismatch/);
     });
   });
 
@@ -162,25 +178,9 @@ describe("OrderDesk Pre-payment Webhook", function() {
     it("Rejects if the quantity is higher", async function () {
       resetMocks();
       MockFoxyWebhook.item.quantity = 10;
-      await prePaymentExpectInvalid(/Insufficient inventory/);
+      await prePaymentExpectInvalid(/insufficientInventory/);
     });
 
-  });
-
-  describe("Responds useful messages", function () {
-    it("Informs the invalid items when the price is wrong.", async function () {
-      resetMocks();
-      MockDatastore.item.price = 100;
-      const body = await prePaymentExpectInvalid(/Invalid items/);
-      expect(body.details).match(/Invalid items: foo/);
-    });
-
-    it("Informs the items with insufficient inventory and the current available inventory.", async function () {
-      resetMocks();
-      MockDatastore.item.inventory = 0;
-      const body = await prePaymentExpectInvalid(/Insufficient inventory/);
-      expect(body.details).match(/Insufficient inventory for these items: foo/);
-    });
   });
 });
 
