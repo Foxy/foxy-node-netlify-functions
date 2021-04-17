@@ -1,4 +1,5 @@
 const Webflow = require("webflow-api");
+const FoxyWebhook = require("../../foxy/FoxyWebhook.js");
 const config = require("../../../config.js");
 
 let webflowApi;
@@ -232,11 +233,17 @@ const validation = {
     validate: () => !!config.datastore.provider.webflow.token,
   },
   input: {
-    response: () => ({
-      body: JSON.stringify({ details: 'Empty request.', ok: false }),
-      statusCode: 400,
-    }),
-    validate: (requestEvent) => requestEvent && requestEvent.body,
+    errorMessage: "",
+    response: function() {
+      return {
+        body: JSON.stringify({ details: this.errorMessage, ok: false }),
+        statusCode: 400,
+      }
+    },
+    validate: function (requestEvent) {
+      this.errorMessage = FoxyWebhook.validFoxyRequest(requestEvent);
+      return !this.errorMessage;
+    }
   },
   items: {
     response: (items) => ({

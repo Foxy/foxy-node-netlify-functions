@@ -1,5 +1,5 @@
 const crypto = require("crypto");
-const FoxyWebhook = require('./FoxyWebhook.js');
+const FoxyWebhook = require('../../src/foxy/FoxyWebhook.js');
 
 const { expect } = require("chai");
 const { describe, it } = require("mocha");
@@ -33,7 +33,7 @@ describe("Builds Foxy Webhook Responses", function() {
 describe("Verifies Foxy Webhook Signatures", function () {
   it("Accepts the correct signature",function () {
     const foxySignature = crypto.createHmac('sha256', 'foo').update('bar').digest('hex');
-    expect(FoxyWebhook.verifyWebhookSignature('bar', foxySignature, 'foo')).to.be.true;
+    expect(FoxyWebhook.validSignature('bar', foxySignature, 'foo')).to.be.true;
   });
 
   it("Rejects incorrect signatures",function () {
@@ -42,9 +42,9 @@ describe("Verifies Foxy Webhook Signatures", function () {
       const foxySignature = crypto.createHmac('sha256', 'foo').update('bar').digest('hex');
       const values = ['bar', foxySignature, 'foo'];
       values[c] = 'wrong';
-      expect(FoxyWebhook.verifyWebhookSignature(...values)).to.be.false;
+      expect(FoxyWebhook.validSignature(...values)).to.be.false;
       values[c] = undefined;
-      expect(FoxyWebhook.verifyWebhookSignature(...values)).to.be.false;
+      expect(FoxyWebhook.validSignature(...values)).to.be.false;
     }
   });
 });

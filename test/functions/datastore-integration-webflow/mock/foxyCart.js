@@ -1,3 +1,6 @@
+const MockFoxyRequest = require("../../../MockFoxyRequests.js");
+
+
 function randomString() {
   return Math.random().toString(36)
     .replace(/[^a-z]+/g, '').substr(0, 5);
@@ -101,9 +104,7 @@ function foxyRequest(changes, itemBuilder = basicItem) {
   } else if (typeof changes === 'object') {
     setItemsValuesAll(items._embedded['fx:items'], changes);
   }
-  return {
-    body: items,
-  };
+  return MockFoxyRequest.validRequest(items);
 }
 
 exports.itemBuilders = {

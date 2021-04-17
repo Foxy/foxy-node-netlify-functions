@@ -1,10 +1,11 @@
-const { after, afterEach, before, beforeEach, describe, it } = require("mocha");
+const {afterEach, beforeEach, describe, it } = require("mocha");
 const {expect} = require("chai");
+const MockFoxyRequest = require("../../MockFoxyRequests.js");
 
 const crypto = require("crypto");
 const rewire = require("rewire");
 
-const odHandler = rewire("./index.js");
+const odHandler = rewire("../../../src/functions/datastore-integration-orderdesk/index.js");
 const config = odHandler.__get__('config');
 
 describe("Order Desk Pre-payment Webhook", function() {
@@ -65,7 +66,7 @@ describe("Order Desk Pre-payment Webhook", function() {
         httpMethod: 'POST',
         headers: {
           'content-type': 'application/json',
-          'Foxy-Webhook-Signature': 'wrong'
+          'foxy-webhook-signature': 'wrong'
         },
         body: '{"foo": "bar"}'
       });
@@ -120,19 +121,4 @@ describe("Order Desk Pre-payment Webhook", function() {
 
 });
 
-function validRequest(payload = null) {
-  if (payload === null) {
-    payload = {"foo": "bar"}; 
-  }
-  payload = JSON.stringify(payload)
-  const foxySignature = crypto.createHmac('sha256', config.foxy.webhook.encryptionKey).update(payload).digest('hex');
-  return {
-        body: payload,
-        headers: {
-          'content-type': 'application/json',
-          'foxy-webhook-signature': foxySignature,
-          'foxy-webhook-event': 'validation/payment'
-        },
-        httpMethod: 'POST'
-      };
-}
+const validRequest = MockFoxyRequest.validRequest;

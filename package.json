@@ -4,7 +4,7 @@
   "description": "Run serverless functions on Netlify to work with the Foxy.io hypermedia API.",
   "private": false,
   "scripts": {
-    "test": "nyc mocha \"src/**/*.test.js\"",
+    "test": "nyc mocha \"test/**/*.test.js\"",
     "start": "netlify dev",
     "start-http": "http-server ./src/functions --port 9000 -c-1"
   },

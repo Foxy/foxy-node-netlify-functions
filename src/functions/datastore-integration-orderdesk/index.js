@@ -1,4 +1,4 @@
-const FoxyClient = require('../../foxy/FoxyWebhook.js');
+const FoxyWebhook= require('../../foxy/FoxyWebhook.js');
 const webhook = require('./webhook.js');
 const config = require("../../../config.js");
 
@@ -39,22 +39,6 @@ async function handleRequest(requestEvent) {
 }
 
 /**
- * @param req
- */
-function validSignature(req) {
-  const foxyEvent = req.headers['foxy-webhook-event'];
-  const signature = req.headers['foxy-webhook-signature'];
-  if (foxyEvent === 'validation/payment') {
-    if (!signature) {
-      return true;
-    }
-  }
-  const key = config.foxy.webhook.encryptionKey;
-  const payload = req.body;
-  return FoxyClient.verifyWebhookSignature(payload, signature, key);
-}
-
-/**
  * @typedef {Object} Validation
  * @property {Function} response a function that builds the response
  * @property {Function} validate a function that is used to validate
@@ -86,22 +70,8 @@ const validation = {
   },
   input: {
     errorMessage: "Bad Request",
+    getError: FoxyWebhook.validFoxyRequest,
     response: (message) => webhook.response(message, 400),
-    getError: (requestEvent) => {
-      let err = false;
-      if (!requestEvent) {
-        err = 'Request Event does not Exist';
-      } else if (!requestEvent.httpMethod || requestEvent.httpMethod !== 'POST') {
-        err = 'Method not allowed';
-      } else if (requestEvent.headers['content-type'] !== 'application/json') {
-        err = 'Content type should be application/json';
-      } else if (
-        !validSignature(requestEvent)
-      ) {
-        err = 'Forbidden';
-      }
-      return err;
-    },
   }
 
 };

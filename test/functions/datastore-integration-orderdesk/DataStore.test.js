@@ -5,7 +5,7 @@ const { describe, it, beforeEach } = require("mocha");
 chai.use(require('chai-as-promised'))
 const expect = chai.expect;
 
-const DataStore = rewire("./DataStore.js");
+const DataStore = rewire("../../../src/functions/datastore-integration-orderdesk/DataStore.js");
 const config = DataStore.__get__("config");
 
 const mockOD = new MockOrderDesk();
@@ -176,6 +176,7 @@ describe("OrderDesk Datastore", function() {
       [{price: 0, code: '1'}, {name: undefined, price: 0, inventory: undefined, code: '1', update_source: 'Foxy-OrderDesk-Webhook'}],
     ];
     for (let c of cases) {
+      console.debug(c);
       expect(odClient.convertToCanonical(c[0]))
         .to.deep.equal(c[1]);
     }

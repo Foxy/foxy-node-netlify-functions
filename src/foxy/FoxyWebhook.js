@@ -1,4 +1,6 @@
 const FoxySdk = require('@foxy.io/sdk');
+const config = require('../../config.js');
+
 
 /**
  * @typedef {Object} PrepaymentPayload
@@ -102,7 +104,7 @@ function response(details="", code=200) {
  * @param {string} key to be used to verify the signature.
  * @returns {boolean} the signature is valid
  */
-function verifyWebhookSignature(payload, signature, key) {
+function validSignature(payload, signature, key) {
   try {
     return FoxySdk.Backend.verifyWebhookSignature({ key, payload, signature });
   } catch (e) {
@@ -111,9 +113,53 @@ function verifyWebhookSignature(payload, signature, key) {
   }
 }
 
+/**
+ * Verifies the signature of a Foxy Webhook Request.
+ *
+ * @param {Object} req the request with the signature to be verified
+ * @returns {boolean} the signature is valid
+ */
+function verifyWebhookSignature(req) {
+  const foxyEvent = req.headers['foxy-webhook-event'];
+  const signature = req.headers['foxy-webhook-signature'];
+  if (foxyEvent === 'validation/payment') {
+    if (!signature) {
+      return true;
+    }
+  }
+  const key = config.foxy.webhook.encryptionKey;
+  const payload = req.body;
+  return validSignature(payload, signature, key);
+}
+
+/**
+ * Validates a Foxy request.
+ *
+ * It must be a Signed POST request with content-type application/json
+ * @param request
+ * @returns {boolean}
+ */
+function validFoxyRequest(requestEvent) {
+  let err = false;
+  if (!requestEvent) {
+    err = 'Request Event does not Exist';
+  } else if (!requestEvent.body) {
+    err = 'Empty request.';
+  } else if (!requestEvent.httpMethod || requestEvent.httpMethod !== 'POST') {
+    err = 'Method not allowed';
+  } else if (requestEvent.headers['content-type'] !== 'application/json') {
+    err = 'Content type should be application/json';
+  } else if (!verifyWebhookSignature(requestEvent)) {
+    err = 'Forbidden';
+  }
+  return err;
+}
+
 module.exports = {
   getItems,
   response,
-  verifyWebhookSignature
+  verifyWebhookSignature,
+  validSignature,
+  validFoxyRequest
 }
 

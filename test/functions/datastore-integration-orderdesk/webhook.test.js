@@ -1,7 +1,7 @@
 const rewire = require("rewire");
 const { expect } = require("chai");
-const { after, afterEach, before, beforeEach, describe, it } = require("mocha");
-const webhook = rewire("./webhook.js");
+const { describe, it } = require("mocha");
+const webhook = rewire("../../../src/functions/datastore-integration-orderdesk/webhook.js");
 
 const oldFoxyWebhook = webhook.__get__('FoxyWebhook');
 const MockFoxyWebhook = {
@@ -40,16 +40,16 @@ webhook.__set__('getDataStore', () => MockDatastore);
  */
 function arbitraryCartItem() {
   return {
+    code: 1,
     name: 'foo',
+    parent_code: 4,
     price: 1,
     quantity: 2,
-    quantity_min: 1,
     quantity_max: 3,
-    weight: 3,
-    code: 1,
-    parent_code: 4,
+    quantity_min: 1,
     subscription_frequency: '1m',
-    subscription_start_date: new Date().toISOString()
+    subscription_start_date: new Date().toISOString(),
+    weight: 3,
   }
 }
 
@@ -99,8 +99,8 @@ async function prePaymentExpectInvalid(reg) {
   return parsed;
 }
 
-describe("Pre-payment Webhook", function() {
-  describe("Validates the cart items prices agains a datastore", function() {
+describe("OrderDesk Pre-payment Webhook", function() {
+  describe("Validates the cart items prices against a datastore", function() {
     it("Accepts if the prices are the same", async function () {
       resetMocks();
       await prePaymentExpectOk();
