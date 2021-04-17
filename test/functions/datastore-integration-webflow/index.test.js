@@ -118,8 +118,8 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     config.datastore.field.code = '';
     config.datastore.field.price = '';
     config.datastore.field.inventory = '';
-    config.datastore.skipCode.inventory = '';
-    config.datastore.skipCode.price = '';
+    config.datastore.skipValidation.inventory = '';
+    config.datastore.skipValidation.price = '';
   });
 
   /**
@@ -152,7 +152,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
 
     it("Ignores price verification for codes in FX_SKIP_PRICES_FIELDS ", async () => {
       let response;
-      config.datastore.skipCode.price = 'editable';
+      config.datastore.skipValidation.price = 'editable';
       const event = mockFoxyCart.request({ code: 'editable', price: 0.1, quantity: 1 });
       const items =  JSON.parse(event.body)._embedded["fx:items"];
       injectedWebflow.items = () =>
@@ -196,7 +196,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
 
     it("Ignores inventory checks for codes excluded with FOXY_SKIP_INVENTORY_CODES", async () => {
       let response;
-      config.datastore.skipCode.inventory = 'limitless';
+      config.datastore.skipValidation.inventory = 'limitless';
       const event = mockFoxyCart.request({ code: 'limitless', price: 11, quantity: 100 });
       const items =  JSON.parse(event.body)._embedded["fx:items"];
       injectedWebflow.items = () =>

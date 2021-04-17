@@ -24,13 +24,16 @@ const config = {
     provider: {
       orderDesk: {
         apiKey: env("FOXY_ORDERDESK_API_KEY"),
-        storeId: env("FOXY_ORDERDESK_STORE_ID")
+        storeId: env("FOXY_ORDERDESK_STORE_ID"),
       },
       webflow: {
         token: env('FOXY_WEBFLOW_TOKEN') || env('WEBFLOW_TOKEN'),
       }
     },
-    skipCode: {
+    skipUpdate: {
+      inventory: env('FOXY_SKIP_INVENTORY_UPDATE_CODES')
+    },
+    skipValidation: {
       inventory: env('FOXY_SKIP_INVENTORY_CODES') || env('FX_SKIP_INVENTORY_CODES'),
       price: env('FOXY_SKIP_PRICE_CODES') || env('FX_SKIP_PRICE_CODES')
     },

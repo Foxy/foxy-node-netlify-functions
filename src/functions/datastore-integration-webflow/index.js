@@ -17,8 +17,8 @@ function customOptions() {
       price: config.datastore.field.price || 'price'
     },
     skip: {
-      inventory: (config.datastore.skipCode.inventory || '').split(',').map(e => e.trim()).filter(e => !!e) || [],
-      price: (config.datastore.skipCode.price || '').split(',').map(e => e.trim()).filter(e => !!e) || [],
+      inventory: (config.datastore.skipValidation.inventory || '').split(',').map(e => e.trim()).filter(e => !!e) || [],
+      price: (config.datastore.skipValidation.price || '').split(',').map(e => e.trim()).filter(e => !!e) || [],
     },
     webflow: {
       limit: 100,

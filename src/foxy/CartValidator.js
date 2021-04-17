@@ -14,7 +14,7 @@ const config = require('../../config.js');
 
 class CartValidator {
 
-  skipCodes = {
+  skipValidation = {
     inventory: [],
     price: [],
   }
@@ -25,7 +25,7 @@ class CartValidator {
    * @param {string} code the code to be skipped during inventory validation.
    */
   skipInventory(code) {
-    this.skipCodes.inventory.push(code);
+    this.skipValidation.inventory.push(code);
   }
 
   /**
@@ -34,7 +34,7 @@ class CartValidator {
    * @param {string} code the code to be skipped during price validation.
    */
   skipPrice(code) {
-    this.skipCodes.price.push(code);
+    this.skipValidation.price.push(code);
   }
 
   /**
@@ -42,8 +42,14 @@ class CartValidator {
    * of items with codes listed in the configured environment variables.
    */
   skipFromEnv() {
-    (config.datastore.skipCode.price || '').split(',').forEach(this.skipPrice.bind(this));
-    (config.datastore.skipCode.inventory || '').split(',').forEach(this.skipPrice.bind(this));
+    if (config.datastore.skipValidation.inventory === '__ALL__') {
+      this.skipValidation.inventory.all = true;
+    }
+    if (config.datastore.skipValidation.price === '__ALL__') {
+      this.skipValidation.price.all = true;
+    }
+    (config.datastore.skipValidation.price || '').split(',').forEach(this.skipPrice.bind(this));
+    (config.datastore.skipValidation.inventory || '').split(',').forEach(this.skipPrice.bind(this));
   }
 
   /**
@@ -56,7 +62,8 @@ class CartValidator {
    *
    */
   validPrice(cartItem, canonicalItem) {
-    return this.skipCodes.price.includes(cartItem.code) ||
+    return this.skipValidation.inventory.all ||
+      this.skipValidation.price.includes(cartItem.code) ||
       !canonicalItem.price ||
       parseFloat(cartItem.price) === parseFloat(canonicalItem.price);
   }
@@ -70,7 +77,8 @@ class CartValidator {
    * @returns {boolean} the inventory is sufficient for this purchase.
    */
   validInventory(cartItem, canonicalItem) {
-    return this.skipCodes.inventory.includes(cartItem.code) ||
+    return this.skipValidation.inventory.all ||
+      this.skipValidation.inventory.includes(cartItem.code) ||
       !cartItem.quantity ||
       canonicalItem.inventory === undefined ||
       Number(cartItem.quantity) <= Number(canonicalItem.inventory);
