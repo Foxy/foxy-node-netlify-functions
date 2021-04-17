@@ -41,18 +41,26 @@ async function prePayment(body) {
  * Process a transaction/created Foxy Webhook.
  *
  * @param {Object} body the parsed body of the Foxy request.
- * @returns {}
+ * @returns {Response}
  */
 async function transactionCreated(body) {
-  const datastore = getDataStore();
-  const pairs = await buildPairs(body, FoxyWebhook, datastore);
-  const updated = pairs.map(p => ({...p[1],
-    stock: Number(p[1].inventory) - Number(p[0].quantity), // Notice that OrderDesk inventory field is "stock"
-  }));
-  const result = await datastore.updateInventoryItems(updated);
-  if (result.status === 'success') {
+  if (config.datastore.skipUpdate.inventory === '__ALL__' ) {
     return response();
-  } else {
+  }
+  try {
+    const datastore = getDataStore();
+    const pairs = await buildPairs(body, FoxyWebhook, datastore);
+    const updated = pairs.map(p => ({...p[1],
+      stock: Number(p[1].inventory) - Number(p[0].quantity), // Notice that OrderDesk inventory field is "stock"
+    }));
+    const result = await datastore.updateInventoryItems(updated);
+    if (result.status === 'success') {
+      return response();
+    } else {
+      return response('Internal Server Error', 500);
+    }
+  } catch (e) {
+    console.error('Could not update inventory', e.name, e.message);
     return response('Internal Server Error', 500);
   }
 }

@@ -101,9 +101,17 @@ class DataStore extends DataStoreBase {
   /**
    * Update inventory items in OrderDesk
    *
-   * @param {Array<OrderDeskItem>} items to be updated
+   * It won't update any items if the skip update inventory option is set to __ALL__.
+   * It won't update any items whose codes are set in skip update inventory option.
+   *
+   * @param {Array<OrderDeskItem>} items to be updated.
+   * @returns {Object} the OrderDesk response.
    */
   async updateInventoryItems(items) {
+    if (this.skipUpdate.inventory.all) {
+      return {};
+    }
+    items = items.filter(i => !this.skipUpdate.inventory.includes(i.code));
     const invalid = items.filter((i) => !this.validateInventoryItem(i));
     if (invalid.length) {
       throw new Error("Invalid inventory items for update", invalid.join(','));

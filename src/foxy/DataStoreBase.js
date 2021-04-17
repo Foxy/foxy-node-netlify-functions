@@ -1,4 +1,10 @@
+const config = require("../../config.js");
+
 class DataStoreBase {
+
+  skipUpdate = {
+    inventory: []
+  }
 
   constructor() {
     const abstractMethods = [
@@ -12,6 +18,20 @@ class DataStoreBase {
     if (unimplemented.length) {
       throw new TypeError(unimplemented.join(',') + " must be overriden");
     }
+    this.skipFromEnv();
+  }
+
+  /**
+   * Autoconfigures the instance to skip the validation of prices and inventory
+   * of items with codes listed in the configured environment variables.
+   */
+  skipFromEnv() {
+    if (config.datastore.skipUpdate.inventory === '__ALL__') {
+      this.skipUpdate.inventory.all = true;
+    }
+    this.skipUpdate.inventory.concat(
+      (config.datastore.skipUpdate.inventory || '').split(',')
+    );
   }
 
   /**
