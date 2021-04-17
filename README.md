@@ -1,50 +1,42 @@
 # Netlify Serverless Functions for the Foxy.io API
 
-This repository allows for easily creating serverless functions to work with the Foxy.io API, deployed using Netlify. The goal is to make this as approachable as possible, so we're avoiding unnecessary
+This repository allows you to (more) easily create serverless functions to work with the Foxy.io API, deployed using Netlify. The goal is to make this as approachable as possible, so we try to have reasonable default behaviours, and Netlify is a great choice because of the one-click deployment. Once you deploy to Netlify, you can modify your own GitHub files to customize as needed.
 
 ## Functions
 
-The functions provided in this repository can be used independently, or as a reference for building your own functinos.
-Be sure to check the README for each function in the functions folder.
+The functions provided in this repository can be used independently, or as a reference for building your own functions. Be sure to check the README for each function in the functions folder.
 
-- [cart](src/functions/cart): Converts a cart between recurring and non-recurring.
-- [idevaffiliate-marketplace](src/functions/idevaffiliate-marketplace): Integration with iDev Affiliate.
+- [cart](src/functions/cart): Converts a cart between recurring and non-recurring. Useful in an upsell flow.
+- [idevaffiliate-marketplace](src/functions/idevaffiliate-marketplace): A marketplace-style integration, using iDevAffiliate.
 - Datastore integrations: 
     - [pre-payment-webhook-webflow](src/functions/pre-payment-webhook-webflow): Validates the price and/or availability of items against Webflow CMS collections before a payment is processed.
     - [datastore-integration-orderdesk](src/functions/datastore-integration-orderdesk): Validates the cart against OrderDesk and updates the inventory upon successful transaction.
 
-### Data store integrations
+### Data Store Integrations
 
-Data store integrations allow you to verify the cart against a third-party Data
-Store.
+Data store integrations allow you to verify the cart against a third-party Data Store.
 
 Your customer workflow is basically unchanged.
 
-The workflow bellow shows in gray steps that are invisible to your customers.
-Notice that upon cart submit the pre-payment validation is triggered. It is get
-the inventory and price information from your data store (Webflow and OrderDesk
-are available) and check if the cart is valid.
+The image below shows the order flow, with the gray steps showing the functionality provided by these functions (invisible to the customer). Notice that upon cart submit the pre-payment validation is triggered. The webhook makes a request to this function, which then gets the inventory and price information from your data store (Webflow or OrderDesk), and checks if the cart is valid.
 
 ![Data Store Integration workflow](https://github.com/Foxy/foxy-node-netlify-functions/blob/feat/datastore-orderdesk/images/datastore-integrations-workflow.png?raw=true)
 
 - You may choose not to validate prices at all or for specific items.
-- You may choose not to validate the inventory
+- You may choose not to validate the inventory.
 - Depending on your data store, you may have other configuration available.
 
 
-## Available DataStores
+#### Available DataStores
 
-- OrderDesk
-- Webflow CMS
+- [OrderDesk](https://www.orderdesk.com)
+- [Webflow CMS](https://webflow.com)
 
-## Pre-payment
+#### The Foxy Pre-Payment Webhook
 
-It provides you with a function to validate the price and quantity submitted to
-FoxyCart before a payment is made, thus providing security against HTML
-modifications in the client side.
+The pre-payment webhook fires before a transaction is submitted to the payment processor (Stripe, Authorize.net, PayPal, etc.). We'll use that with these functions to prevent overselling, and also to prevent product link/form tampering if you can't use Foxy's [link+form signing](https://wiki.foxycart.com/v/2.0/hmac_validation) (either directly or via [the Cloudflare Worker hmac signing function](https://github.com/Foxy/foxy-cloudflare-addtocart-signing) to do it automatically).
 
-**It ignores existing subscriptions**. If a subscription start date is current,
-price will be checked. If it is in the past, the price is not checked.
+**It ignores existing subscriptions**. If a subscription start date is "today", the price will be checked. If it is in the past, the price is not checked.
 
 #### Limitations
 
@@ -55,14 +47,14 @@ price will be checked. If it is in the past, the price is not checked.
   requesting specific items directly. Check the README for your datastore
   integration about this issue.
 
-## Usage
+#### Usage
 
 1. Read the short **Configuration** section in the datastore integration page.
-  - **Important**: your datastore need to meet some criteria for the webhook to work. Product items need a `code` field.
+  - **Important**: Your datastore must meet some criteria for the webhook to work. Product items need a `code` field.
 1. Grab the credentials needed for integrating with your datastore. Check the details in your datastore integration page.
 1. Click the **deploy to Netlify** button at the end of this page.
   - Netlify will provide you with a form for you to provide your configuration.
-  - The Webflow Prepayment Webhook requires only FOXY_WEBFLOW_TOKEN. The other settings are used for the other services in this repository.
+  - The Webflow Prepayment Webhook requires only `FOXY_WEBFLOW_TOKEN`. The other settings are used for the other services in this repository.
 1. Grab the URL for your webhook in Netlify. Be sure to get the correct URL for your specific webhook.
   - To do this, after the deploy is finished, click the "functions" tab, look for your webhook function and copy the **Endpoint URL**.
 1. Configure your prepayment webhook using your endpoint. Check the docs here: https://wiki.foxycart.com/v/2.0/pre_payment_webhook
