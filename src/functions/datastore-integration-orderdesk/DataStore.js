@@ -27,6 +27,27 @@ class DataStore extends DataStoreBase {
     this.domain = "app.orderdesk.me";
     this.api = "api/v2/";
     this.setCredentials();
+    this.setDefaultConfig();
+  }
+
+  /**
+   * @inheritdoc
+   */
+  setCredentials() {
+    const credentials = this.parseConfigCredentials(config);
+    if (!credentials.key || !credentials.id) {
+      throw new Error("Environment variables for OrderDesk store id and/or API key are missing.");
+    }
+    this.credentials = credentials;
+  }
+
+  /**
+   * If no value is set for the skip update inventory option, skip all inventories.
+   */
+  setDefaultConfig() {
+    if (!config.datastore.skipUpdate.inventory) {
+      this.skipUpdate.inventory.all = true;
+    }
   }
 
   /**:
@@ -40,17 +61,6 @@ class DataStore extends DataStoreBase {
       "ORDERDESK-API-KEY": this.credentials.key,
       "ORDERDESK-STORE-ID": this.credentials.id,
     }
-  }
-
-  /**
-   * @inheritdoc
-   */
-  setCredentials() {
-    const credentials = this.parseConfigCredentials(config);
-    if (!credentials.key || !credentials.id) {
-      throw new Error("Environment variables for OrderDesk store id and/or API key are missing.");
-    }
-    this.credentials = credentials;
   }
 
   parseConfigCredentials(config) {

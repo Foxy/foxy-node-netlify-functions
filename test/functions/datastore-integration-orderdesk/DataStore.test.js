@@ -83,6 +83,7 @@ describe("OrderDesk Datastore", function() {
   describe("Update OrderDesk items", function() {
 
     describe("Does not update to invalid states", function () {
+      config.datastore.skipUpdate.inventory = '__NONE__';
       const odClient = new DataStore();
       const fullItem = orderDeskFullItem();
       for (let k of Object.keys(fullItem)) {
@@ -95,6 +96,7 @@ describe("OrderDesk Datastore", function() {
     });
 
     describe("Sends an appropriate PUT request", async function () {
+      config.datastore.skipUpdate.inventory = '__NONE__';
       const odClient = new DataStore();
       const fullItem = orderDeskFullItem();
       const prevfetch = DataStore.__get__('fetch');
