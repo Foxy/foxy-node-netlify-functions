@@ -503,7 +503,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
 /**
  * Returns a response for a request with insufficient inventory.
  *
- * @returns {object} the insuficient inventory response
+ * @returns {object} the insufficient inventory response
  */
 async function insufficientInventoryRequest(event = null) {
   if (!event) {

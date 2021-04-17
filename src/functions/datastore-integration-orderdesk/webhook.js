@@ -27,7 +27,7 @@ async function prePayment(body) {
   const invalidInventory = pairs.filter(
     p => !cartValidator.validInventory(...p)
   );
-  const inventoryDetail = invalidInventory.length ? `Insuficient inventory for these items: ${
+  const inventoryDetail = invalidInventory.length ? `Insufficient inventory for these items: ${
     invalidInventory.map(p => `${p[1].name}: only ${p[1].inventory} available`).join(';')
   }` : ""
   if (invalidInventory.length || invalidPrice.length) {

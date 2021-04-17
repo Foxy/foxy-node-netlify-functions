@@ -162,7 +162,7 @@ describe("OrderDesk Pre-payment Webhook", function() {
     it("Rejects if the quantity is higher", async function () {
       resetMocks();
       MockFoxyWebhook.item.quantity = 10;
-      await prePaymentExpectInvalid(/Insuficient inventory/);
+      await prePaymentExpectInvalid(/Insufficient inventory/);
     });
 
   });
@@ -175,11 +175,11 @@ describe("OrderDesk Pre-payment Webhook", function() {
       expect(body.details).match(/Invalid items: foo/);
     });
 
-    it("Informs the items with insuficient inventory and the current available inventory.", async function () {
+    it("Informs the items with insufficient inventory and the current available inventory.", async function () {
       resetMocks();
       MockDatastore.item.inventory = 0;
-      const body = await prePaymentExpectInvalid(/Insuficient inventory/);
-      expect(body.details).match(/Insuficient inventory for these items: foo/);
+      const body = await prePaymentExpectInvalid(/Insufficient inventory/);
+      expect(body.details).match(/Insufficient inventory for these items: foo/);
     });
   });
 });
