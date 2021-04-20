@@ -62,7 +62,7 @@ describe("Initialize and validate the webhook", () => {
     config.datastore.provider.webflow.token = undefined;
     await prePayment.handler(null, null, noToken);
     config.datastore.provider.webflow.token = "FOOBAR";
-    await prePayment.handler(null, null, withToken);
+    await prePayment.handler({}, null, withToken);
   });
 
   it("Extracts the items from FoxyCart payload", async () => {
@@ -449,22 +449,6 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     expect(response.statusCode).to.deep.equal(500);
     expect(JSON.parse(response.body)).to.deep.equal({
       details: internalErrorMessage,
-      ok: false,
-    });
-  });
-
-  it("Returns Bad Request when no body is provided", async () => {
-    let response;
-    const event = MockFoxyRequests.validRequest();
-    injectedWebflow.items = () =>
-      Promise.resolve(
-        mockWebflow.arbitrary(JSON.parse(event.body)._embedded["fx:items"])({}, {})
-      );
-    delete event.body;
-    response = await prePayment.handler(event);
-    expect(response.statusCode).to.equal(400);
-    expect(JSON.parse(response.body)).to.deep.equal({
-      details: "Empty request.",
       ok: false,
     });
   });

@@ -182,6 +182,12 @@ function validFoxyRequest(requestEvent) {
   } else if (!verifyWebhookSignature(requestEvent)) {
     err = 'Forbidden';
   }
+  try {
+    JSON.parse(requestEvent.body);
+  } catch (e) {
+    console.log('body' , requestEvent.body);
+    err = 'Payload is not valid JSON.';
+  }
   return err;
 }
 

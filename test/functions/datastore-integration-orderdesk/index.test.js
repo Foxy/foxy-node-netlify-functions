@@ -53,7 +53,7 @@ describe("Order Desk Pre-payment Webhook", function() {
   });
 
   it ("Should return a Foxy Prepayment Webhook Response", async function () {
-    const responsePromise = odHandler.handler();
+    const responsePromise = odHandler.handler('');
     expect(responsePromise).to.be.a("Promise");
     const response = await responsePromise;
     expect(response.statusCode).to.exist;

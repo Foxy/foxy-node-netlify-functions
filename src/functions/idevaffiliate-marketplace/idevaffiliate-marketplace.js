@@ -1,16 +1,17 @@
 require("dotenv").config();
 const config = require("../../../config.js");
 const fetch = require("node-fetch");
+const FoxyWebhook = require("../../foxy/FoxyWebhook.js");
 
 const { URLSearchParams } = require("url");
 const { FoxyApi } = require("@foxy.io/node-api");
 
-const foxy = new FoxyApi();
-const store = foxy.follow("fx:store");
 
 const idevApiUrl = config.idevAffiliate.apiUrl || "";
 const idevSecretKey = config.idevAffiliate.secretKey || "";
 const foxyWebhookEncryptionKey = config.foxy.webhook.encryptionKey || "";
+
+const getFoxyApi = () => new FoxyApi();
 
 const getAffiliateIdFromProduct = (productCode) => {
   if (productCode.match(/\-a(\d+)$/i)) {
@@ -27,12 +28,10 @@ const pushToIdev = async (item, webhook) => {
   if (!item.name || !item.code || !item.price) {
     return false;
   }
-
   const params = new URLSearchParams();
   params.append("affiliate_id", getAffiliateIdFromProduct(item.code));
   params.append("idev_saleamt", item.price);
   params.append("idev_ordernum", webhook.id);
-
   // TODO: Check an existing attribute to see if this has already been done.
   // Upsert a Foxy API attribute on the product after pushing so it's not duplicated
   // with a re-run of the webhook.
@@ -62,43 +61,23 @@ const processTransaction = async (message) => {
  */
 
 exports.handler = async (event, context) => {
-  // Verify the Foxy webhook is valid
-  const foxyWebhookIsVerified = FoxyApi.webhook.verify({
-    signature: event.headers["foxy-webhook-signature"],
-    payload: event.body,
-    key: config.foxy.webhook.encryptionKey,
-  });
-
-  // Parse the body
-  let payload;
-  try {
-    payload = JSON.parse(event.body);
-  } catch (error) {
-    console.log("ERROR: Payload is not a valid Foxy webhook.");
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ message: "Cannot parse body." }),
-    };
+  const foxy = getFoxyApi();
+  const err = FoxyWebhook.validFoxyRequest(event);
+  if (err) {
+    return FoxyWebhook.response(err);
   }
-
+  const payload = JSON.parse(event.body);
   // Make sure everything looks ok
   if (
-    !foxyWebhookIsVerified ||
     event.headers["foxy-webhook-event"] !== "transaction/created" ||
     !payload._embedded ||
     !payload._embedded["fx:items"] ||
     !payload._embedded["fx:items"].length > 0
   ) {
-    console.log("ERROR: Payload is not a valid Foxy webhook.");
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ message: "Invalid signature." }),
-    };
+    return FoxyWebhook.response("Invalid payload.");
   }
-
   return processTransaction(payload)
     .then((data) => {
-      console.log(data);
       return {
         statusCode: 200,
         body: JSON.stringify({ message: "success." }),
