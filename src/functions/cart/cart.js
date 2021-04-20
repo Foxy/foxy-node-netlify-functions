@@ -13,6 +13,8 @@ const bodyParser = require("body-parser");
 let foxy;
 let store;
 
+const messageCartNotFound = 'Cart not found.';
+
 /**
  * Validate configuration requirements
  *
@@ -56,7 +58,9 @@ const defaultSubFrequency = config.default.autoshipFrequency || "1m";
 
 /**
  * Retrieves a `cart` resource by ID.
+ *
  * @param {number} id - The ID of the cart to retrieve.
+ * @returns {Object} first cart.
  */
 const getCart = async (id) => {
   if (!id && !Number.isInteger(id)) {
@@ -129,7 +133,8 @@ const convertCartToOneOff = async (id, cart) => {
 };
 
 /**
- * Converts
+ * Converts a cart into a subscription
+ *
  * @param {number} id
  * @param {Object} cart
  * @param {string} frequency
@@ -185,7 +190,7 @@ cartRouter.get(
     await getCart(req.params.cartId)
       .then(async (cart) => {
         if (!validateCart(cart)) {
-          throw createError(404, "Cart not found");
+          throw createError(404, messageCartNotFound);
         }
         return convertCartToSubscription(
           req.params.cartId,
@@ -209,28 +214,29 @@ cartRouter.get(
   "/:cartId(\\d+)/convert/nonrecurring",
   async (req, res, next) => {
     if (!validateConfig()) {
-      res.status(500).json("FOXY_API_CLIENT_ID is not configured;");
-      return;
+      res.status(500).json("FOXY_API_CLIENT_ID is not configured.");
+    } else {
+      setup();
+      // Code bellow will never run
+      // if (!req.params.cartId) {
+      //   throw createError(400, messageCartNotFound);
+      // }
+      await getCart(req.params.cartId)
+        .then(async (cart) => {
+          if (!validateCart(cart)) {
+            throw createError(404, messageCartNotFound);
+          }
+          return convertCartToOneOff(req.params.cartId, cart);
+        })
+        .then((data) => res.json(data))
+        .catch((err) => {
+          if (err.status) {
+            res.status(err.status).json(err.message);
+          } else {
+            res.status(500).json("Error fetching or modifying cart.");
+          }
+        });
     }
-    setup();
-    if (!req.params.cartId) {
-      throw createError(400, `cartId not found.`);
-    }
-    await getCart(req.params.cartId)
-      .then(async (cart) => {
-        if (!validateCart(cart)) {
-          throw createError(404, "Cart not found");
-        }
-        return convertCartToOneOff(req.params.cartId, cart);
-      })
-      .then((data) => res.json(data))
-      .catch((err) => {
-        if (err.status) {
-          res.status(err.status).json(err.message);
-        } else {
-          res.status(500).json("Error fetching or modifying cart.");
-        }
-      });
   }
 );
 
