@@ -185,7 +185,6 @@ function validFoxyRequest(requestEvent) {
   try {
     JSON.parse(requestEvent.body);
   } catch (e) {
-    console.log('body' , requestEvent.body);
     err = 'Payload is not valid JSON.';
   }
   return err;

@@ -184,9 +184,10 @@ cartRouter.get(
       return;
     }
     setup();
-    if (!req.params.cartId) {
-      throw createError(400, `cartId not found.`);
-    }
+    // This code is never executed
+    //if (!req.params.cartId) {
+    //  throw createError(400, `cartId not found.`);
+    //}
     await getCart(req.params.cartId)
       .then(async (cart) => {
         if (!validateCart(cart)) {
