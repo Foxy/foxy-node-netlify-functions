@@ -3,11 +3,6 @@ const webhook = require('./webhook.js');
 const config = require("../../../config.js");
 
 /**
- * @callback requestCallback
- * @param {}
- */
-
-/**
  * Receives the request, process it and invokes the callback.
  *
  * @param {Object} requestEvent the event built by Netlify upon receiving the request.
