@@ -21,15 +21,7 @@ async function handleRequest(requestEvent) {
   return response;
 }
 
-/**
- * @typedef {Object} Validation
- * @property {Function} response a function that builds the response
- * @property {Function} validate a function that is used to validate
- */
-
-// The validation object is used to aggregate validation functions
-// and responses.
-// @type {Object<string, Validation>}
+// The validation object is used to aggregate validation functions and responses.
 const validation = {
   configuration: {
     response: () => webhook.response(
