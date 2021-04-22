@@ -9,6 +9,7 @@ This integration allows you to create shipments in ShipTheory for Foxy.io transa
 - Grab the function URL
 - Configure your Foxy Store to use that URL
 
+You will also need to configure your SipTheory rules.
 
 # Reference
 

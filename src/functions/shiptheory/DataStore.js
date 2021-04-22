@@ -40,7 +40,6 @@ class DataStore extends DataStoreBase {
    */
   async authenticate() {
     if (!this.token) {
-      console.log('credentials', this.credentials);
       const response = await fetch(this.buildEndpoint('token'), {
         body: JSON.stringify({
           email: this.credentials.email,
@@ -50,7 +49,6 @@ class DataStore extends DataStoreBase {
         method: 'POST'
       });
       const parsed = await response.json();
-      console.log('parsed', parsed);
       this.token = parsed.success && parsed.data.token;
     } 
     return !!this.token;
