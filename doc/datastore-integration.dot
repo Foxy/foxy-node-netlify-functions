@@ -1,0 +1,74 @@
+digraph G {
+  node [shape = box];
+  newrank=true;
+  rankdir=TB;
+  
+
+  subgraph clusterCustomer {
+    label="Customer\n\nYour customer workflow\nremains fluid.";
+    chooseProduct[label="Choose\nproducts"];
+    goToCart[label="Go to\ncart"];
+    success[label="Success"];
+    goToCart->success[style=invis];
+  }
+
+  subgraph clusterFoxy {
+    label="Foxy.io";
+    cart[label="Cart"];
+    cartSubmit[label="Cart\nSubmit"];
+    cartProcess[label="Payment\nprocessing", color="gray"];
+  }
+
+  subgraph clusterWebhook {
+    label="Datastore Integration Webhook";
+    color="gray";
+    prepaymentValidation[label="Prepayment\ntransaction\nvalidation", color="gray"];
+    transactionCreated[label="Transaction\nCreated", color="gray"];
+
+    prepaymentValidation->transactionCreated[style=invis];
+  }
+
+  subgraph clusterDatastore {
+    label="Datastore";
+    color="gray";
+    getInventory[label="get\nInventory", color="gray"];
+    getPrice[label="get\nPrice", color="gray"];
+    updateInventory[label="update\nInventory", color="gray"];
+  }
+
+chooseProduct->goToCart;
+
+goToCart->cart;
+
+cart->cartSubmit;
+
+cartSubmit->prepaymentValidation[dir="both"; label="is trasaction valid?"; style="dashed", fontsize="10px"];
+
+cartSubmit->cartProcess;
+
+cartProcess->transactionCreated[label="successful transaction"; style="dashed", fontsize="10px"];
+
+prepaymentValidation->getPrice[dir="both"; label="is price correct?", style="dashed", color=blue; fontcolor=blue; fontsize="10px"];
+prepaymentValidation->getInventory[dir="both"; label="is price correct?", style="dashed", color=blue; fontcolor=blue; fontsize="10px"];
+transactionCreated->updateInventory[label="update inventory", style="dashed", color=blue; fontcolor=blue; fontsize="10px"];
+
+cartProcess->success;
+cartSubmit->cart[label="if invalid,\ntry again", fontsize="10px", color="red", style="dashed", fontcolor=red];
+
+{rank=same;
+  goToCart; cart;
+}
+
+{rank=same;
+  cartSubmit; prepaymentValidation;
+}
+
+{rank=same;
+  cartProcess; transactionCreated;
+}
+
+{rank=same;
+chooseProduct; getInventory; updateInventory; getPrice
+}
+
+}

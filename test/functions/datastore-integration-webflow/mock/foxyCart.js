@@ -1,5 +1,9 @@
+const MockFoxyRequest = require("../../../MockFoxyRequests.js");
+
+
 function randomString() {
-  return Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
+  return Math.random().toString(36)
+    .replace(/[^a-z]+/g, '').substr(0, 5);
 }
 
 function basicRequest(itemBuilder, qty = 10) {
@@ -64,24 +68,34 @@ function foxyRequest(changes, itemBuilder = basicItem) {
     items.forEach(functionToSet(key, value));
   }
 
-  function setItemsOption(items, option, value) {
-    items.forEach(i => {
-      i._embedded['fx:item_options'].forEach(o => {
-        if (o.name === option) o.value = value
-      })
-    });
+  function setItemsOption(items, option, optionValue) {
+    for (let i of items) {
+      if (!i._embedded) {
+        i._embedded = {};
+      }
+      if (!i._embedded['fx:item_options']) {
+        i._embedded['fx:item_options'] = [];
+      }
+      const existing = i._embedded['fx:item_options'].find(i=>i.name === option);
+      if (existing) {
+        existing.value = optionValue;
+      } else {
+        i._embedded['fx:item_options'].push({name: option, value: optionValue});
+      }
+    }
   }
 
   /** Set several values for all items in a collection */
   function setItemsValuesAll(items, changes) {
-    Object.entries(changes).forEach(([k, v]) => {
+    for (let [k, v] of Object.entries(changes)) {
       if (k === 'options' && typeof v === 'object') {
         for (const [option, optionValue] of Object.entries(v)) {
           setItemsOption(items, option, optionValue);
         }
+      } else {
+        setItemsValue(items, k, v);
       }
-      setItemsValue(items, k, v);
-    });
+    }
   }
 
   const items = basicRequest(itemBuilder);
@@ -90,24 +104,15 @@ function foxyRequest(changes, itemBuilder = basicItem) {
   } else if (typeof changes === 'object') {
     setItemsValuesAll(items._embedded['fx:items'], changes);
   }
-  return {
-    body: items,
-  };
+  return MockFoxyRequest.validRequest(items);
 }
 
 exports.itemBuilders = {
-  basicItem,
   subscriptionItem,
 };
 
 exports.basic = function () {
   return basicRequest(basicItem);
-};
-
-exports.subscription = function () {
-  return basicRequest(
-    () => basicSubscription(basicItem()),
-  );
 };
 
 exports.longCollection = function () {

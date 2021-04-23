@@ -1,6 +1,13 @@
 node_modules
 dist
 
+# Istanbul code coverage files and folders
+.nyc_output
+coverage
+
+# ctags files
+tags
+
 # Local Netlify folder
 .netlify
 
@@ -10,3 +17,16 @@ dist
 
 # VSCode and other editor-specific files
 tempCodeRunner*
+
+.idea
+
+### Vim ###
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-v][a-z]
+[._]sw[a-p]
+Session.vim
+.netrwhist
+*~
+.vimrc
+.vimlocal
