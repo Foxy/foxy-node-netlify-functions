@@ -125,7 +125,7 @@ class DataStore extends DataStoreBase {
     // for now it is simply assuming all items in embedded are part of the shipment
     const products = items.map(p => ({
       name: p.name,
-      qtd: p.quantity,
+      qty: p.quantity,
       sku: p.code,
       value: p.price,
       weight: p.weight
