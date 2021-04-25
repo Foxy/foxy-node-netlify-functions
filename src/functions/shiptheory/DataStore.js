@@ -137,6 +137,7 @@ class DataStore extends DataStoreBase {
         address_line_1: shipments[0].address1,
         city: shipments[0].city,
         country: shipments[0].country,
+        email: transaction.customer_email,
         firstname: shipments[0].first_name,
         lastname: shipments[0].last_name,
         postcode: shipments[0].postal_code,
