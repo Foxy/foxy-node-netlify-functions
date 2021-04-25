@@ -124,11 +124,13 @@ class DataStore extends DataStoreBase {
     // grab data from each shipment and create a list of shipments to be sent to Shiptheory
     // for now it is simply assuming all items in embedded are part of the shipment
     const products = items.map(p => ({
+      height: p.height,
       name: p.name,
       qty: p.quantity,
       sku: p.code,
       value: p.price,
-      weight: p.weight
+      weight: p.weight,
+      width: p.width
     }));
     const weight = items.reduce( (accum, curr) => curr.weight + accum);
     return {
