@@ -123,12 +123,14 @@ class DataStore extends DataStoreBase {
     // TODO: account for possible multiple shippings in a single transaction
     // grab data from each shipment and create a list of shipments to be sent to Shiptheory
     // for now it is simply assuming all items in embedded are part of the shipment
-    const products = items.map(p => ({
+    const products = items.map((p,i) => ({
+      height: p.height,
       name: p.name,
-      qtd: p.quantity,
-      sku: p.code,
+      qty: p.quantity,
+      sku: p.code || `${transaction.id}-${i}`,
       value: p.price,
-      weight: p.weight
+      weight: p.weight,
+      width: p.width
     }));
     const weight = items.reduce( (accum, curr) => curr.weight + accum);
     return {
@@ -137,6 +139,7 @@ class DataStore extends DataStoreBase {
         address_line_1: shipments[0].address1,
         city: shipments[0].city,
         country: shipments[0].country,
+        email: transaction.customer_email,
         firstname: shipments[0].first_name,
         lastname: shipments[0].last_name,
         postcode: shipments[0].postal_code,
