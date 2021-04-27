@@ -6,6 +6,8 @@ import sinon from "sinon";
 
 const {expect} = chai;
 
+let log;
+let logError;
 function silenceLog() {
   log = sinon.stub(console, 'log');
   logError = sinon.stub(console, 'error');
