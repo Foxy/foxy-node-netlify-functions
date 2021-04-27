@@ -197,6 +197,10 @@ cartRouter.get(
           ));
         } catch(e) {
           err = e;
+          if (err.message === 'Error getting cart.') {
+            err.status = 404;
+            err.message = "Cart not found.";
+          }
           console.log("Error: ", err.code, err.message);
         }
       }
