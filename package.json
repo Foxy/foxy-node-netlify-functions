@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Run serverless functions on Netlify to work with the Foxy.io hypermedia API.",
   "private": false,
+  "type": "module",
   "scripts": {
     "test": "nyc mocha \"test/**/*.test.js\" --exit",
     "start": "netlify dev",
@@ -12,7 +13,6 @@
   "license": "MIT",
   "devDependencies": {
     "@foxy.io/eslint-config": "^1.0.0",
-    "c8": "^7.7.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "chai-http": "^4.3.0",
