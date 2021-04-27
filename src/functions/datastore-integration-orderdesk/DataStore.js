@@ -1,6 +1,6 @@
-const DataStoreBase = require('../../foxy/DataStoreBase.js');
-const config = require('../../../config.js');
-const fetch = require('node-fetch');
+import {DataStoreBase} from '../../foxy/DataStoreBase.js';
+import {config} from '../../../config.js';
+import fetch from 'node-fetch';
 
 /**
  * @typedef {Object} OrderDeskItem
@@ -33,8 +33,8 @@ class DataStore extends DataStoreBase {
   /**
    * @inheritdoc
    */
-  setCredentials() {
-    const credentials = this.parseConfigCredentials(config);
+  setCredentials(credentials) {
+    credentials = this.parseConfigCredentials(config);
     if (!credentials.key || !credentials.id) {
       throw new Error("Environment variables for OrderDesk store id and/or API key are missing.");
     }
@@ -135,7 +135,7 @@ class DataStore extends DataStoreBase {
   }
 
   /**
-   * Converts an order desk intem into a CartValidados Canonical Item.
+   * Converts an order desk item into a CartValidados Canonical Item.
    *
    * Does not change any field that does not need to be changed.
    * For OrderDesk, simply create an inventory field which is equal to stock.
@@ -162,4 +162,6 @@ class DataStore extends DataStoreBase {
 
 }
 
-module.exports = DataStore;
+export {
+  DataStore
+}

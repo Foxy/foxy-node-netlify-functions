@@ -1,6 +1,6 @@
-const FoxyWebhook= require('../../foxy/FoxyWebhook.js');
-const webhook = require('./webhook.js');
-const config = require("../../../config.js");
+import * as FoxyWebhook from '../../foxy/FoxyWebhook.js';
+import * as webhook from './webhook.js';
+import { config } from "../../../config.js";
 
 /**
  * @callback requestCallback
@@ -78,4 +78,6 @@ const validation = {
 
 const BadRequest = webhook.response('Bad Request', 400);
 
-exports.handler = handleRequest;
+export {
+  handleRequest
+}

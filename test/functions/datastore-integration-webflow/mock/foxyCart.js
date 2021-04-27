@@ -1,4 +1,4 @@
-const MockFoxyRequest = require("../../../MockFoxyRequests.js");
+import * as MockFoxyRequest from "../../../MockFoxyRequests.js";
 
 
 function randomString() {
@@ -107,17 +107,21 @@ function foxyRequest(changes, itemBuilder = basicItem) {
   return MockFoxyRequest.validRequest(items);
 }
 
-exports.itemBuilders = {
+const itemBuilders = {
   subscriptionItem,
 };
 
-exports.basic = function () {
+const basic = function () {
   return basicRequest(basicItem);
 };
 
-exports.longCollection = function () {
+const longCollection = function () {
   return basicRequest(basicItem, 100);
 };
 
-
-exports.request = foxyRequest;
+export {
+  basic,
+  itemBuilders,
+  longCollection,
+  foxyRequest
+}

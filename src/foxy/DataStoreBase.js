@@ -1,6 +1,6 @@
-const config = require("../../config.js");
+import {config} from "../../config.js";
 
-class DataStoreBase {
+export class DataStoreBase {
 
   skipUpdate = {
     inventory: []
@@ -16,7 +16,7 @@ class DataStoreBase {
       m => typeof this[m] !== "function"
     );
     if (unimplemented.length) {
-      throw new TypeError(unimplemented.join(',') + " must be overriden");
+      throw new TypeError(unimplemented.join(',') + " must be overridden");
     }
     this.skipFromEnv();
   }
@@ -72,4 +72,3 @@ class DataStoreBase {
 
 }
 
-module.exports = DataStoreBase;

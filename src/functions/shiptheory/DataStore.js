@@ -1,6 +1,5 @@
-const DataStoreBase = require('../../foxy/DataStoreBase.js');
-const config = require('../../../config.js');
-const fetch = require('node-fetch');
+import { DataStoreBase } from '../../foxy/DataStoreBase.js';
+import fetch from 'node-fetch';
 
 /**
  * @typedef {Object} OrderDeskItem
@@ -21,7 +20,7 @@ const fetch = require('node-fetch');
 
 
 
-class DataStore extends DataStoreBase {
+export class DataStore extends DataStoreBase {
 
   token = false;
   credentials;
@@ -157,4 +156,3 @@ class DataStore extends DataStoreBase {
 
 }
 
-module.exports = DataStore;

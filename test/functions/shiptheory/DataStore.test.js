@@ -1,25 +1,11 @@
-const { after, afterEach, before, beforeEach, describe, it } = require("mocha");
-const {expect} = require("chai");
-const rewire = require("rewire");
-const DataStore = rewire("../../../src/functions/shiptheory/DataStore.js");
-const mockShipTheoryAPI = require("./MockShipTheoryAPI");
+import { after, before, describe, it } from "mocha";
+import { DataStore } from "../../../src/functions/shiptheory/DataStore.js";
+import chai from "chai";
+import * as mockShipTheoryAPI from "./MockShipTheoryAPI.js";
 
-
-
+const expect = chai.expect;
 
 describe("ShipTheory Client", function() {
-  let restore;
-  before(
-    function() {
-      restore = DataStore.__set__('fetch', mockShipTheoryAPI.fetch);
-    }
-  );
-
-  after(
-    function() {
-      restore();
-    }
-  );
 
   it ("Should be configured usig environment variables.", function() {
     const ds = new DataStore();
@@ -40,12 +26,9 @@ describe("ShipTheory Client", function() {
 
   it ("Should authenticate in ShipTheory", async function() {
     const ds = new DataStore();
-    const result = await ds.authenticate();
+    await ds.authenticate();
     expect(ds.token).to.exist;
-    expect(ds.token).to.equal('token');;
+    expect(ds.token).to.equal('token');
   });
-
-  
-
 
 });

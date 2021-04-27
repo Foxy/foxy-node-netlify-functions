@@ -1,9 +1,10 @@
-const crypto = require("crypto");
-const FoxyWebhook = require('../../src/foxy/FoxyWebhook.js');
-const sinon = require("sinon");
+import * as FoxyWebhook from '../../src/foxy/FoxyWebhook.js';
+import { after, before, describe, it } from "mocha";
+import chai from "chai";
+import crypto from "crypto";
+import sinon from "sinon";
 
-const { expect } = require("chai");
-const { after, before, describe, it } = require("mocha");
+const {expect} = chai;
 
 function silenceLog() {
   log = sinon.stub(console, 'log');

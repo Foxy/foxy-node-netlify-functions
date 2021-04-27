@@ -1,14 +1,15 @@
-require("dotenv").config();
-const config = require('../../../config.js');
-const traverse = require("traverse");
+import * as FoxySDK from "@foxy.io/sdk";
+import * as dotenv from "dotenv";
+import bodyParser from "body-parser";
+import { config } from '../../../config.js';
+import createError from "http-errors";
+import express from "express";
+import serverless from "serverless-http";
 
-const { FoxyApi } = require("@foxy.io/node-api");
 
-const createError = require("http-errors");
-const express = require("express");
-const serverless = require("serverless-http");
 const app = express();
-const bodyParser = require("body-parser");
+
+dotenv.config();
 
 let foxy;
 let store;
@@ -29,7 +30,7 @@ function validateConfig() {
 }
 
 /**
- * Validate the cart has the propper attributes.
+ * Validate the cart has the proper attributes.
  *
  * @param {Object} cart to be validated.
  * @returns {boolean} the cart attributes are valid.
@@ -45,10 +46,17 @@ function validateCart(cart) {
 /**
  * Initialize Foxy API
  */
-function setup() {
+function getFoxyAPI() {
   if (validateConfig()) {
-    foxy = new FoxyApi();
-    store = foxy.follow("fx:store");
+    return new FoxySDK.Backend.API(
+      {
+        clientId: config.foxy.api.clientId,
+        clientSecret: config.foxy.api.clientSecret,
+        refreshToken: config.foxy.api.refreshToken,
+      }
+    );
+  } else {
+    return null;
   }
 }
 
@@ -59,53 +67,53 @@ const defaultSubFrequency = config.default.autoshipFrequency || "1m";
 /**
  * Retrieves a `cart` resource by ID.
  *
+ * @param {FoxySDK.Backend.API} foxy api to use.
  * @param {number} id - The ID of the cart to retrieve.
  * @returns {Object} first cart.
  */
-const getCart = async (id) => {
+const getCart = async (foxy, id) => {
   if (!id && !Number.isInteger(id)) {
     return {};
   }
-  const carts = await store
-    .follow("fx:carts")
-    .fetch({
-      query: { id },
-      zoom: [
-        "items",
-        "items:item_options",
-        "items:item_options:discount_details",
-      ],
-    })
-    .catch(() => Promise.reject(new Error("Error getting cart.")));
+  let carts;
+  try {
+    carts = await foxy
+      .follow("fx:store")
+      .follow("fx:carts")
+      .get({
+        query: { id },
+        zoom: [
+          "items",
+          "items:item_options",
+          "items:item_options:discount_details",
+        ],
+      });
+  } catch(e) {
+    throw new Error("Error getting cart.");
+  }
   return carts._embedded["fx:carts"][0] || {};
 };
 
 /**
  * Updates the cart and its contents
  *
- * @param {number} id
- * @param {Object} cart
- * @returns {Promise}
+ * @param {Object} cart with modifications to be.
+ * @returns {Promise} that resolves to the api response.
  */
-const patchCart = async (id, cart) => {
-  return foxy
-    .fetchRaw({
-      body: cart,
-      method: "PATCH",
-      url: cart._links.self.href,
-      zoom: [
-        "items",
-        "items:item_options",
-        "items:item_options:discount_details",
-      ],
-    })
-    .catch((e) => {
-      return Promise.reject("Patching cart failed.");
-    });
+const patchCart = async (cart) => {
+  return cart.patch({
+    body: cart,
+    zoom: [
+      "items",
+      "items:item_options",
+      "items:item_options:discount_details",
+    ],
+  });
 };
 
 /**
  * Strips all `sub_` parameters from all cart items.
+ *
  * @param {number} id
  * @param {Object} cart
  */
@@ -115,18 +123,14 @@ const convertCartToOneOff = async (id, cart) => {
   cart._embedded["fx:items"] = cart._embedded["fx:items"].filter(
     (item) => item.subscription_frequency
   );
-
-  for (let i = 0; i < cart._embedded["fx:items"].length; i++) {
-    cart._embedded["fx:items"][i].subscription_frequency = "";
-    cart._embedded["fx:items"][i].subscription_start_date = null;
-    cart._embedded["fx:items"][i].subscription_end_date = null;
-    cart._embedded["fx:items"][i].subscription_next_transaction_date = null;
+  for (const item of cart._embedded["fx:items"]) {
+    item.subscription_frequency = "";
+    item.subscription_start_date = null;
+    item.subscription_end_date = null;
+    item.subscription_next_transaction_date = null;
   }
-
   if (cart._embedded["fx:items"].length > 0) {
-    return patchCart(id, cart).catch((e) => {
-      return Promise.reject("ERROR patching cart.");
-    });
+    return patchCart(cart);
   } else {
     return cartOriginal;
   }
@@ -150,18 +154,14 @@ const convertCartToSubscription = async (
 ) => {
   // Remove any existing subscription items in the cart, as we don't need to modify them
   const cartOriginal = JSON.parse(JSON.stringify(cart));
-  cart._embedded["fx:items"] = cart._embedded["fx:items"].filter(
-    (item) => !item.subscription_frequency
-  );
-
-  for (let i = 0; i < cart._embedded["fx:items"].length; i++) {
-    cart._embedded["fx:items"][i].subscription_frequency = frequency;
-  }
-
-  if (cart._embedded["fx:items"].length > 0) {
-    return patchCart(id, cart).catch((e) => {
-      return Promise.reject("ERROR patching cart.");
+  cart._embedded["fx:items"] = cart._embedded["fx:items"]
+    .filter(item => !item.subscription_frequency)
+    .map(item => {
+      item.subscription_frequency = frequency;
+      return item
     });
+  if (cart._embedded["fx:items"].length > 0) {
+    return patchCart(cart);
   } else {
     return cartOriginal;
   }
@@ -178,65 +178,59 @@ cartRouter.get("/", (req, res) => {
 // TODO: Make it POST
 cartRouter.get(
   "/:cartId(\\d+)/convert/recurring/:frequency",
-  async (req, res, next) => {
+  async (req, res) => {
+    let err;
     if (!validateConfig()) {
       res.status(500).json("FOXY_API_CLIENT_ID is not configured;");
-      return;
+    } else {
+      const foxy = getFoxyAPI();
+      if (foxy) {
+        try {
+          const cart = await getCart(foxy, req.params.cartId);
+          if (!validateCart(cart)) {
+            throw createError(404, messageCartNotFound);
+          }
+          res.json(convertCartToSubscription(
+            req.params.cartId,
+            cart,
+            req.params.frequency
+          ));
+        } catch(e) {
+          err = e;
+          console.log("Error: ", err.code, err.message);
+        }
+      }
+      if (err.status) {
+        res.status(err.status).json(err.message);
+      } else {
+        res.status(500).json("Error fetching or modifying cart.");
+      }
     }
-    setup();
-    // This code is never executed
-    //if (!req.params.cartId) {
-    //  throw createError(400, `cartId not found.`);
-    //}
-    await getCart(req.params.cartId)
-      .then(async (cart) => {
-        if (!validateCart(cart)) {
-          throw createError(404, messageCartNotFound);
-        }
-        return convertCartToSubscription(
-          req.params.cartId,
-          cart,
-          req.params.frequency
-        );
-      })
-      .then((data) => res.json(data))
-      .catch((err) => {
-        if (err.status) {
-          res.status(err.status).json(err.message);
-        } else {
-          res.status(500).json("Error fetching or modifying cart.");
-        }
-      });
   }
 );
 
 // TODO: Make it POST
 cartRouter.get(
   "/:cartId(\\d+)/convert/nonrecurring",
-  async (req, res, next) => {
+  async (req, res) => {
     if (!validateConfig()) {
       res.status(500).json("FOXY_API_CLIENT_ID is not configured.");
     } else {
-      setup();
-      // Code bellow will never run
-      // if (!req.params.cartId) {
-      //   throw createError(400, messageCartNotFound);
-      // }
-      await getCart(req.params.cartId)
-        .then(async (cart) => {
-          if (!validateCart(cart)) {
-            throw createError(404, messageCartNotFound);
-          }
-          return convertCartToOneOff(req.params.cartId, cart);
-        })
-        .then((data) => res.json(data))
-        .catch((err) => {
-          if (err.status) {
-            res.status(err.status).json(err.message);
-          } else {
-            res.status(500).json("Error fetching or modifying cart.");
-          }
-        });
+      const foxy = getFoxyAPI();
+      try {
+        const cart = await getCart(foxy, req.params.cartId);
+        if (!validateCart(cart)) {
+          throw createError(404, messageCartNotFound);
+        }
+        const data = convertCartToOneOff(req.params.cartId, cart);
+        res.json(data);
+      } catch(err) {
+        if (err.status) {
+          res.status(err.status).json(err.message);
+        } else {
+          res.status(500).json("Error fetching or modifying cart.");
+        }
+      }
     }
   }
 );
@@ -288,5 +282,5 @@ app.use((err, req, res, next) => {
   });
 });
 
-module.exports = app;
-module.exports.handler = serverless(app);
+export const handler = serverless(app);
+export { app }

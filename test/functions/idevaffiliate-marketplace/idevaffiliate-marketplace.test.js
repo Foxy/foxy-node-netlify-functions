@@ -1,17 +1,12 @@
-const { after, afterEach, before, beforeEach, describe, it } = require("mocha");
-const {expect} = require("chai");
-const rewire = require("rewire");
-const MockFoxyRequests = require("../../MockFoxyRequests.js");
+import * as IdevAffiliate from "../../../src/functions/idevaffiliate-marketplace/idevaffiliate-marketplace.js";
+import * as MockFoxyRequests from "../../MockFoxyRequests.js";
+import { before, beforeEach, describe, it } from "mocha";
+import chai from "chai";
+import { config } from "../../../config.js";
 
-
-const chaiHttp = require('chai-http');
-const IdevAffiliate = rewire('../../../src/functions/idevaffiliate-marketplace/idevaffiliate-marketplace.js');
-const config = IdevAffiliate.__get__('config');
+const expect = chai.expect;
 
 let sentRequests = [];
-IdevAffiliate.__set__('fetch', function () {
-  sentRequests.push(arguments);
-});
 
 describe("Idev Affiliate", function() {
 
@@ -59,11 +54,5 @@ describe("Idev Affiliate", function() {
       )).to.be.true;
     expect(response.statusCode).to.equal(200);
   });
-  
-
-
-
-
-
 
 });

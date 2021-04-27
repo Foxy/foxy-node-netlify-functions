@@ -1,19 +1,19 @@
-const rewire = require("rewire");
-const { expect } = require("chai");
-const { describe, it, before, after } = require("mocha");
-const sinon = require("sinon");
-const webhook = rewire("../../../src/functions/datastore-integration-orderdesk/webhook.js");
+import { describe, it, before, after } from "mocha";
+import chai from "chai";
+import sinon from "sinon";
+import * as originalWebhook from "../../../src/functions/datastore-integration-orderdesk/webhook.js";
+const expect = chai.expect;
 
-const oldFoxyWebhook = webhook.__get__('FoxyWebhook');
 const MockFoxyWebhook = {
   getItems: function() {return [this.item];},
   item: {},
   messageInsufficientInventory: () => 'insufficientInventory',
-  messagePriceMismatch: () => 'priceMismatch',
-  response: oldFoxyWebhook.response
+  messagePriceMismatch: () => 'priceMismatch'
 }
 
-webhook.__set__('FoxyWebhook', MockFoxyWebhook);
+const getDataStore = () => MockDatastore;
+const FoxyWebhook = MockFoxyWebhook;
+const webhook = {...originalWebhook};
 
 const MockDatastore = {
   item: {},
@@ -32,7 +32,6 @@ const MockDatastore = {
   },
   convertToCanonical: (i) => i
 }
-webhook.__set__('getDataStore', () => MockDatastore);
 
 /**
  * Creates an Arbitrary Cart Item

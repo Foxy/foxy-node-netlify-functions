@@ -1,9 +1,14 @@
-const { after, afterEach, before, beforeEach, describe, it } = require("mocha");
-const chai = require("chai");
-const rewire = require("rewire");
-const chaiHttp = require('chai-http');
-const app = rewire('../../../src/functions/cart/cart.js');
-const config = app.__get__('config');
+import { beforeEach, describe, it } from "mocha";
+import chai from "chai";
+import chaiHttp from 'chai-http';
+import {app} from "../../../src/functions/cart/cart.js";
+import {config} from "../../../config.js";
+
+function getApp() {
+  const config = config;
+  const FoxyApi = MockFoxy;
+  return {...app};
+}
 
 class MockFoxy {
   /**
@@ -11,7 +16,7 @@ class MockFoxy {
    */
   static foxyResponse = {};
 
-  follow(target) {
+  follow() {
     return this;
   }
 
@@ -75,8 +80,6 @@ class MockFoxy {
   }
 
 }
-
-  app.__set__('FoxyApi', MockFoxy);
 
 chai.use(chaiHttp);
 const expect = chai.expect;

@@ -1,14 +1,14 @@
-const {after, afterEach, before, beforeEach, describe, it } = require("mocha");
-const {expect} = require("chai");
-const MockFoxyRequest = require("../../MockFoxyRequests.js");
-const sinon = require("sinon");
+import * as MockFoxyRequest from "../../MockFoxyRequests.js";
+import * as odHandler from "../../../src/functions/datastore-integration-orderdesk/index.js";
+import { after, afterEach, before, beforeEach, describe, it } from "mocha";
+import chai from "chai";
+import { config } from '../../../config.js';
+import sinon from "sinon";
 
-const crypto = require("crypto");
-const rewire = require("rewire");
+const expect = chai.expect;
 
-const odHandler = rewire("../../../src/functions/datastore-integration-orderdesk/index.js");
-const config = odHandler.__get__('config');
-
+let log;
+let logError;
 function silenceLog() {
   log = sinon.stub(console, 'log');
   logError = sinon.stub(console, 'error');

@@ -1,15 +1,5 @@
-const crypto = require('crypto');
-const defaultConfig = require('../config.js');
-
-let customConfig;
-
-function getConfig() {
-  return customConfig || defaultConfig;
-}
-
-function setConfig(cfg) {
-  customConfig = cfg;
-}
+import { config } from '../config.js';
+import crypto from 'crypto';
 
 /**
  * Creates a valid request with a given payload.
@@ -22,7 +12,7 @@ function validRequest(payload = null) {
     payload = {"foo": "bar"};
   }
   payload = JSON.stringify(payload);
-  const foxySignature = crypto.createHmac('sha256', getConfig().foxy.webhook.encryptionKey).update(payload).digest('hex');
+  const foxySignature = crypto.createHmac('sha256', config.foxy.webhook.encryptionKey).update(payload).digest('hex');
   return {
     body: payload,
     headers: {
@@ -34,7 +24,6 @@ function validRequest(payload = null) {
   };
 }
 
-module.exports = {
-  setConfig,
+export {
   validRequest
 }

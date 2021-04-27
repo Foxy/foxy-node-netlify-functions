@@ -1,9 +1,9 @@
-const config = require('../../config.js');
+import {config} from "../../config.js";
 
 
 /**
  * @typedef {Object} CanonicalItem
- * @property {string} name the anme of the product
+ * @property {string} name the name of the product
  * @property {number|undefined} price the product price
  * @property {number|undefined} inventory the amount available in the inventory.
  * @property {string} code the unique code of the product (sku)
@@ -12,7 +12,7 @@ const config = require('../../config.js');
  */
 
 
-class CartValidator {
+export class CartValidator {
 
   skipValidation = {
     inventory: [],
@@ -65,7 +65,7 @@ class CartValidator {
     return this.skipValidation.inventory.all ||
       this.skipValidation.price.includes(cartItem.code) ||
       !canonicalItem.price ||
-      parseFloat(cartItem.price) === parseFloat(canonicalItem.price);
+      parseFloat(cartItem.price) === parseFloat(canonicalItem.price.toString());
   }
 
   /**
@@ -84,5 +84,3 @@ class CartValidator {
       Number(cartItem.quantity) <= Number(canonicalItem.inventory);
   }
 }
-
-module.exports = CartValidator;

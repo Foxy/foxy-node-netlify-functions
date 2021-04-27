@@ -36,13 +36,13 @@ function newWebflowBasicItem() {
   };
 }
 
-exports.deterministic = basicResponse(
+const deterministic = basicResponse(
   newWebflowBasicItem,
   100,
   500,
 );
 
-exports.arbitrary = function arbitrary(items, customConfig = {}, without = []) {
+const arbitrary = function arbitrary(items, customConfig = {}, without = []) {
   const defaultConfig = {
     category: (v) => v,
     code: (v) => v,
@@ -74,3 +74,9 @@ exports.arbitrary = function arbitrary(items, customConfig = {}, without = []) {
     return r;
   };
 };
+
+export {
+  arbitrary,
+  basicResponse,
+  deterministic
+}
