@@ -4,6 +4,8 @@ import chaiHttp from 'chai-http';
 import {app} from "../../../src/functions/cart/cart.js";
 import {config} from "../../../config.js";
 
+
+
 function getApp() {
   const config = config;
   const FoxyApi = MockFoxy;
@@ -20,7 +22,7 @@ class MockFoxy {
     return this;
   }
 
-  fetch() {
+  get() {
     return Promise.resolve(MockFoxy.foxyResponse);
   }
 
@@ -105,6 +107,7 @@ describe("Cart", function () {
   let requester;
   beforeEach(
     function() {
+      app.foxy = new MockFoxy();
       setClientId();
       requester = chai.request(app);
     }

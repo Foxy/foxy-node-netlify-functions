@@ -11,9 +11,6 @@ const app = express();
 
 dotenv.config();
 
-let foxy;
-let store;
-
 const messageCartNotFound = 'Cart not found.';
 
 /**
@@ -22,11 +19,10 @@ const messageCartNotFound = 'Cart not found.';
  * @returns {boolean} the configuration is valid
  */
 function validateConfig() {
-  return (
-    config.foxy.api.clientId &&
+  return !!(config.foxy.api.clientId &&
     config.foxy.api.clientSecret &&
-    config.foxy.api.refreshToken
-  );
+    config.foxy.api.refreshToken)
+  ;
 }
 
 /**
@@ -36,28 +32,32 @@ function validateConfig() {
  * @returns {boolean} the cart attributes are valid.
  */
 function validateCart(cart) {
-  if (!cart) return false;
-  if (!cart._embedded || !Array.isArray(cart._embedded["fx:items"])) {
+  if (!cart) {
     return false;
+  } else {
+    return !(!cart._embedded || !Array.isArray(cart._embedded["fx:items"]));
   }
-  return true;
 }
 
 /**
  * Initialize Foxy API
+ *
+ * @param {Object} app to be assigned a Foxy Backend API.
+ * @returns {Object} foxy api instance
  */
-function getFoxyAPI() {
-  if (validateConfig()) {
-    return new FoxySDK.Backend.API(
-      {
-        clientId: config.foxy.api.clientId,
-        clientSecret: config.foxy.api.clientSecret,
-        refreshToken: config.foxy.api.refreshToken,
-      }
-    );
-  } else {
-    return null;
+function setFoxyAPI(app) {
+  if (!app.foxy) {
+    if (validateConfig()) {
+      app.foxy = new FoxySDK.Backend.API(
+        {
+          clientId: config.foxy.api.clientId,
+          clientSecret: config.foxy.api.clientSecret,
+          refreshToken: config.foxy.api.refreshToken,
+        }
+      );
+    }
   }
+  return app.foxy;
 }
 
 /** Functions and Variables */
@@ -65,9 +65,13 @@ function getFoxyAPI() {
 const defaultSubFrequency = config.default.autoshipFrequency || "1m";
 
 /**
+ * @typedef {import(@foxy/sdk).Backend.API} API
+ */
+
+/**
  * Retrieves a `cart` resource by ID.
  *
- * @param {FoxySDK.Backend.API} foxy api to use.
+ * @param {Object} foxy API instance to use.
  * @param {number} id - The ID of the cart to retrieve.
  * @returns {Object} first cart.
  */
@@ -183,18 +187,19 @@ cartRouter.get(
     if (!validateConfig()) {
       res.status(500).json("FOXY_API_CLIENT_ID is not configured;");
     } else {
-      const foxy = getFoxyAPI();
-      if (foxy) {
+      setFoxyAPI(app);
+      if (app.foxy) {
         try {
-          const cart = await getCart(foxy, req.params.cartId);
+          const cart = await getCart(app.foxy, req.params.cartId);
           if (!validateCart(cart)) {
             throw createError(404, messageCartNotFound);
           }
-          res.json(convertCartToSubscription(
+          res.json(await convertCartToSubscription(
             req.params.cartId,
             cart,
             req.params.frequency
           ));
+          return;
         } catch(e) {
           err = e;
           if (err.message === 'Error getting cart.') {
@@ -220,9 +225,9 @@ cartRouter.get(
     if (!validateConfig()) {
       res.status(500).json("FOXY_API_CLIENT_ID is not configured.");
     } else {
-      const foxy = getFoxyAPI();
+      setFoxyAPI(app);
       try {
-        const cart = await getCart(foxy, req.params.cartId);
+        const cart = await getCart(app.foxy, req.params.cartId);
         if (!validateCart(cart)) {
           throw createError(404, messageCartNotFound);
         }
