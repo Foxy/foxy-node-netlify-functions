@@ -1,19 +1,15 @@
-import { describe, it, before, after } from "mocha";
+import * as webhook from "../../../src/functions/datastore-integration-orderdesk/webhook.js";
+import { describe, it, before, beforeEach, after, afterEach} from "mocha";
 import chai from "chai";
 import sinon from "sinon";
-import * as originalWebhook from "../../../src/functions/datastore-integration-orderdesk/webhook.js";
+import nock from "nock";
 const expect = chai.expect;
+import {config} from "../../../config.js";
 
-const MockFoxyWebhook = {
-  getItems: function() {return [this.item];},
-  item: {},
-  messageInsufficientInventory: () => 'insufficientInventory',
-  messagePriceMismatch: () => 'priceMismatch'
+function setConfig() {
+  config.datastore.provider.orderDesk.storeId = 'foo';
+  config.datastore.provider.orderDesk.apiKey = 'bar';
 }
-
-const getDataStore = () => MockDatastore;
-const FoxyWebhook = MockFoxyWebhook;
-const webhook = {...originalWebhook};
 
 const MockDatastore = {
   item: {},
@@ -70,15 +66,8 @@ function arbitraryCanonicalItem(item = {}, differences = []) {
   return item;
 }
 
-function resetMocks() {
-  MockFoxyWebhook.item = arbitraryCartItem();
-  MockDatastore.item = {...MockFoxyWebhook.item};
-  MockDatastore.item.inventory = MockDatastore.item.quantity;
-  MockDatastore.differences = [];
-}
-
-async function prePaymentExpectOk() {
-  const result = await webhook.prePayment('foo');
+async function prePaymentExpectOk(item) {
+  const result = await webhook.prePayment({_embedded: {'fx:items':[item]}});
   expect(result.statusCode).to.equal(200);
   expect(result.body).to.exist;
   const parsed = JSON.parse(result.body);
@@ -87,8 +76,8 @@ async function prePaymentExpectOk() {
   return parsed;
 }
 
-async function prePaymentExpectInvalid(reg) {
-  const result = await webhook.prePayment('foo');
+async function prePaymentExpectInvalid(item, reg) {
+  const result = await webhook.prePayment({_embedded: {'fx:items':[item]}});
   expect(result.statusCode).to.equal(200);
   expect(result.body).to.exist;
   const parsed = JSON.parse(result.body);
@@ -108,6 +97,13 @@ describe("OrderDesk Pre-payment Webhook", function() {
     }
   );
 
+  beforeEach(
+    function() {
+      setConfig();
+      nock.cleanAll();
+    }
+  );
+
   after(
     function() {
       log.restore();
@@ -117,84 +113,119 @@ describe("OrderDesk Pre-payment Webhook", function() {
 
   describe("Validates the cart items prices against a datastore", function() {
     it("Accepts if the prices are the same", async function () {
-      resetMocks();
-      await prePaymentExpectOk();
+      const item = arbitraryCartItem();
+      setOrderDeskItemsResponse([item]);
+      await prePaymentExpectOk(item);
     });
 
     it("Accepts prices zero", async function () {
-      resetMocks();
-      MockFoxyWebhook.item.price = 0;
-      MockDatastore.item.price = 0;
-      await prePaymentExpectOk();
+      const item = arbitraryCartItem();
+      item.price = 0;
+      setOrderDeskItemsResponse([item]);
+      await prePaymentExpectOk(item);
     });
 
     it("Accepts if the datastore has no price", async function () {
-      resetMocks();
-      MockDatastore.item.price = undefined;
-      await prePaymentExpectOk();
+      const cartItem = arbitraryCartItem();
+      const datastoreItem = {...cartItem};
+      delete datastoreItem.price;
+      setOrderDeskItemsResponse([datastoreItem]);
+      await prePaymentExpectOk(cartItem);
     });
 
     it("Rejects if the prices are different", async function () {
-      resetMocks();
-      MockDatastore.item.price = 10;
-      const result = await webhook.prePayment('foo');
-      expect(result.statusCode).to.equal(200);
-      expect(result.body).to.exist;
-      expect(JSON.parse(result.body).ok).to.be.false;
-      expect(JSON.parse(result.body).details).to.match(/priceMismatch/);
+      const cartItem = arbitraryCartItem();
+      const datastoreItem = {...cartItem, price: cartItem.price + 10};
+      setOrderDeskItemsResponse([datastoreItem]);
+      await prePaymentExpectInvalid(cartItem, /Prices do not match/);
     });
 
     it("Rejects if the cart has no price and the datastore does", async function() {
-      resetMocks();
-      MockFoxyWebhook.item.price = undefined;
-      await prePaymentExpectInvalid(/priceMismatch/);
+      const cartItem = arbitraryCartItem();
+      delete cartItem.price;
+      const datastoreItem = arbitraryCartItem();
+      setOrderDeskItemsResponse([datastoreItem]);
+      await prePaymentExpectInvalid(cartItem, /Prices do not match/);
     });
   });
 
-  describe("Validates the cart items quantities agains a datastore", function() {
+  describe("Validates the cart items quantities against a datastore", function() {
     it("Accepts if the quantity is the same or lower as the inventory", async function () {
-      resetMocks();
-      await prePaymentExpectOk();
-      resetMocks();
-      MockDatastore.item.inventory += 1;
-      await prePaymentExpectOk();
+      const item = arbitraryCartItem();
+      const datastoreItem = {...item}
+      setOrderDeskItemsResponse([datastoreItem])
+      await prePaymentExpectOk(item);
+      datastoreItem.inventory += 1;
+      setOrderDeskItemsResponse([datastoreItem])
+      await prePaymentExpectOk(item);
     });
 
     it("Accepts if the quantity is zero", async function () {
-      resetMocks();
-      MockFoxyWebhook.item.quantity = 0;
-      await prePaymentExpectOk();
-      MockDatastore.item.inventory = -1;
-      await prePaymentExpectOk();
+      const item = arbitraryCartItem();
+      item.quantity = 0;
+      setOrderDeskItemsResponse([item])
+      await prePaymentExpectOk(item);
+      setOrderDeskItemsResponse([{...item, inventory: -1}])
+      await prePaymentExpectOk(item);
     });
 
     it("Accepts if the the inventory field is null", async function () {
-      resetMocks();
-      MockDatastore.item.inventory = undefined;
-      await prePaymentExpectOk();
+      const item = arbitraryCartItem();
+      const datastoreItem = {...item};
+      delete datastoreItem.inventory;
+      setOrderDeskItemsResponse([datastoreItem]);
+      await prePaymentExpectOk(item);
     });
 
     it("Rejects if the quantity is higher", async function () {
-      resetMocks();
-      MockFoxyWebhook.item.quantity = 10;
-      await prePaymentExpectInvalid(/insufficientInventory/);
+      const item = arbitraryCartItem();
+      const datastoreItem = {...item};
+      item.quantity = 10;
+      datastoreItem.stock = 9;
+      setOrderDeskItemsResponse([datastoreItem]);
+      await prePaymentExpectInvalid(item, /Insufficient inventory/);
     });
 
   });
 });
 
 describe("Transaction Created Webhook", function() {
+
   describe("Updates the datastore", function() {
+    beforeEach(
+      function() {
+        setConfig();
+        nock.cleanAll();
+      }
+    );
     it("Deduces the quantity from the inventory.", async function () {
-      resetMocks();
-      await webhook.transactionCreated('foo');
-      expect(MockDatastore.item.stock).to.equal(0);
-      resetMocks();
-      MockDatastore.item.inventory = 5;
-      MockFoxyWebhook.item.quantity = 3;
-      await webhook.transactionCreated('foo');
-      expect(MockDatastore.item.stock).to.equal(2);
+      config.datastore.skipUpdate.inventory = 'false';
+      const inventory = 1234;
+      const item = arbitraryCartItem();
+      item.inventory = inventory;
+      item.stock = item.inventory;
+      item.id = item.code;
+      setOrderDeskItemsResponse([item]);
+      nock('https://app.orderdesk.me', {
+        reqheaders: {
+          'ORDERDESK-API-KEY': 'bar',
+          'ORDERDESK-STORE-ID': 'foo',
+        }
+      })
+        .put('/api/v2/batch-inventory-items')
+        .query(true)
+        .reply(200, (path, body) => {
+            expect(body[0].stock).to.equal(inventory - item.quantity);
+            return JSON.stringify((body.every(i => i.name && (i.price || i.price ===0) && (i.inventory || i.inventory === 0))) &&
+              { status: "success"} ||
+              { status: "fail"}
+            );
+          }
+        );
+      const response = await webhook.transactionCreated({_embedded: {'fx:items': [{...item, inventory: item.quantity}]}});
+      expect(response.statusCode).to.equal(200);
     });
+
     it("Sets Foxy.io OrderDesk Webhook as the update method");
   });
 
@@ -209,3 +240,12 @@ describe("Transaction Created Webhook", function() {
   });
 
 });
+
+function setOrderDeskItemsResponse(items) {
+  nock('https://app.orderdesk.me:443')
+    .get('/api/v2/inventory-items')
+    .query(true)
+    .reply(200, {
+      inventory_items: [...items]
+    });
+}

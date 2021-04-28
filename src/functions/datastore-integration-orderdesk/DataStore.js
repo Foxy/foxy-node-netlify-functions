@@ -99,13 +99,15 @@ class DataStore extends DataStoreBase {
    * @returns {Array<OrderDeskItem>} items retrieved from OrderDesk
    */
   async fetchInventoryItems(items) {
+    const u = this.buildEndpoint('inventory-items');
     const response = await fetch(this.buildEndpoint('inventory-items') + '?' + new URLSearchParams({
       code: items.join(',')
     }), {
       headers: this.getDefaultHeader(),
       method: 'GET'
     });
-    return (await response.json()).inventory_items;
+    const parsed = await response.json();
+    return parsed.inventory_items;
   }
 
   /**
@@ -124,13 +126,14 @@ class DataStore extends DataStoreBase {
     items = items.filter(i => !this.skipUpdate.inventory.includes(i.code));
     const invalid = items.filter((i) => !this.validateInventoryItem(i));
     if (invalid.length) {
-      throw new Error("Invalid inventory items for update", invalid.join(','));
+      throw new Error("Invalid inventory items for update " + invalid.join(','));
     }
-    const response = await fetch(this.buildEndpoint('batch-inventory-items'), {
+    const opts = {
       body: JSON.stringify(items),
       headers: this.getDefaultHeader(),
       method: 'PUT'
-    });
+    };
+    const response = await fetch(this.buildEndpoint('batch-inventory-items'), opts );
     return response.json();
   }
 

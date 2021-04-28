@@ -1,6 +1,7 @@
-import { beforeEach, describe, it } from "mocha";
+import { after, beforeEach, describe, it } from "mocha";
 import {DataStore} from "../../../src/functions/datastore-integration-orderdesk/DataStore.js";
 import {MockOrderDesk} from "./mock/mockOrderDesk.js";
+import nock from "nock";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 
@@ -10,12 +11,6 @@ const expect = chai.expect;
 import {config} from "../../../config.js";
 
 const mockOD = new MockOrderDesk();
-
-function getDataStore(fetchFunction = mockOD.fetch) {
-  const fetch = fetchFunction;
-  class DS extends DataStore {}
-  return DS;
-}
 
 function setOrderDeskConfig(key, id) {
   config.datastore.provider.orderDesk.apiKey = key;
@@ -41,6 +36,10 @@ describe("OrderDesk Datastore", function() {
 
   describe("Configuration", function() {
 
+    after(
+      () => delete config.datastore.credentials
+    );
+
     it ("Should inform about missing configuration.", function () {
       const cases = [
         ['foo', undefined],
@@ -49,35 +48,37 @@ describe("OrderDesk Datastore", function() {
       ];
       for (let c of cases) {
         setOrderDeskConfig(...c);
-        expect(() => new (getDataStore())()).to.throw(Error, /Environment variables for OrderDesk store id and\/or API key are missing./)
+        expect(() => new DataStore()).to.throw(Error, /Environment variables for OrderDesk store id and\/or API key are missing./)
       }
     });
 
     it ("Should be configurable using order desk keys", function () {
-      const odClient = new (getDataStore())();
+      const odClient = new DataStore();
       expect(odClient.credentials).to.deep.equal( { id: 'bar', key: 'foo' });
     });
 
     it ("Should be configurable using default datastore credentials", function () {
       setOrderDeskConfig(undefined, undefined);
       config.datastore.credentials = 'Store ID 11111 API Key foobar';
-      const odClient = new (getDataStore())();
+      const odClient = new DataStore();
       expect(odClient.credentials).to.deep.equal(
         {
           id: '11111',
           key: 'foobar'
         }
       );
+      setOrderDeskConfig(undefined, undefined);
     });
 
   });
 
   describe("Fetch OrderDesk items", function() {
     it ("Should fetch items from OrderDesk", async function () {
-      const odClient = new (getDataStore())(
+      const odClient = new DataStore(
         process.env['FOXY_ORDERDESK_STORE_ID'],
         process.env['FOXY_ORDERDESK_API_KEY']
       );
+      mockInventoryItems(odClient);
       const result = await odClient.fetchInventoryItems(['lollipop', 'candy', 'bubblegum']);
       expect(result).to.exist;
       expect(result.length).to.equal(3);
@@ -88,7 +89,7 @@ describe("OrderDesk Datastore", function() {
 
     describe("Does not update to invalid states", function () {
       config.datastore.skipUpdate.inventory = '__NONE__';
-      const odClient = new (getDataStore())();
+      const odClient = new DataStore();
       const fullItem = orderDeskFullItem();
       for (let k of Object.keys(fullItem)) {
         const lacking = {...fullItem};
@@ -101,23 +102,10 @@ describe("OrderDesk Datastore", function() {
 
     describe("Sends an appropriate PUT request", async function () {
       config.datastore.skipUpdate.inventory = '__NONE__';
-      const odClient = new (getDataStore())(
-        function(url, req) {
-        it ("Puts to batch-inventory-items endpoint", function() {
-          expect(url).to.match(/batch-inventory-items/);
-        });
-        it ("Adds OrderDesk required headers", function() {
-          expect(req.headers['ORDERDESK-API-KEY']).to.equal('foo');
-          expect(req.headers['ORDERDESK-STORE-ID']).to.equal('bar');
-        });
-        it("Provides all fields to the update endpoint", function () {
-          const itemsSent = JSON.parse(req.body);
-          itemsSent.every(i => i.id && i.name && i.price && i.stock && i.update_source);
-        });
-        return mockOD.fetch(url, req);
-      });
+      const odClient = new DataStore();
       const fullItem = orderDeskFullItem();
       it ("Returns the body of the response", async function() {
+        mockBatchInventoryItems(odClient);
         const response = await odClient.updateInventoryItems([fullItem]);
         expect(response.status).to.equal('success');
       });
@@ -186,3 +174,32 @@ describe("OrderDesk Datastore", function() {
   });
 });
 
+function mockInventoryItems(dataStore) {
+  const mock = new MockOrderDesk();
+  const response = mock.fetch('inventory-items')
+  nock('https://' + dataStore.domain)
+    .defaultReplyHeaders(response.headers)
+    .get('/api/v2/inventory-items')
+    .query(true)
+    .reply(200, response.body);
+}
+
+function mockBatchInventoryItems(dataStore) {
+  const mock = new MockOrderDesk();
+  const response = mock.fetch('batch-inventory-items')
+  nock('https://' + dataStore.domain, {
+    reqheaders: {
+      'ORDERDESK-API-KEY': 'foo',
+      'ORDERDESK-STORE-ID': 'bar'
+    }
+  })
+    .defaultReplyHeaders(response.headers)
+    .put('/api/v2/batch-inventory-items')
+    .reply(200, (path, items) => {
+      it("should contain propper items", function() {
+        expect(items).to.be.an('Array');
+        expect(items.every(i => i.id && i.name && i.price && i.stock && i.update_source)).to.be.true;
+      });
+      return response.body
+    });
+}

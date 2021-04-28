@@ -4,6 +4,7 @@ import { after, afterEach, before, beforeEach, describe, it } from "mocha";
 import chai from "chai";
 import { config } from '../../../config.js';
 import sinon from "sinon";
+import nock from "nock";
 
 const expect = chai.expect;
 
@@ -44,7 +45,7 @@ describe("Order Desk Pre-payment Webhook", function() {
       for (let c of cases) {
         it(`Warns about ${c[0]}`, async function() {
           c[1]();
-          const response = await odHandler.handler();
+          const response = await odHandler.handleRequest();
           expect(response.statusCode).to.equal(503);
           expect(JSON.parse(response.body).details).to.match(/Service Unavailable/);
         });
@@ -53,7 +54,7 @@ describe("Order Desk Pre-payment Webhook", function() {
   });
 
   it ("Should return a Foxy Prepayment Webhook Response", async function () {
-    const responsePromise = odHandler.handler('');
+    const responsePromise = odHandler.handleRequest('');
     expect(responsePromise).to.be.a("Promise");
     const response = await responsePromise;
     expect(response.statusCode).to.exist;
@@ -70,7 +71,7 @@ describe("Order Desk Pre-payment Webhook", function() {
       const cases = ['GET', 'PUT', 'DELETE', 'PATCH'];
       for (let c of cases) {
         valid.httpMethod = c;
-        const response = await odHandler.handler(valid);
+        const response = await odHandler.handleRequest(valid);
         expect(response.statusCode).to.equal(400);
         expect(JSON.parse(response.body).details).to.equal('Method not allowed');
       }
@@ -78,7 +79,7 @@ describe("Order Desk Pre-payment Webhook", function() {
 
     it("Should reject invalid Foxy Requests", async function () {
       config.foxy.webhook.encryptionKey = 'foo';
-      const responsePromise = odHandler.handler({
+      const responsePromise = odHandler.handleRequest({
         httpMethod: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -95,7 +96,7 @@ describe("Order Desk Pre-payment Webhook", function() {
     it("Should accept valid Foxy Requests", async function() {
       const key = 'foxykey';
       config.foxy.webhook.encryptionKey = key;
-      const responsePromise = odHandler.handler(validRequest());
+      const responsePromise = odHandler.handleRequest(validRequest());
       const response = await responsePromise;
       const body = JSON.parse(response.body);
       expect(body.ok).to.be.true;
@@ -103,38 +104,7 @@ describe("Order Desk Pre-payment Webhook", function() {
     });
   });
 
-  describe("Routes Foxy Requests", async function () {
-    let routed = {'prePayment': false, 'txCreated': false};
-    let revert;
-    const flagger = {
-      prePayment: () => routed.prePayment = true,
-      transactionCreated: () => routed.txCreated = true
-    };
-    beforeEach(() => {
-      routed = {prePayment: false, txCreated: false};
-      revert = odHandler.__set__('webhook', flagger);
-    });
-
-    afterEach(() => {
-      revert();
-    });
-
-    it ("Invokes pre payment when foxy-webhook-event is validation/payment", () => {
-      odHandler.handler(validRequest());
-      expect(routed.prePayment).to.be.true;
-      expect(routed.txCreated).to.be.false;
-    });
-    
-    it ("Invokes transaction created when foxy-webhook-event is transaction/created", () => {
-      const valid = validRequest();
-      valid.headers['foxy-webhook-event'] = 'transaction/created';
-      odHandler.handler(valid);
-      expect(routed.prePayment).to.be.false;
-      expect(routed.txCreated).to.be.true;
-    });
-    
-  });
-
 });
 
 const validRequest = MockFoxyRequest.validRequest;
+

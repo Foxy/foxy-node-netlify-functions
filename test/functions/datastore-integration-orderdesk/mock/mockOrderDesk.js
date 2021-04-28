@@ -13,9 +13,8 @@ export class MockOrderDesk {
       }
     }
     return {  
-      body: {},
+      body: JSON.stringify(data),
       headers: { },
-      json: () => Promise.resolve(data),
       ok: true,
       status: 200,
       statusText: 'OK',

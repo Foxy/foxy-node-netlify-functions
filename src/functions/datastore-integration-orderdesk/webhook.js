@@ -8,7 +8,7 @@ import { config } from "../../../config.js";
  *
  * https://wiki.foxycart.com/v/2.0/pre_payment_webhook
  *
- * @param {string} body of the request received from Foxy
+ * @param {Object} body parsed of the request received from Foxy
  * @returns {Response} to the pre payment request.
  */
 async function prePayment(body) {
