@@ -86,7 +86,6 @@ export class DataStore extends DataStoreBase {
    * @returns {string} the full URL of the endpoint.
    */
   buildEndpoint(path) {
-    console.log('url',  `https://${this.domain}/${this.api}/${path}`);
     return `https://${this.domain}/${this.api}/${path}`;
   }
 

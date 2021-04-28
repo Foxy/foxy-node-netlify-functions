@@ -3,6 +3,7 @@ import * as MockFoxyRequests from "../../MockFoxyRequests.js";
 import { before, beforeEach, describe, it } from "mocha";
 import chai from "chai";
 import { config } from "../../../config.js";
+import nock from "nock";
 
 const expect = chai.expect;
 
@@ -37,13 +38,21 @@ describe("Idev Affiliate", function() {
   });
 
   it ("Should send items to Idev Affiliate", async function () {
+    config.idevAffiliate.apiUrl = 'http://idev.com/api';
+    config.foxy.webhook.encryptionKey = 'foxy';
+
+    nock('http://idev.com')
+      .post('/api', body => body['affiliate_id'] && body['idev_saleamt'] && body['idev_ordernum'])
+      .twice()
+      .reply(200, {});
     const request = MockFoxyRequests.validRequest({
       _embedded: {
         'fx:items': [
-          {code: 'foo', name: 'foo', price: 1},
-          {code: 'bar', name: 'bar', price: 2},
+          {code: 'foo-a123', name: 'foo', price: 1},
+          {code: 'bar-a234', name: 'bar', price: 2},
         ]
-      }
+      },
+      id: 123,
     });
     request.headers['foxy-webhook-event'] = 'transaction/created';
     const response = await IdevAffiliate.handler(request);

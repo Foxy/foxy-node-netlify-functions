@@ -3,6 +3,9 @@ import Webflow from "webflow-api";
 import { config } from "../../../config.js";
 
 let webflowApi;
+function setApi(api) {
+  webflowApi = api;
+}
 
 /**
  * Returns custom Options set as environment variables.
@@ -492,5 +495,9 @@ function iGet(object, key) {
 }
 
 export {
-  handleRequest
+  handleRequest,
+  getWebflow,
+  extractItems,
+  getCustomizableOption,
+  setApi
 }

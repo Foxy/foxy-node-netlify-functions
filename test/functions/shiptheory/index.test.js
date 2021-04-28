@@ -30,7 +30,7 @@ describe("Shiptheory", function() {
         delete missingOne[k];
         process.env = missingOne;
         it ("Should detect invalid " + k, async function() {
-          await handler.handler({});
+          await handler.handleRequest({});
           stub.calledWithMatch(k);
         });
       }

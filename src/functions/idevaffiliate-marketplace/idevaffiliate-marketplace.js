@@ -6,7 +6,9 @@ import fetch from "node-fetch";
 
 dotenv.config();
 
-const idevApiUrl = config.idevAffiliate.apiUrl || "";
+function getIdevApiUrl() {
+  return config.idevAffiliate.apiUrl || "";
+}
 const idevSecretKey = config.idevAffiliate.secretKey || "";
 const foxyWebhookEncryptionKey = config.foxy.webhook.encryptionKey || "";
 
@@ -28,7 +30,7 @@ const getProductNetPrice = (productCode, webhook) => {};
  */
 function pushToIdev (item, webhookId) {
   if (!item.name || !item.code || !item.price) {
-    return false;
+    return Promise.resolve(false);
   }
   const params = new URLSearchParams();
   params.append("affiliate_id", getAffiliateIdFromProduct(item.code));
@@ -37,7 +39,7 @@ function pushToIdev (item, webhookId) {
   // TODO: Check an existing attribute to see if this has already been done.
   // Upsert a Foxy API attribute on the product after pushing so it's not duplicated
   // with a re-run of the webhook.
-  return fetch(idevApiUrl, {
+  return fetch(getIdevApiUrl(), {
     body: params,
     method: "POST",
   });

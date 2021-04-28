@@ -1,7 +1,8 @@
-import { after, before, describe, it } from "mocha";
+import { describe, it } from "mocha";
 import { DataStore } from "../../../src/functions/shiptheory/DataStore.js";
 import chai from "chai";
 import * as mockShipTheoryAPI from "./MockShipTheoryAPI.js";
+import nock from "nock";
 
 const expect = chai.expect;
 
@@ -25,6 +26,16 @@ describe("ShipTheory Client", function() {
   });
 
   it ("Should authenticate in ShipTheory", async function() {
+    process.env["FOXY_SHIPTHEORY_EMAIL"] = 'foo@example.com';
+    process.env["FOXY_SHIPTHEORY_PASSWORD"] = 'password@example.com';
+    nock('https://api.shiptheory.com', {
+      reqheaders: {
+        accept: "application/json",
+        "content-type": "application/json",
+      }
+    })
+      .post('/v1/token', body => body.email && body.password)
+      .reply(200, {success: true, data: {token: 'token'}});
     const ds = new DataStore();
     await ds.authenticate();
     expect(ds.token).to.exist;
