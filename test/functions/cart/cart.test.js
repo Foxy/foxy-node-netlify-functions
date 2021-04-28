@@ -26,7 +26,7 @@ class MockFoxy {
     return Promise.resolve(MockFoxy.foxyResponse);
   }
 
-  fetchRaw(req) {
+  patch(req) {
     return Promise.resolve({json: () => true, patched: true, cart: req.body});
   }
 
@@ -53,6 +53,7 @@ class MockFoxy {
         addItem: function(i) {
           this._embedded['fx:items'].push(i)
         },
+        patch: r => Promise.resolve({json: () => true, patched: true, cart: r.body}),
         _embedded: {
           'fx:items': []
         },
@@ -142,6 +143,7 @@ describe("Cart", function () {
       const res = await requester.get(lambdaPath('/111/convert/recurring/1m'));
       const expected = MockFoxy.foxyResponse._embedded['fx:carts'][0];
       delete expected.addItem;
+      delete expected.patch;
       expect(res.body).to.deep.equal(expected);
     });
 

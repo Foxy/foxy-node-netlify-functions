@@ -194,11 +194,12 @@ cartRouter.get(
           if (!validateCart(cart)) {
             throw createError(404, messageCartNotFound);
           }
-          res.json(await convertCartToSubscription(
+          const subsCart = await convertCartToSubscription(
             req.params.cartId,
             cart,
             req.params.frequency
-          ));
+          );
+          res.json(subsCart);
           return;
         } catch(e) {
           err = e;
@@ -232,7 +233,7 @@ cartRouter.get(
           throw createError(404, messageCartNotFound);
         }
         const data = convertCartToOneOff(req.params.cartId, cart);
-        res.json(data);
+        res.json(await data);
       } catch(err) {
         if (err.status) {
           res.status(err.status).json(err.message);
