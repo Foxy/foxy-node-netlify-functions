@@ -74,7 +74,7 @@ These environment variables are used to allow your webhook to authenticate authe
 
 | Variable                        | Default Value   | Description|
 | ------------------------------- | --------------- | --------------------------------------------------------------------------------  |
-| FOXY_WEBHOOK_ENCRYPTION_KEY     | ""         | **Required** Your Foy Refresh Token. **This value must not be shared or made public.** | 
+| FOXY_WEBHOOK_ENCRYPTION_KEY     | ""         | **Required** Your wehook encryption key. **This value must not be shared or made public.** | 
 | FOXY_ORDERDESK_API_KEY          | ""         | **Required** Your OrderDesk API Key                                                    |
 | FOXY_ORDERDESK_STORE_ID         | ""         | **Required** Your OrderDesk Store id                                                   |
 | FOXY_DATASTORE_CREDENTIALS      | ""         | This variable is an alternative to `FOXY_ORDERDESK_API_KEY` and `FOXY_ORDERDESK_STORE_ID`. If you provide this variable you don't have to provide those. This is meant to receive a copy of the values provided in the API tab in your OrderDesk settings.|
