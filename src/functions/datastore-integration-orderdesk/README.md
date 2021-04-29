@@ -39,6 +39,14 @@ Please, notice that **it ignores existing subscriptions**.
 Here are the steps you'll have to take to set up this integration:
 
 1. Grab your OrderDesk credentials
+1. Grab your Foxy.io credentials:
+1. Deploy your Webhook to your server.
+1. Configure your prepayment webhook using your endpoint.
+1. Go to your Foxy.io store payments page and enable custom pre-payment hook.
+
+## Setup Tutorial
+
+1. Grab your OrderDesk credentials
     - Visit https://orderdesk.com and click on the Login button.
     - On your Dashboard, click the "Store Settings" link in the left sidebar
     - Click the "API" tab (it's the rightmost tab)
@@ -51,8 +59,6 @@ Here are the steps you'll have to take to set up this integration:
     - You can also do it afterwards in your Netlify dashboard.
 1. Configure your prepayment webhook using your endpoint. Check the docs here: https://wiki.foxycart.com/v/2.0/pre_payment_webhook
 1. Go to your Foxy.io store payments page and enable custom pre-payment hook.
-
-## Setup Tutorial
 
 # Configuration Reference
 
