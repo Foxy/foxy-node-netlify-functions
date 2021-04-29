@@ -11,6 +11,8 @@ The functions provided in this repository can be used independently, or as a ref
 - Datastore integrations: 
     - [pre-payment-webhook-webflow](src/functions/pre-payment-webhook-webflow): Validates the price and/or availability of items against Webflow CMS collections before a payment is processed.
     - [datastore-integration-orderdesk](src/functions/datastore-integration-orderdesk): Validates the cart against OrderDesk and updates the inventory upon successful transaction.
+- [ShipTheory](src/functions/shiptheory): Creates shipments in your ShipTheory account upon successful transactions.
+
 
 ### Data Store Integrations
 
