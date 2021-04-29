@@ -56,30 +56,49 @@ Here are the steps you'll have to take to set up this integration:
 
 # Configuration Reference
 
-There are a some customization you can do to your webhook. These are set with environment variables that you can set directly in Netlify dashboard.
+There are a some customization you can do to your webhook.
+These are set with **environment variables** that you can set directly in Netlify dashboard.
 
-Please, notice that the default values where chosen to match the default OrderDesk settings. You shouldn't need to change these values unless you are not using OrderDesk default fields.
+To configure your **environment variables** follow these steps:
+- go to your site admin dashboard in Netlify
+- click "Site settings" button
+- click the "Build & deploy" tab in the left menu
+- under **Environment**, click "Edit variables"
+
+Please, notice that the default values where chosen to match the default OrderDesk settings.
+ou shouldn't need to change these values unless you are not using OrderDesk default fields.
 
 ##### Configuration
 
+These environment variables are used to allow your webhook to authenticate authenticate with Foxy and OrderDesk.
 
 | Variable                        | Default Value   | Description|
-| ------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| FOXY_WEBHOOK_ENCRYPTION_KEY     | ""         | **Required** Your Foxy Refresh Token. **This value must not be shared or made public.**| 
-| FOXY_ORDERDESK_API_KEY          | ""         | **Required** Your OrderDesk API Key|
-| FOXY_ORDERDESK_STORE_ID         | ""         | **Required** Your OrderDesk Store id|
-| FOXY_DATASTORE_CREDENTIALS      | ""         | This variable is an alternative to FOXY_ORDERDESK_API_KEY and FOXY_ORDERDESK_STORE_ID. If you provide this variable you don't have to provide those. This is meant to receive a copy of the values provided in the API tab in your OrderDesk settings.|
+| ------------------------------- | --------------- | --------------------------------------------------------------------------------  |
+| FOXY_WEBHOOK_ENCRYPTION_KEY     | ""         | **Required** Your Foy Refresh Token. **This value must not be shared or made public.** | 
+| FOXY_ORDERDESK_API_KEY          | ""         | **Required** Your OrderDesk API Key                                                    |
+| FOXY_ORDERDESK_STORE_ID         | ""         | **Required** Your OrderDesk Store id                                                   |
+| FOXY_DATASTORE_CREDENTIALS      | ""         | This variable is an alternative to `FOXY_ORDERDESK_API_KEY` and `FOXY_ORDERDESK_STORE_ID`. If you provide this variable you don't have to provide those. This is meant to receive a copy of the values provided in the API tab in your OrderDesk settings.|
 
 
-##### Price verification
+##### Price and Inventory verification
 
-| Variable                        | Default Value        | Description                                                                                                                                                                                                        |
-| ------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| FOXY_SKIP_PRICE_CODES           | ""                   | A comma separated list of code values (this is the value set in your 'code' field in OrderDesk. **The items with these codes will skip price verification**.     |
-| FOXY_SKIP_INVENTORY_CODES       | ""                   | A comma separated list of code values (this is the value set in your 'code' field in OrderDesk. **The items with these codes will skip inventory verification**. |
-| FOXY_FIELD_CODE                 | "code"               | The name of the field that stores the code in OrderDesk. There is no need to set this if you are using OrderDesk "code" as your "sku".                           |
-| FOXY_FIELD_PRICE                | "price"              | The name of the field that stores the price in the OrderDesk. There is no need to set this if you are using OrderDesk "price" field.                             | 
-| FOXY_FIELD_INVENTORY            | "stock"              | The name of the field that stores the inventory in OrderDesk. Set this variable to "false" (without the quotes) to disable inventory verification for all items. |
+These environment variables are used to configure how the price and inventory verification will work.
+
+You can skip some items from either verification.
+
+| Variable                         | Default Value   | Example config         |Description                                                                                                                                                                                                        |
+| -------------------------------- | --------------- | ---------------------- |---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FOXY_SKIP_PRICE_CODES            | ""              | "SHIRT-123, PANTS-456" |A comma separated list of code values (this is the value set in your 'sku' field in OrderDesk). **The items with these codes will skip price verification**. You can set this field to **__ALL__** in order to skip all price verification.    |
+| FOXY_SKIP_INVENTORY_CODES        | ""              | "SHIRT-123, PANTS-456" |A comma separated list of code values. **The items with these codes will skip inventory verification**.  You can set this field to **__ALL__** in order to skip all inventory verification.    |
+| FOXY_SKIP_INVENTORY_UPDATE_CODES | ""              | "SHIRT-123, PANTS-456" |A comma separated list of code values. **The items with these codes will skip inventory verification**.  You can set this field to **__ALL__** in order to skip all inventory verification.    |
+
+If necessary you may change the fields the webhook will consider from OrderDesk.
+This is likely unnecessary and you shouldn't change these default values unless you are not using OrderDesk default fields.
+
+| Variable                         | Default Value   | Example config         |Description                                                                                                                                                                                                        |
+| FOXY_FIELD_CODE                  | "sku"           | "code"                 |The name of the field that stores the code in OrderDesk. **There is no need to set this if you are using OrderDesk "code" as your "sku"**.                           |
+| FOXY_FIELD_PRICE                 | "price"         | "value"                |The name of the field that stores the price in the OrderDesk. **There is no need to set this if you are using OrderDesk "price" field**.                             | 
+| FOXY_FIELD_INVENTORY             | "stock"         | "inventory"            |The name of the field that stores the inventory in OrderDesk. **There is no need to set this if you are using OrderDesk "stock" field**. |
 
 ##### Error messages
 
