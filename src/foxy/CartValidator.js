@@ -1,4 +1,4 @@
-import {config} from "../../config.js";
+const {config} = require("../../config.js");
 
 
 /**
@@ -12,7 +12,7 @@ import {config} from "../../config.js";
  */
 
 
-export class CartValidator {
+class CartValidator {
 
   skipValidation = {
     inventory: [],
@@ -83,4 +83,8 @@ export class CartValidator {
       canonicalItem.inventory === undefined ||
       Number(cartItem.quantity) <= Number(canonicalItem.inventory);
   }
+}
+
+module.exports = {
+  CartValidator
 }

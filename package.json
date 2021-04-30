@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Run serverless functions on Netlify to work with the Foxy.io hypermedia API.",
   "private": false,
-  "type": "module",
   "scripts": {
     "test": "nyc mocha \"test/**/*.test.js\" --exit",
     "start": "netlify dev",
@@ -37,6 +36,7 @@
   "dependencies": {
     "@foxy.io/sdk": "^1.2.0",
     "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
     "express": "^4.17.1",
     "http-errors": "^1.8.0",
     "node-fetch": "^2.6.1",

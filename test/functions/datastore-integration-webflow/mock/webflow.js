@@ -75,7 +75,7 @@ const arbitrary = function arbitrary(items, customConfig = {}, without = []) {
   };
 };
 
-export {
+module.exports = {
   arbitrary,
   basicResponse,
   deterministic

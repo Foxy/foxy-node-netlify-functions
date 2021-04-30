@@ -1,5 +1,5 @@
-import { config } from '../config.js';
-import crypto from 'crypto';
+const { config } = require("../config.js");
+const crypto = require("crypto");
 
 /**
  * Creates a valid request with a given payload.
@@ -24,6 +24,6 @@ function validRequest(payload = null) {
   };
 }
 
-export {
+module.exports = {
   validRequest
 }

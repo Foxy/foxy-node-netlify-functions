@@ -1,8 +1,8 @@
-import { beforeEach, describe, it } from "mocha";
-import chai from "chai";
-import chaiHttp from 'chai-http';
-import {app} from "../../../src/functions/cart/cart.js";
-import {config} from "../../../config.js";
+const { beforeEach, describe, it } = require("mocha");
+const chai = require("chai");
+const chaiHttp = require("chai-http");
+const {app} = require("../../../src/functions/cart/cart.js");
+const {config} = require("../../../config.js");
 
 
 

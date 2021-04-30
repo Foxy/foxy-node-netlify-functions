@@ -1,10 +1,11 @@
-import * as webhook from "../../../src/functions/datastore-integration-orderdesk/webhook.js";
-import { describe, it, before, beforeEach, after, afterEach} from "mocha";
-import chai from "chai";
-import sinon from "sinon";
-import nock from "nock";
+const webhook = require("../../../src/functions/datastore-integration-orderdesk/webhook.js");
+const { describe, it, before, beforeEach, after, afterEach} = require("mocha");
+const chai = require("chai");
+const sinon = require("sinon");
+const nock = require("nock");
+const {config} = require("../../../config.js");
+
 const expect = chai.expect;
-import {config} from "../../../config.js";
 
 function setConfig() {
   config.datastore.provider.orderDesk.storeId = 'foo';

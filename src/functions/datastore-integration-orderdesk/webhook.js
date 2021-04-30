@@ -1,7 +1,7 @@
-import * as FoxyWebhook from "../../foxy/FoxyWebhook.js";
-import { CartValidator } from "../../foxy/CartValidator.js";
-import { DataStore } from "./DataStore.js";
-import { config } from "../../../config.js";
+const FoxyWebhook = require("../../foxy/FoxyWebhook.js");
+const { CartValidator } = require("../../foxy/CartValidator.js");
+const { DataStore } = require("./DataStore.js");
+const { config } = require("../../../config.js");
 
 /**
  * Implements a pre-payment webhook for use with Foxy.io and OrderDesk
@@ -103,7 +103,7 @@ function getDataStore() {
 
 const response = FoxyWebhook.response;
 
-export {
+module.exports = {
   prePayment,
   response,
   transactionCreated,

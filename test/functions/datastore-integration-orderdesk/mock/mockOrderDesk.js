@@ -1,5 +1,5 @@
 
-export class MockOrderDesk {
+class MockOrderDesk {
 
   fetch(endpoint) {
     let data = {};
@@ -81,4 +81,6 @@ const items = {
   total_records: '0',
 }
 
-
+module.exports = {
+  MockOrderDesk
+}

@@ -1,10 +1,10 @@
-import * as MockFoxyRequest from "../../MockFoxyRequests.js";
-import * as odHandler from "../../../src/functions/datastore-integration-orderdesk/index.js";
-import { after, afterEach, before, beforeEach, describe, it } from "mocha";
-import chai from "chai";
-import { config } from '../../../config.js';
-import sinon from "sinon";
-import nock from "nock";
+const MockFoxyRequest = require("../../MockFoxyRequests.js");
+const odHandler = require("../../../src/functions/datastore-integration-orderdesk/index.js");
+const { after, afterEach, before, beforeEach, describe, it } = require("mocha");
+const chai = require("chai");
+const { config } = require("../../../config.js");
+const sinon = require("sinon");
+const nock = require("nock");
 
 const expect = chai.expect;
 

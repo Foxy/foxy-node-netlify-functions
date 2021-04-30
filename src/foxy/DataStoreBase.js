@@ -1,6 +1,6 @@
-import {config} from "../../config.js";
+const {config} = require("../../config.js");
 
-export class DataStoreBase {
+class DataStoreBase {
 
   skipUpdate = {
     inventory: []
@@ -72,3 +72,6 @@ export class DataStoreBase {
 
 }
 
+module.exports = {
+  DataStoreBase 
+}

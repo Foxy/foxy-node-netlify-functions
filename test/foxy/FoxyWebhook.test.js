@@ -1,8 +1,8 @@
-import * as FoxyWebhook from '../../src/foxy/FoxyWebhook.js';
-import { after, before, describe, it } from "mocha";
-import chai from "chai";
-import crypto from "crypto";
-import sinon from "sinon";
+const FoxyWebhook = require("../../src/foxy/FoxyWebhook.js");
+const { after, before, describe, it } = require("mocha");
+const chai = require("chai");
+const crypto = require("crypto");
+const sinon = require("sinon");
 
 const {expect} = chai;
 

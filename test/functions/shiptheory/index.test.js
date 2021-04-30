@@ -1,7 +1,7 @@
-import * as handler from "../../../src/functions/shiptheory/index.js";
-import { afterEach, beforeEach, describe, it } from "mocha";
-import chai from "chai";
-import sinon from "sinon"; 
+const handler = require("../../../src/functions/shiptheory/index.js");
+const { afterEach, beforeEach, describe, it } = require("mocha");
+const chai = require("chai");
+const sinon = require("sinon"); 
 
 const expect = chai.expect;
 

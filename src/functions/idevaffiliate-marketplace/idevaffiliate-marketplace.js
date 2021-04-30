@@ -1,8 +1,8 @@
-import * as FoxyWebhook from "../../foxy/FoxyWebhook.js";
-import * as dotenv from "dotenv";
-import { URLSearchParams } from "url";
-import { config } from "../../../config.js";
-import fetch from "node-fetch";
+const FoxyWebhook = require("../../foxy/FoxyWebhook.js");
+const dotenv = require("dotenv");
+const { URLSearchParams } = require("url");
+const { config } = require("../../../config.js");
+const fetch = require("node-fetch");
 
 dotenv.config();
 
@@ -94,6 +94,6 @@ async function handler (requestEvent) {
   }
 }
 
-export {
+module.exports = {
   handler
 }

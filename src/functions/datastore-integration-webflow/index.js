@@ -1,6 +1,6 @@
-import * as FoxyWebhook from "../../foxy/FoxyWebhook.js";
-import Webflow from "webflow-api";
-import { config } from "../../../config.js";
+const FoxyWebhook = require("../../foxy/FoxyWebhook.js");
+const Webflow = require("webflow-api");
+const { config } = require("../../../config.js");
 
 let webflowApi;
 function setApi(api) {
@@ -494,7 +494,7 @@ function iGet(object, key) {
   return object[existingKey[0]];
 }
 
-export {
+module.exports = {
   handleRequest,
   getWebflow,
   extractItems,

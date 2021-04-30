@@ -1,5 +1,5 @@
-import * as FoxyWebhook from "../../foxy/FoxyWebhook.js";
-import { DataStore } from "./DataStore.js";
+const FoxyWebhook = require("../../foxy/FoxyWebhook.js");
+const { DataStore } = require("./DataStore.js");
 
 
 /**
@@ -35,7 +35,7 @@ async function getDataStore() {
 
 const response = FoxyWebhook.response;
 
-export {
+module.exports = {
   response,
   transactionCreated,
 }

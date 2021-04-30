@@ -1,8 +1,8 @@
-import { describe, it } from "mocha";
-import { DataStore } from "../../../src/functions/shiptheory/DataStore.js";
-import chai from "chai";
-import * as mockShipTheoryAPI from "./MockShipTheoryAPI.js";
-import nock from "nock";
+const { describe, it } = require("mocha");
+const { DataStore } = require("../../../src/functions/shiptheory/DataStore.js");
+const chai = require("chai");
+const mockShipTheoryAPI = require("./MockShipTheoryAPI.js");
+const nock = require("nock");
 
 const expect = chai.expect;
 

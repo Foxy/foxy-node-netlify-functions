@@ -1,14 +1,14 @@
-import { after, beforeEach, describe, it } from "mocha";
-import {DataStore} from "../../../src/functions/datastore-integration-orderdesk/DataStore.js";
-import {MockOrderDesk} from "./mock/mockOrderDesk.js";
-import nock from "nock";
-import chai from "chai";
-import chaiAsPromised from "chai-as-promised";
+const chai = require("chai");
+const chaiAsPromised = require("chai-as-promised");
+const nock = require("nock");
+const { after, beforeEach, describe, it } = require("mocha");
+const { DataStore } = require("../../../src/functions/datastore-integration-orderdesk/DataStore.js");
+const { MockOrderDesk } = require("./mock/mockOrderDesk.js");
+const { config } = require("../../../config.js");
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-import {config} from "../../../config.js";
 
 const mockOD = new MockOrderDesk();
 

@@ -1,13 +1,13 @@
-import * as MockFoxyRequests from "../../MockFoxyRequests.js";
-import * as mockFoxyCart from "./mock/foxyCart.js";
-import sinon from "sinon";
-import chai from "chai";
-import { afterEach, beforeEach, describe, it } from "mocha";
-import * as mockWebflow from "./mock/webflow.js";
+const MockFoxyRequests = require("../../MockFoxyRequests.js");
+const mockFoxyCart = require("./mock/foxyCart.js");
+const sinon = require("sinon");
+const chai = require("chai");
+const { afterEach, beforeEach, describe, it } = require("mocha");
+const mockWebflow = require("./mock/webflow.js");
 const expect = chai.expect;
 
-import * as prePayment from "../../../src/functions/datastore-integration-webflow/index.js";
-import {config} from "../../../config.js";
+const prePayment = require("../../../src/functions/datastore-integration-webflow/index.js");
+const {config} = require("../../../config.js");
 
 config.foxy.webhook.encryptionKey = 'foxy';
 

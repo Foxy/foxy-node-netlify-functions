@@ -1,9 +1,9 @@
-import * as IdevAffiliate from "../../../src/functions/idevaffiliate-marketplace/idevaffiliate-marketplace.js";
-import * as MockFoxyRequests from "../../MockFoxyRequests.js";
-import { before, beforeEach, describe, it } from "mocha";
-import chai from "chai";
-import { config } from "../../../config.js";
-import nock from "nock";
+const IdevAffiliate = require("../../../src/functions/idevaffiliate-marketplace/idevaffiliate-marketplace.js");
+const MockFoxyRequests = require("../../MockFoxyRequests.js");
+const { before, beforeEach, describe, it } = require("mocha");
+const chai = require("chai");
+const { config } = require("../../../config.js");
+const nock = require("nock");
 
 const expect = chai.expect;
 

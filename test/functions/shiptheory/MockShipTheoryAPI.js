@@ -21,6 +21,6 @@ async function fetch(endpoint, options) {
 }
 
 
-export {
+module.exports = {
   fetch
 }

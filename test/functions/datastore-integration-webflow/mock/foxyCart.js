@@ -1,4 +1,4 @@
-import * as MockFoxyRequest from "../../../MockFoxyRequests.js";
+const MockFoxyRequest = require("../../../MockFoxyRequests.js");
 
 
 function randomString() {
@@ -119,7 +119,7 @@ const longCollection = function () {
   return basicRequest(basicItem, 100);
 };
 
-export {
+module.exports = {
   basic,
   itemBuilders,
   longCollection,

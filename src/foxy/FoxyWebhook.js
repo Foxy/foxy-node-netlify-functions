@@ -1,5 +1,5 @@
-import * as FoxySdk from "@foxy.io/sdk";
-import {config} from "../../config.js";
+const FoxySdk = require("@foxy.io/sdk");
+const {config} = require("../../config.js");
 
 
 /**
@@ -190,7 +190,7 @@ function validFoxyRequest(requestEvent) {
   return err;
 }
 
-export {
+module.exports = {
   getItems,
   messageInsufficientInventory,
   messagePriceMismatch,

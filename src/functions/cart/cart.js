@@ -1,10 +1,11 @@
-import * as FoxySDK from "@foxy.io/sdk";
-import * as dotenv from "dotenv";
-import bodyParser from "body-parser";
-import { config } from '../../../config.js';
-import createError from "http-errors";
-import express from "express";
-import serverless from "serverless-http";
+const FoxySDK = require("@foxy.io/sdk");
+const dotenv = require("dotenv");
+const bodyParser = require("body-parser");
+const { config } = require("../../../config.js");
+const cors = require("cors");
+const createError = require("http-errors");
+const express = require("express");
+const serverless = require("serverless-http");
 
 
 const app = express();
@@ -12,6 +13,11 @@ const app = express();
 dotenv.config();
 
 const messageCartNotFound = 'Cart not found.';
+
+app.use(cors({
+  origin: 'http://127.0.0.1:8080',
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+}));
 
 /**
  * Validate configuration requirements
@@ -267,18 +273,18 @@ app.use(bodyParser.json());
 
 app.use("/.netlify/functions/cart", cartRouter); // path must route to lambda
 
-// CORS error
-app.use((err, req, res, next) => {
-  if (err.message && err.message === "CORS_ERROR") {
-    res.status(401).json({
-      type: "cors",
-      code: "401",
-      message: "Invalid origin header.",
-    });
-  } else {
-    next();
-  }
-});
+//// CORS error
+//app.use((err, req, res, next) => {
+//  if (err.message && err.message === "CORS_ERROR") {
+//    res.status(401).json({
+//      type: "cors",
+//      code: "401",
+//      message: "Invalid origin header.",
+//    });
+//  } else {
+//    next();
+//  }
+//});
 
 // Unknown Error Handler
 // Without the `next` this barfs the whole stack trace, and says res.status isn't defined?
@@ -292,5 +298,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-export const handler = serverless(app);
-export { app }
+const handler = serverless(app);
+
+module.exports = {
+  app,
+  handler,
+}

@@ -1,6 +1,6 @@
-import { beforeEach, describe, it } from "mocha";
-import {CartValidator} from "../../src/foxy/CartValidator.js";
-import chai from "chai";
+const { beforeEach, describe, it } = require("mocha");
+const {CartValidator} = require("../../src/foxy/CartValidator.js");
+const chai = require("chai");
 const expect = chai.expect;
 
 

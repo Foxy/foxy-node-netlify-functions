@@ -10,7 +10,7 @@ function env(envVar) {
   return process.env[envVar];
 }
 
-export const config = {
+const config = {
   datastore: {
     credentials: env('FOXY_DATASTORE_CREDENTIALS'),
     error: {
@@ -58,3 +58,7 @@ export const config = {
   },
 }
 
+
+module.exports = {
+  config
+}
