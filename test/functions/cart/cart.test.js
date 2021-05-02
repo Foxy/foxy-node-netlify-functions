@@ -46,26 +46,45 @@ class MockFoxy {
     MockFoxy.setResponse(MockFoxy.stdResponse());
   }
 
+  static basicCart() {
+    return {
+      _embedded: {
+        'fx:items': [
+          {
+            code: 'foo',
+            price: 1,
+            quantity: 1,
+          }
+        ]
+      }
+    };
+  }
+
   static setValidCart() {
     const std = MockFoxy.stdResponse();
+    const empty = { 'fx:items': []}
     std._embedded['fx:carts'].push(
       {
+        _embedded: empty,
+        _links: {
+          self: {
+            href: 'self.href',
+            patch: r => Promise.resolve({json: () => ({patched: true, cart: r})}),
+          }
+        },
         addItem: function(i) {
           this._embedded['fx:items'].push(i)
         },
-        patch: r => Promise.resolve({json: () => true, patched: true, cart: r.body}),
-        _embedded: {
-          'fx:items': []
-        },
-        _links: {
-          self: {
-            href: 'self.href'
-          }
-        }
       }
     );
     std.getCart = function() {
       return this._embedded['fx:carts'][0];
+    };
+    std.json = function() {
+      return Promise.resolve(MockFoxy.foxyResponse);
+    }
+    std.addCart = function(i) {
+      this._embedded['fx:carts'].push(i)
     };
     MockFoxy.setResponse(std);
   }
@@ -128,22 +147,24 @@ describe("Cart", function () {
     expect(res.body).to.match(/FOXY_API_CLIENT_ID is not configured/);
   });
 
-  it("Should report Cart not found when cart is not available", async function () {
+  it("Should report error fetching cart when cart is not available", async function () {
     setConfig();
     MockFoxy.setEmptyCart();
     const res = await requester.get(lambdaPath('/111/convert/recurring/1m'));
-    expect(res.statusCode).to.equal(404);
-    expect(res.body).to.equal("Cart not found.");
+    expect(res.statusCode).to.equal(500);
+    expect(res.body).to.equal("Error fetching or modifying cart.");
   });
 
   describe("Should convert the cart to subscription", async function () {
     it ("should not change a cart with no items", async function () {
       setConfig();
       MockFoxy.setValidCart();
+      MockFoxy.foxyResponse.addCart(MockFoxy.basicCart());
       const res = await requester.get(lambdaPath('/111/convert/recurring/1m'));
       const expected = MockFoxy.foxyResponse._embedded['fx:carts'][0];
       delete expected.addItem;
       delete expected.patch;
+      delete expected._links.self.patch;
       expect(res.body).to.deep.equal(expected);
     });
 
@@ -195,10 +216,11 @@ describe("Cart", function () {
     });
 
     it ("Should warn about invalid cart", async function () {
+      setConfig();
       MockFoxy.setEmptyCart();
       const res = await requester.get(lambdaPath('/111/convert/nonrecurring'));
-      expect(res.status).to.equal(404);
-      expect(res.body).to.match(/Cart not found\./);
+      expect(res.status).to.equal(500);
+      expect(res.body).to.match(/Error fetching or modifying cart\./);
     });
 
     
@@ -209,6 +231,7 @@ describe("Cart", function () {
       cart.addItem(MockFoxy.subscriptionItem());
       cart.addItem(MockFoxy.subscriptionItem());
       const res = await requester.get(lambdaPath('/111/convert/nonrecurring'));
+      expect(res.statusCode).to.equal(200);
       expect(res.body.patched).to.be.true;
       expect(res.body.cart._embedded).to.exist;
       expect(res.body.cart._embedded['fx:items'].every(i => !i.subscription_frequency)).to.be.true;

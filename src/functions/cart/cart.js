@@ -38,11 +38,9 @@ function validateConfig() {
  * @returns {boolean} the cart attributes are valid.
  */
 function validateCart(cart) {
-  if (!cart) {
-    return false;
-  } else {
-    return !(!cart._embedded || !Array.isArray(cart._embedded["fx:items"]));
-  }
+  return cart &&
+    cart._embedded &&
+    Array.isArray(cart._embedded["fx:items"]);
 }
 
 /**
@@ -85,23 +83,20 @@ const getCart = async (foxy, id) => {
   if (!id && !Number.isInteger(id)) {
     return {};
   }
-  let carts;
-  try {
-    carts = await foxy
-      .follow("fx:store")
-      .follow("fx:carts")
-      .get({
-        query: { id },
-        zoom: [
-          "items",
-          "items:item_options",
-          "items:item_options:discount_details",
-        ],
-      });
-  } catch(e) {
-    throw new Error("Error getting cart.");
-  }
-  return carts._embedded["fx:carts"][0] || {};
+  const store = await foxy.follow('fx:store');
+  const cartsFollow = await store.follow("fx:carts");
+  const carts = await cartsFollow
+    .get({
+      filters: [`id=${id}`],
+      zoom: [
+        "items",
+        "items:item_options",
+        "items:item_options:discount_details",
+      ],
+    });
+  return (
+    await carts.json()
+  )._embedded["fx:carts"][0] || {};
 };
 
 /**
@@ -111,14 +106,10 @@ const getCart = async (foxy, id) => {
  * @returns {Promise} that resolves to the api response.
  */
 const patchCart = async (cart) => {
-  return cart.patch({
-    body: cart,
-    zoom: [
-      "items",
-      "items:item_options",
-      "items:item_options:discount_details",
-    ],
-  });
+  const selfCart = cart._links.self;
+  const cartData = {...cart};
+  delete cartData._links;
+  return selfCart.patch(cartData);
 };
 
 /**
@@ -135,12 +126,12 @@ const convertCartToOneOff = async (id, cart) => {
   );
   for (const item of cart._embedded["fx:items"]) {
     item.subscription_frequency = "";
-    item.subscription_start_date = null;
-    item.subscription_end_date = null;
-    item.subscription_next_transaction_date = null;
+    delete item.subscription_start_date;
+    delete item.subscription_end_date;
+    delete item.subscription_next_transaction_date;
   }
   if (cart._embedded["fx:items"].length > 0) {
-    return patchCart(cart);
+    return (await patchCart(cart)).json();
   } else {
     return cartOriginal;
   }
@@ -168,10 +159,15 @@ const convertCartToSubscription = async (
     .filter(item => !item.subscription_frequency)
     .map(item => {
       item.subscription_frequency = frequency;
+      delete item.subscription_start_date;
+      delete item.subscription_end_date;
+      delete item.subscription_next_transaction_date;
       return item
     });
   if (cart._embedded["fx:items"].length > 0) {
-    return patchCart(cart);
+    const patchResponse = await patchCart(cart);
+    const patchResult = await patchResponse.json();
+    return patchResult;
   } else {
     return cartOriginal;
   }
@@ -215,6 +211,9 @@ cartRouter.get(
           }
           console.log("Error: ", err.code, err.message);
         }
+      } else {
+        err.status = 500;
+        err.message = "Could not instantiate Foxy SDK";
       }
       if (err.status) {
         res.status(err.status).json(err.message);
@@ -238,8 +237,8 @@ cartRouter.get(
         if (!validateCart(cart)) {
           throw createError(404, messageCartNotFound);
         }
-        const data = convertCartToOneOff(req.params.cartId, cart);
-        res.json(await data);
+        const data = await convertCartToOneOff(req.params.cartId, cart);
+        res.json(data);
       } catch(err) {
         if (err.status) {
           res.status(err.status).json(err.message);
