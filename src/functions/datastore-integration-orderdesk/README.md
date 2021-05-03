@@ -102,11 +102,16 @@ To configure your **environment variables** follow these steps:
 - under **Environment**, click "Edit variables"
 
 Please, notice that the default values where chosen to match the default OrderDesk settings.
-ou shouldn't need to change these values unless you are not using OrderDesk default fields.
+You shouldn't need to change these values unless you are not using OrderDesk default fields.
+
+This section contains all possible customizations you can do by setting environment variables.
+
+After changing your environment variables you may want to redeploy your webhook.
 
 ##### Configuration
 
 These environment variables are used to allow your webhook to authenticate authenticate with Foxy and OrderDesk.
+
 
 | Variable                        | Default Value   | Description|
 | ------------------------------- | --------------- | --------------------------------------------------------------------------------  |
