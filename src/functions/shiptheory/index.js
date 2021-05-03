@@ -7,7 +7,7 @@ const webhook = require("./webhook.js");
  * @param {Object} requestEvent the event built by Netlify upon receiving the request.
  * @returns {Promise<{statusCode: number, body: string}>} the response object
  */
-async function handleRequest(requestEvent) {
+async function handler(requestEvent) {
   // Validation
   if (!validation.configuration.validate()) {
     return validation.configuration.response();
@@ -46,5 +46,5 @@ const validation = {
 };
 
 module.exports = {
-  handleRequest
+  handler
 }
