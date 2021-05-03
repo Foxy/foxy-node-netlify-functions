@@ -21,7 +21,7 @@ It validates the prices of all products in a purchase, regardless of if they are
 1. Read the short configuration section bellow to make sure your Webflow Collection and FoxyCart links are all set;
    - **Important**: your webflow collection and your add to cart buttons/forms need to be properly configured for the webhook to work. Product items need a `code` field.
 1. Grab your Webflow token: https://university.webflow.com/lesson/intro-to-the-webflow-api#generating-an-api-access-token;
-1. Click the **deploy to Netlify** button at the end of this page. Netlify will provide you with a form for you to provide your configuration. The Webflow Prepayment Webhook requires only WEBFLOW_TOKEN. The other settings are used for the other services in this repository.
+1. Click the **deploy to Netlify** button at the end of this page. Netlify will provide you with a form for you to provide your configuration. The Webflow Prepayment Webhook requires only `FOXY_WEBFLOW_TOKEN`. The other settings are used for the other services in this repository.
 1. Grab the URL for your webhook in Netlify. Be sure to get the correct URL for the webflow-prepayment-webhook. To do this, after the deploy is finished, click the "functions" tab, look for `pre-payment-webhook-webflow` function and copy the **Endpoint URL**.
 1. Configure your prepayment webhook using your endpoint. Check the docs here: https://wiki.foxycart.com/v/2.0/pre_payment_webhook
 
@@ -72,11 +72,11 @@ You may have some items you don't want to be subject to price verification. This
 
 | Variable                        | Default Value                             | Description                                                                                                                                                                                                        |
 | ------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| FOXY_SKIP_PRICE_CODES             | ""                                        | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip price verification**.     |
-| FOXY_SKIP_INVENTORY_CODES         | ""                                        | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip inventory verification**. |
-| FOXY_FIELD_CODE                   | "code"                                    | The name of the field that stores the code in the webflow collection.                                                                                                                                              |
-| FOXY_FIELD_PRICE                  | "price"                                   | The name of the field that stores the price in the webflow collection.                                                                                                                                             |
-| FOXY_FIELD_INVENTORY              | "inventory"                               | The name of the field that stores the inventory in the webflow collection. Set this variable to "false" (without the quotes) to disable inventory verification for all items.                                      |
+| `FOXY_SKIP_PRICE_CODES`             | ""                                        | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip price verification**.     |
+| `FOXY_SKIP_INVENTORY_CODES`         | ""                                        | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip inventory verification**. |
+| `FOXY_FIELD_CODE`                   | "code"                                    | The name of the field that stores the code in the webflow collection.                                                                                                                                              |
+| `FOXY_FIELD_PRICE`                  | "price"                                   | The name of the field that stores the price in the webflow collection.                                                                                                                                             |
+| `FOXY_FIELD_INVENTORY`              | "inventory"                               | The name of the field that stores the inventory in the webflow collection. Set this variable to "false" (without the quotes) to disable inventory verification for all items.                                      |
 
 ##### Error messages
 
@@ -86,8 +86,8 @@ To set up custom error messages, simply create new variables as described above.
 
 | Variable                        | Default Value                             | Description                                                                                                                                                                                               |
 | ------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| FOXY_ERROR_INSUFFICIENT_INVENTORY | "Insufficient inventory for these items:" | Occurs when the quantity purchased is greater than the inventory available in Webflow. **A comma separated list of the names of the products out-of-stock will be appended to the end of the error message**. |
-| FOXY_ERROR_PRICE_MISMATCH         | "Prices do not match."                    | Occurs when the price of any of the products does not match with the `price` field in Webflow                                                                                                             |
+| `FOXY_ERROR_INSUFFICIENT_INVENTORY` | "Insufficient inventory for these items:" | Occurs when the quantity purchased is greater than the inventory available in Webflow. **A comma separated list of the names of the products out-of-stock will be appended to the end of the error message**. |
+| `FOXY_ERROR_PRICE_MISMATCH`         | "Prices do not match."                    | Occurs when the price of any of the products does not match with the `price` field in Webflow                                                                                                             |
 
 ## Examples
 
