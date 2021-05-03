@@ -47,7 +47,7 @@ function getMessages() {
  * @param {Object} requestEvent the request event built by Netlify Functions
  * @returns {Promise<{statusCode: number, body: string}>} the response object
  */
-async function handleRequest(requestEvent) {
+async function handler(requestEvent) {
   // Validation
   if (!validation.configuration.validate()) {
     return validation.configuration.response();
@@ -495,7 +495,7 @@ function iGet(object, key) {
 }
 
 module.exports = {
-  handleRequest,
+  handler,
   getWebflow,
   extractItems,
   getCustomizableOption,
