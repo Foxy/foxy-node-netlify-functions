@@ -101,7 +101,7 @@ To configure your **environment variables** follow these steps:
 - click the "Build & deploy" tab in the left menu
 - under **Environment**, click "Edit variables"
 
-Please, notice that the default values where chosen to match the default OrderDesk settings.
+Please, notice that the default values were chosen to match the default OrderDesk settings.
 You shouldn't need to change these values unless you are not using OrderDesk default fields.
 
 This section contains all possible customizations you can do by setting environment variables.
