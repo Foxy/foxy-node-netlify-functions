@@ -17,7 +17,7 @@ async function handler(requestEvent) {
     return validation.input.response(inputError);
   }
   const response = webhook.transactionCreated(JSON.parse(requestEvent.body));
-  return response;
+  return webhook.response();
 }
 
 // The validation object is used to aggregate validation functions and responses.
