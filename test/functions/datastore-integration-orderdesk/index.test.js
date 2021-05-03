@@ -45,7 +45,7 @@ describe("Order Desk Pre-payment Webhook", function() {
       for (let c of cases) {
         it(`Warns about ${c[0]}`, async function() {
           c[1]();
-          const response = await odHandler.handleRequest();
+          const response = await odHandler.handler();
           expect(response.statusCode).to.equal(503);
           expect(JSON.parse(response.body).details).to.match(/Service Unavailable/);
         });
@@ -54,7 +54,7 @@ describe("Order Desk Pre-payment Webhook", function() {
   });
 
   it ("Should return a Foxy Prepayment Webhook Response", async function () {
-    const responsePromise = odHandler.handleRequest('');
+    const responsePromise = odHandler.handler('');
     expect(responsePromise).to.be.a("Promise");
     const response = await responsePromise;
     expect(response.statusCode).to.exist;
@@ -71,7 +71,7 @@ describe("Order Desk Pre-payment Webhook", function() {
       const cases = ['GET', 'PUT', 'DELETE', 'PATCH'];
       for (let c of cases) {
         valid.httpMethod = c;
-        const response = await odHandler.handleRequest(valid);
+        const response = await odHandler.handler(valid);
         expect(response.statusCode).to.equal(400);
         expect(JSON.parse(response.body).details).to.equal('Method not allowed');
       }
@@ -79,7 +79,7 @@ describe("Order Desk Pre-payment Webhook", function() {
 
     it("Should reject invalid Foxy Requests", async function () {
       config.foxy.webhook.encryptionKey = 'foo';
-      const responsePromise = odHandler.handleRequest({
+      const responsePromise = odHandler.handler({
         httpMethod: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -96,7 +96,7 @@ describe("Order Desk Pre-payment Webhook", function() {
     it("Should accept valid Foxy Requests", async function() {
       const key = 'foxykey';
       config.foxy.webhook.encryptionKey = key;
-      const responsePromise = odHandler.handleRequest(validRequest());
+      const responsePromise = odHandler.handler(validRequest());
       const response = await responsePromise;
       const body = JSON.parse(response.body);
       expect(body.ok).to.be.true;
