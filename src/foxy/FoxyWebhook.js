@@ -1,5 +1,5 @@
-const FoxySdk = require('@foxy.io/sdk');
-const config = require('../../config.js');
+const FoxySdk = require("@foxy.io/sdk");
+const {config} = require("../../config.js");
 
 
 /**
@@ -28,7 +28,7 @@ const config = require('../../config.js');
  * @property {Array<PrepaymentItem>} fx:items
  * @property {Array} fx:discounts
  * @property {Array} fx:custom_fields
- * @property {Array} fx:shipmet
+ * @property {Array} fx:shipment
  * @property {Array} fx:customer
  */
 

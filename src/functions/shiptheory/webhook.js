@@ -1,5 +1,5 @@
-const DataStore = require("./DataStore.js");
 const FoxyWebhook = require("../../foxy/FoxyWebhook.js");
+const { DataStore } = require("./DataStore.js");
 
 
 /**

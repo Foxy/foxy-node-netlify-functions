@@ -1,14 +1,15 @@
-const {after, afterEach, before, beforeEach, describe, it } = require("mocha");
-const {expect} = require("chai");
 const MockFoxyRequest = require("../../MockFoxyRequests.js");
+const odHandler = require("../../../src/functions/datastore-integration-orderdesk/index.js");
+const { after, afterEach, before, beforeEach, describe, it } = require("mocha");
+const chai = require("chai");
+const { config } = require("../../../config.js");
 const sinon = require("sinon");
+const nock = require("nock");
 
-const crypto = require("crypto");
-const rewire = require("rewire");
+const expect = chai.expect;
 
-const odHandler = rewire("../../../src/functions/datastore-integration-orderdesk/index.js");
-const config = odHandler.__get__('config');
-
+let log;
+let logError;
 function silenceLog() {
   log = sinon.stub(console, 'log');
   logError = sinon.stub(console, 'error');
@@ -103,38 +104,7 @@ describe("Order Desk Pre-payment Webhook", function() {
     });
   });
 
-  describe("Routes Foxy Requests", async function () {
-    let routed = {'prePayment': false, 'txCreated': false};
-    let revert;
-    const flagger = {
-      prePayment: () => routed.prePayment = true,
-      transactionCreated: () => routed.txCreated = true
-    };
-    beforeEach(() => {
-      routed = {prePayment: false, txCreated: false};
-      revert = odHandler.__set__('webhook', flagger);
-    });
-
-    afterEach(() => {
-      revert();
-    });
-
-    it ("Invokes pre payment when foxy-webhook-event is validation/payment", () => {
-      odHandler.handler(validRequest());
-      expect(routed.prePayment).to.be.true;
-      expect(routed.txCreated).to.be.false;
-    });
-    
-    it ("Invokes transaction created when foxy-webhook-event is transaction/created", () => {
-      const valid = validRequest();
-      valid.headers['foxy-webhook-event'] = 'transaction/created';
-      odHandler.handler(valid);
-      expect(routed.prePayment).to.be.false;
-      expect(routed.txCreated).to.be.true;
-    });
-    
-  });
-
 });
 
 const validRequest = MockFoxyRequest.validRequest;
+

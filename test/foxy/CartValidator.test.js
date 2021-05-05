@@ -1,6 +1,8 @@
-const { describe, it, beforeEach } = require("mocha");
-const CartValidator = require('../../src/foxy/CartValidator.js');
-const { expect } = require("chai");
+const { beforeEach, describe, it } = require("mocha");
+const {CartValidator} = require("../../src/foxy/CartValidator.js");
+const chai = require("chai");
+const expect = chai.expect;
+
 
 describe("Cart Validator", function() {
 

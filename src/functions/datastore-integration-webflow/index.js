@@ -1,8 +1,11 @@
-const Webflow = require("webflow-api");
 const FoxyWebhook = require("../../foxy/FoxyWebhook.js");
-const config = require("../../../config.js");
+const Webflow = require("webflow-api");
+const { config } = require("../../../config.js");
 
 let webflowApi;
+function setApi(api) {
+  webflowApi = api;
+}
 
 /**
  * Returns custom Options set as environment variables.
@@ -44,7 +47,7 @@ function getMessages() {
  * @param {Object} requestEvent the request event built by Netlify Functions
  * @returns {Promise<{statusCode: number, body: string}>} the response object
  */
-async function handleRequest(requestEvent) {
+async function handler(requestEvent) {
   // Validation
   if (!validation.configuration.validate()) {
     return validation.configuration.response();
@@ -491,4 +494,10 @@ function iGet(object, key) {
   return object[existingKey[0]];
 }
 
-exports.handler = handleRequest;
+module.exports = {
+  handler,
+  getWebflow,
+  extractItems,
+  getCustomizableOption,
+  setApi
+}

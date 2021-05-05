@@ -1,22 +1,21 @@
-const MockOrderDesk = require("./mock/mockOrderDesk.js");
 const chai = require("chai");
-const rewire = require('rewire');
-const { describe, it, beforeEach } = require("mocha");
-chai.use(require('chai-as-promised'))
+const chaiAsPromised = require("chai-as-promised");
+const nock = require("nock");
+const { after, beforeEach, describe, it } = require("mocha");
+const { DataStore } = require("../../../src/functions/datastore-integration-orderdesk/DataStore.js");
+const { MockOrderDesk } = require("./mock/mockOrderDesk.js");
+const { config } = require("../../../config.js");
+
+chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-const DataStore = rewire("../../../src/functions/datastore-integration-orderdesk/DataStore.js");
-const config = DataStore.__get__("config");
 
 const mockOD = new MockOrderDesk();
-DataStore.__set__('fetch', mockOD.fetch);
-
 
 function setOrderDeskConfig(key, id) {
   config.datastore.provider.orderDesk.apiKey = key;
   config.datastore.provider.orderDesk.storeId = id;
 }
-
 
 function orderDeskFullItem() {
   return  {
@@ -36,6 +35,10 @@ describe("OrderDesk Datastore", function() {
   );
 
   describe("Configuration", function() {
+
+    after(
+      () => delete config.datastore.credentials
+    );
 
     it ("Should inform about missing configuration.", function () {
       const cases = [
@@ -64,6 +67,7 @@ describe("OrderDesk Datastore", function() {
           key: 'foobar'
         }
       );
+      setOrderDeskConfig(undefined, undefined);
     });
 
   });
@@ -74,6 +78,7 @@ describe("OrderDesk Datastore", function() {
         process.env['FOXY_ORDERDESK_STORE_ID'],
         process.env['FOXY_ORDERDESK_API_KEY']
       );
+      mockInventoryItems(odClient);
       const result = await odClient.fetchInventoryItems(['lollipop', 'candy', 'bubblegum']);
       expect(result).to.exist;
       expect(result.length).to.equal(3);
@@ -99,26 +104,11 @@ describe("OrderDesk Datastore", function() {
       config.datastore.skipUpdate.inventory = '__NONE__';
       const odClient = new DataStore();
       const fullItem = orderDeskFullItem();
-      const prevfetch = DataStore.__get__('fetch');
-      DataStore.__set__('fetch', function (url, req) {
-        it ("Puts to batch-inventory-items endpoint", function() {
-          expect(url).to.match(/batch-inventory-items/);
-        });
-        it ("Adds OrderDesk required headers", function() {
-          expect(req.headers['ORDERDESK-API-KEY']).to.equal('foo');
-          expect(req.headers['ORDERDESK-STORE-ID']).to.equal('bar');
-        });
-        it("Provides all fields to the update endpoint", function () {
-          const itemsSent = JSON.parse(req.body);
-          itemsSent.every(i => i.id && i.name && i.price && i.stock && i.update_source);
-        });
-        return prevfetch(url, req);
-      });
       it ("Returns the body of the response", async function() {
+        mockBatchInventoryItems(odClient);
         const response = await odClient.updateInventoryItems([fullItem]);
         expect(response.status).to.equal('success');
       });
-      DataStore.__set__('fetch', prevfetch);
     });
 
 
@@ -184,3 +174,32 @@ describe("OrderDesk Datastore", function() {
   });
 });
 
+function mockInventoryItems(dataStore) {
+  const mock = new MockOrderDesk();
+  const response = mock.fetch('inventory-items')
+  nock('https://' + dataStore.domain)
+    .defaultReplyHeaders(response.headers)
+    .get('/api/v2/inventory-items')
+    .query(true)
+    .reply(200, response.body);
+}
+
+function mockBatchInventoryItems(dataStore) {
+  const mock = new MockOrderDesk();
+  const response = mock.fetch('batch-inventory-items')
+  nock('https://' + dataStore.domain, {
+    reqheaders: {
+      'ORDERDESK-API-KEY': 'foo',
+      'ORDERDESK-STORE-ID': 'bar'
+    }
+  })
+    .defaultReplyHeaders(response.headers)
+    .put('/api/v2/batch-inventory-items')
+    .reply(200, (path, items) => {
+      it("should contain propper items", function() {
+        expect(items).to.be.an('Array');
+        expect(items.every(i => i.id && i.name && i.price && i.stock && i.update_source)).to.be.true;
+      });
+      return response.body
+    });
+}

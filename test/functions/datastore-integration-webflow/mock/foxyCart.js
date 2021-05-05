@@ -107,17 +107,21 @@ function foxyRequest(changes, itemBuilder = basicItem) {
   return MockFoxyRequest.validRequest(items);
 }
 
-exports.itemBuilders = {
+const itemBuilders = {
   subscriptionItem,
 };
 
-exports.basic = function () {
+const basic = function () {
   return basicRequest(basicItem);
 };
 
-exports.longCollection = function () {
+const longCollection = function () {
   return basicRequest(basicItem, 100);
 };
 
-
-exports.request = foxyRequest;
+module.exports = {
+  basic,
+  itemBuilders,
+  longCollection,
+  foxyRequest
+}

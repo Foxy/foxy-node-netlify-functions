@@ -46,19 +46,49 @@ Here are the steps you'll have to take to set up this integration:
 
 ## Setup Tutorial
 
+Please, note that if you are already using other functions from this
+repository, there are some steps you may skip (those you've already done).
+
 1. Grab your OrderDesk credentials
     - Visit https://orderdesk.com and click on the Login button.
-    - On your Dashboard, click the "Store Settings" link in the left sidebar
+    - On your [Dashboard](https://app.orderdesk.me/dashboard)
+    - Click the "Store Settings" link in the left sidebar
     - Click the "API" tab (it's the rightmost tab)
     - You will find your Store Id and your API key. You will need to copy these to configure your webhook.
 1. Grab your Foxy.io credentials:
     - Go to your Foxy.io store integrations page and create a JSON Webhook integration.
     - Get your Foxy.io Client credentials.
-1. Deploy your Webhook to your server (we provide you with a one-click deploy button).
-    - During deploy you can provide the credentials.
-    - You can also do it afterwards in your Netlify dashboard.
-1. Configure your prepayment webhook using your endpoint. Check the docs here: https://wiki.foxycart.com/v/2.0/pre_payment_webhook
-1. Go to your Foxy.io store payments page and enable custom pre-payment hook.
+1. Deploy your Webhook to your Netlify server.
+    - Fork this repository (use the button on the top-right corner)
+    - Go to your Netlify account and click "New site from Git"
+    - Choose "GitHub"
+    - Choose the repository you've just cloned
+    - You may accept the other values as they are and click "Deploy site"
+    - Click "Site settings"
+    - On the right sidebar, click "Build & deploy".
+    - Click "Environment"
+    - Click "Edit variables"
+    - Refer to ["Configuration"](#configuration) section bellow to create your environment variables.
+1. Configure your **prepayment webhook** using your endpoint. You may check the docs here: https://wiki.foxycart.com/v/2.0/pre_payment_webhook
+    - In Netlify, within your site (webhook) page, click the "Functions" link in the horizontal menu at the top.
+      - If you don't see a list of functions that includes "datastore-integration-orderdesk" click the "Site Overview" link and then click the "Functions" link again.
+    - Click the "datastore-integration-orderdesk" link.
+    - Copy the "Endpoin" URL (you can simply click the copy button for that).
+    - Go to your [Foxy.io Admin page](https://admin.foxycart.com/admin.php)
+    - Under "Store", click on the ["Payments" link](https://admin.foxycart.com/admin.php?ThisAction=EditPaymentGateway)
+    - Look for the "Custom Webhooks" section and check "enable custom pre-payment hook".
+    - Paste the endpoint you copied in the "pre-payment hook url" field.
+    - Choose how you want to handle possible errors in the webhook (approving or rejecting the transaction). Please note that your customer cannot in any way be responsible for any such error.
+    - Save your settings clicking on the "Update Payment Gateway" button in the bottom of the page.
+1. Configure your **transaction/created** webhook if you want it to update your inventory in OrderDesk. You may check the docs here: https://wiki.foxycart.com/v/2.0/webhooks
+    - Go to your [Foxy.io Admin page](https://admin.foxycart.com/admin.php)
+    - Under "Account", click ["integrations]"(https://admin.foxycart.com/admin.php?ThisAction=AddIntegration) 
+    - Check the "JSON Webhook" box and paste the same Endpoint you copied from your Netlify function in the URL field.
+    - Give it a title that makes sense to you.
+    - Copy the value from the "Encryption Key" field.
+    - Go to your Netlify dashboard again to add new Environment variables
+    - Add the `FOXY_WEBHOOK_ENCRYPTION_KEY` variable with the Encryption Key you've just copied.
+    - You also need to set a value to `FOXY_SKIP_INVENTORY_UPDATE_CODES` because the default is not to update any inventory in OrderDesk. Set it to any value that does not occur as a `code` if you don't wish it to skip any inventory update.
 
 # Configuration Reference
 
@@ -71,19 +101,24 @@ To configure your **environment variables** follow these steps:
 - click the "Build & deploy" tab in the left menu
 - under **Environment**, click "Edit variables"
 
-Please, notice that the default values where chosen to match the default OrderDesk settings.
-ou shouldn't need to change these values unless you are not using OrderDesk default fields.
+Please, notice that the default values were chosen to match the default OrderDesk settings.
+You shouldn't need to change these values unless you are not using OrderDesk default fields.
+
+This section contains all possible customizations you can do by setting environment variables.
+
+After changing your environment variables you may want to redeploy your webhook.
 
 ##### Configuration
 
 These environment variables are used to allow your webhook to authenticate authenticate with Foxy and OrderDesk.
 
+
 | Variable                        | Default Value   | Description|
 | ------------------------------- | --------------- | --------------------------------------------------------------------------------  |
-| FOXY_WEBHOOK_ENCRYPTION_KEY     | ""         | **Required** Your wehook encryption key. **This value must not be shared or made public.** | 
-| FOXY_ORDERDESK_API_KEY          | ""         | **Required** Your OrderDesk API Key                                                    |
-| FOXY_ORDERDESK_STORE_ID         | ""         | **Required** Your OrderDesk Store id                                                   |
-| FOXY_DATASTORE_CREDENTIALS      | ""         | This variable is an alternative to `FOXY_ORDERDESK_API_KEY` and `FOXY_ORDERDESK_STORE_ID`. If you provide this variable you don't have to provide those. This is meant to receive a copy of the values provided in the API tab in your OrderDesk settings.|
+| `FOXY_WEBHOOK_ENCRYPTION_KEY`     | ""         | **Required** Your wehook encryption key. **This value must not be shared or made public.** | 
+| `FOXY_ORDERDESK_API_KEY`          | ""         | **Required** Your OrderDesk API Key                                                    |
+| `FOXY_ORDERDESK_STORE_ID`         | ""         | **Required** Your OrderDesk Store id                                                   |
+| `FOXY_DATASTORE_CREDENTIALS`      | ""         | This variable is an alternative to `FOXY_ORDERDESK_API_KEY` and `FOXY_ORDERDESK_STORE_ID`. If you provide this variable you don't have to provide those. This is meant to receive a copy of the values provided in the API tab in your OrderDesk settings.|
 
 
 ##### Price and Inventory verification
@@ -94,17 +129,18 @@ You can skip some items from either verification.
 
 | Variable                         | Default Value   | Example config         |Description                                                                                                                                                                                                        |
 | -------------------------------- | --------------- | ---------------------- |---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| FOXY_SKIP_PRICE_CODES            | ""              | "SHIRT-123, PANTS-456" |A comma separated list of code values (this is the value set in your 'sku' field in OrderDesk). **The items with these codes will skip price verification**. You can set this field to **__ALL__** in order to skip all price verification.    |
-| FOXY_SKIP_INVENTORY_CODES        | ""              | "SHIRT-123, PANTS-456" |A comma separated list of code values. **The items with these codes will skip inventory verification**.  You can set this field to **__ALL__** in order to skip all inventory verification.    |
-| FOXY_SKIP_INVENTORY_UPDATE_CODES | ""              | "SHIRT-123, PANTS-456" |A comma separated list of code values. **The items with these codes will skip inventory verification**.  You can set this field to **__ALL__** in order to skip all inventory verification.    |
+| `FOXY_SKIP_PRICE_CODES`            | ""              | "SHIRT-123, PANTS-456" |A comma separated list of code values (this is the value set in your 'sku' field in OrderDesk). **The items with these codes will skip price verification**. You can set this field to **__ALL__** in order to skip all price verification.    |
+| `FOXY_SKIP_INVENTORY_CODES`        | ""              | "SHIRT-123, PANTS-456" |A comma separated list of code values. **The items with these codes will skip inventory verification**.  You can set this field to **__ALL__** in order to skip all inventory verification.    |
+| `FOXY_SKIP_INVENTORY_UPDATE_CODES` | "\_\_ALL\_\_"              | "SHIRT-123, PANTS-456" |A comma separated list of code values. **The items with these codes will skip inventory verification**.  You can set this field to **__ALL__** in order to skip all inventory verification.    |
 
 If necessary you may change the fields the webhook will consider from OrderDesk.
 This is likely unnecessary and you shouldn't change these default values unless you are not using OrderDesk default fields.
 
 | Variable                         | Default Value   | Example config         |Description                                                                                                                                                                                                        |
-| FOXY_FIELD_CODE                  | "sku"           | "code"                 |The name of the field that stores the code in OrderDesk. **There is no need to set this if you are using OrderDesk "code" as your "sku"**.                           |
-| FOXY_FIELD_PRICE                 | "price"         | "value"                |The name of the field that stores the price in the OrderDesk. **There is no need to set this if you are using OrderDesk "price" field**.                             | 
-| FOXY_FIELD_INVENTORY             | "stock"         | "inventory"            |The name of the field that stores the inventory in OrderDesk. **There is no need to set this if you are using OrderDesk "stock" field**. |
+| -------------------------------- | --------------- | ---------------------- |---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FOXY_FIELD_CODE`                  | "sku"           | "code"                 |The name of the field that stores the code in OrderDesk. **There is no need to set this if you are using OrderDesk "code" as your "sku"**.                           |
+| `FOXY_FIELD_PRICE`                 | "price"         | "value"                |The name of the field that stores the price in the OrderDesk. **There is no need to set this if you are using OrderDesk "price" field**.                             | 
+| `FOXY_FIELD_INVENTORY`             | "stock"         | "inventory"            |The name of the field that stores the inventory in OrderDesk. **There is no need to set this if you are using OrderDesk "stock" field**. |
 
 ##### Error messages
 
@@ -114,8 +150,8 @@ To set up custom error messages, simply create new variables as described above.
 
 | Variable                        | Default Value                               | Description                                                                                                                                                                                                     |
 | ------------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| FOXY_ERROR_INSUFFICIENT_INVENTORY | "Insufficient inventory for these items:" | Occurs when the quantity purchased is greater than the inventory available in Orderdesk. **A comma separated list of the names of the products out-of-stock will be appended to the end of the error message**. |
-| FOXY_ERROR_PRICE_MISMATCH         | "Prices do not match."                    | Occurs when the price of any of the products does not match with the `price` field in OrderDesk.                                                                                                             |
+| `FOXY_ERROR_INSUFFICIENT_INVENTORY` | "Insufficient inventory for these items:" | Occurs when the quantity purchased is greater than the inventory available in Orderdesk. **A comma separated list of the names of the products out-of-stock will be appended to the end of the error message**. |
+| `FOXY_ERROR_PRICE_MISMATCH`         | "Prices do not match."                    | Occurs when the price of any of the products does not match with the `price` field in OrderDesk.                                                                                                             |
 
 
 

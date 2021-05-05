@@ -1,10 +1,13 @@
+const FoxyWebhook = require("../../src/foxy/FoxyWebhook.js");
+const { after, before, describe, it } = require("mocha");
+const chai = require("chai");
 const crypto = require("crypto");
-const FoxyWebhook = require('../../src/foxy/FoxyWebhook.js');
 const sinon = require("sinon");
 
-const { expect } = require("chai");
-const { after, before, describe, it } = require("mocha");
+const {expect} = chai;
 
+let log;
+let logError;
 function silenceLog() {
   log = sinon.stub(console, 'log');
   logError = sinon.stub(console, 'error');

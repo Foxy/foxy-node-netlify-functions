@@ -1,6 +1,6 @@
-const FoxyWebhook= require('../../foxy/FoxyWebhook.js');
-const webhook = require('./webhook.js');
-const config = require("../../../config.js");
+const FoxyWebhook = require("../../foxy/FoxyWebhook.js");
+const webhook = require("./webhook.js");
+const { config } = require("../../../config.js");
 
 /**
  * @callback requestCallback
@@ -13,7 +13,7 @@ const config = require("../../../config.js");
  * @param {Object} requestEvent the event built by Netlify upon receiving the request.
  * @returns {Promise<{statusCode: number, body: string}>} the response object
  */
-async function handleRequest(requestEvent) {
+async function handler(requestEvent) {
   // Validation
   if (!validation.configuration.validate()) {
     return validation.configuration.response();
@@ -78,4 +78,6 @@ const validation = {
 
 const BadRequest = webhook.response('Bad Request', 400);
 
-exports.handler = handleRequest;
+module.exports = {
+  handler
+}

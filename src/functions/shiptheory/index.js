@@ -1,6 +1,5 @@
-const FoxyWebhook= require('../../foxy/FoxyWebhook.js');
-const webhook = require('./webhook.js');
-const config = require("../../../config.js");
+const FoxyWebhook = require("../../foxy/FoxyWebhook.js");
+const webhook = require("./webhook.js");
 
 /**
  * Receives the request, process it and invokes the callback.
@@ -8,7 +7,7 @@ const config = require("../../../config.js");
  * @param {Object} requestEvent the event built by Netlify upon receiving the request.
  * @returns {Promise<{statusCode: number, body: string}>} the response object
  */
-async function handleRequest(requestEvent) {
+async function handler(requestEvent) {
   // Validation
   if (!validation.configuration.validate()) {
     return validation.configuration.response();
@@ -18,7 +17,7 @@ async function handleRequest(requestEvent) {
     return validation.input.response(inputError);
   }
   const response = webhook.transactionCreated(JSON.parse(requestEvent.body));
-  return response;
+  return webhook.response();
 }
 
 // The validation object is used to aggregate validation functions and responses.
@@ -46,4 +45,6 @@ const validation = {
   }
 };
 
-exports.handler = handleRequest;
+module.exports = {
+  handler
+}

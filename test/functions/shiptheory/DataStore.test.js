@@ -1,25 +1,12 @@
-const { after, afterEach, before, beforeEach, describe, it } = require("mocha");
-const {expect} = require("chai");
-const rewire = require("rewire");
-const DataStore = rewire("../../../src/functions/shiptheory/DataStore.js");
-const mockShipTheoryAPI = require("./MockShipTheoryAPI");
+const { describe, it } = require("mocha");
+const { DataStore } = require("../../../src/functions/shiptheory/DataStore.js");
+const chai = require("chai");
+const mockShipTheoryAPI = require("./MockShipTheoryAPI.js");
+const nock = require("nock");
 
-
-
+const expect = chai.expect;
 
 describe("ShipTheory Client", function() {
-  let restore;
-  before(
-    function() {
-      restore = DataStore.__set__('fetch', mockShipTheoryAPI.fetch);
-    }
-  );
-
-  after(
-    function() {
-      restore();
-    }
-  );
 
   it ("Should be configured usig environment variables.", function() {
     const ds = new DataStore();
@@ -39,13 +26,20 @@ describe("ShipTheory Client", function() {
   });
 
   it ("Should authenticate in ShipTheory", async function() {
+    process.env["FOXY_SHIPTHEORY_EMAIL"] = 'foo@example.com';
+    process.env["FOXY_SHIPTHEORY_PASSWORD"] = 'password@example.com';
+    nock('https://api.shiptheory.com', {
+      reqheaders: {
+        accept: "application/json",
+        "content-type": "application/json",
+      }
+    })
+      .post('/v1/token', body => body.email && body.password)
+      .reply(200, {success: true, data: {token: 'token'}});
     const ds = new DataStore();
-    const result = await ds.authenticate();
+    await ds.authenticate();
     expect(ds.token).to.exist;
-    expect(ds.token).to.equal('token');;
+    expect(ds.token).to.equal('token');
   });
-
-  
-
 
 });

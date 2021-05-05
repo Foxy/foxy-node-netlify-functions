@@ -1,11 +1,14 @@
-require("dotenv").config();
-const config = require("../../../config.js");
-const fetch = require("node-fetch");
 const FoxyWebhook = require("../../foxy/FoxyWebhook.js");
-
+const dotenv = require("dotenv");
 const { URLSearchParams } = require("url");
+const { config } = require("../../../config.js");
+const fetch = require("node-fetch");
 
-const idevApiUrl = config.idevAffiliate.apiUrl || "";
+dotenv.config();
+
+function getIdevApiUrl() {
+  return config.idevAffiliate.apiUrl || "";
+}
 const idevSecretKey = config.idevAffiliate.secretKey || "";
 const foxyWebhookEncryptionKey = config.foxy.webhook.encryptionKey || "";
 
@@ -27,7 +30,7 @@ const getProductNetPrice = (productCode, webhook) => {};
  */
 function pushToIdev (item, webhookId) {
   if (!item.name || !item.code || !item.price) {
-    return false;
+    return Promise.resolve(false);
   }
   const params = new URLSearchParams();
   params.append("affiliate_id", getAffiliateIdFromProduct(item.code));
@@ -36,7 +39,7 @@ function pushToIdev (item, webhookId) {
   // TODO: Check an existing attribute to see if this has already been done.
   // Upsert a Foxy API attribute on the product after pushing so it's not duplicated
   // with a re-run of the webhook.
-  return fetch(idevApiUrl, {
+  return fetch(getIdevApiUrl(), {
     body: params,
     method: "POST",
   });
@@ -59,7 +62,7 @@ async function processTransaction (message) {
  * Verifies the request as a valid Foxy webhook.
  * @param (string) - The message payload, described here: https://wiki.foxycart.com/v/2.0/webhooks#example_payload
  */
-exports.handler = async (requestEvent) => {
+async function handler (requestEvent) {
   const err = FoxyWebhook.validFoxyRequest(requestEvent);
   if (err) {
     return FoxyWebhook.response(err, 400);
@@ -89,4 +92,8 @@ exports.handler = async (requestEvent) => {
       statusCode: 400,
     };
   }
+}
+
+module.exports = {
+  handler
 }

@@ -1,19 +1,23 @@
-require("dotenv").config();
-const config = require('../../../config.js');
-const traverse = require("traverse");
-
-const { FoxyApi } = require("@foxy.io/node-api");
-
+const FoxySDK = require("@foxy.io/sdk");
+const dotenv = require("dotenv");
+const bodyParser = require("body-parser");
+const { config } = require("../../../config.js");
+const cors = require("cors");
 const createError = require("http-errors");
 const express = require("express");
 const serverless = require("serverless-http");
-const app = express();
-const bodyParser = require("body-parser");
 
-let foxy;
-let store;
+
+const app = express();
+
+dotenv.config();
 
 const messageCartNotFound = 'Cart not found.';
+
+app.use(cors({
+  origin: 'http://127.0.0.1:8080',
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+}));
 
 /**
  * Validate configuration requirements
@@ -21,35 +25,43 @@ const messageCartNotFound = 'Cart not found.';
  * @returns {boolean} the configuration is valid
  */
 function validateConfig() {
-  return (
-    config.foxy.api.clientId &&
+  return !!(config.foxy.api.clientId &&
     config.foxy.api.clientSecret &&
-    config.foxy.api.refreshToken
-  );
+    config.foxy.api.refreshToken)
+  ;
 }
 
 /**
- * Validate the cart has the propper attributes.
+ * Validate the cart has the proper attributes.
  *
  * @param {Object} cart to be validated.
  * @returns {boolean} the cart attributes are valid.
  */
 function validateCart(cart) {
-  if (!cart) return false;
-  if (!cart._embedded || !Array.isArray(cart._embedded["fx:items"])) {
-    return false;
-  }
-  return true;
+  return cart &&
+    cart._embedded &&
+    Array.isArray(cart._embedded["fx:items"]);
 }
 
 /**
  * Initialize Foxy API
+ *
+ * @param {Object} app to be assigned a Foxy Backend API.
+ * @returns {Object} foxy api instance
  */
-function setup() {
-  if (validateConfig()) {
-    foxy = new FoxyApi();
-    store = foxy.follow("fx:store");
+function setFoxyAPI(app) {
+  if (!app.foxy) {
+    if (validateConfig()) {
+      app.foxy = new FoxySDK.Backend.API(
+        {
+          clientId: config.foxy.api.clientId,
+          clientSecret: config.foxy.api.clientSecret,
+          refreshToken: config.foxy.api.refreshToken,
+        }
+      );
+    }
   }
+  return app.foxy;
 }
 
 /** Functions and Variables */
@@ -57,55 +69,52 @@ function setup() {
 const defaultSubFrequency = config.default.autoshipFrequency || "1m";
 
 /**
+ * @typedef {import(@foxy/sdk).Backend.API} API
+ */
+
+/**
  * Retrieves a `cart` resource by ID.
  *
+ * @param {Object} foxy API instance to use.
  * @param {number} id - The ID of the cart to retrieve.
  * @returns {Object} first cart.
  */
-const getCart = async (id) => {
+const getCart = async (foxy, id) => {
   if (!id && !Number.isInteger(id)) {
     return {};
   }
-  const carts = await store
-    .follow("fx:carts")
-    .fetch({
-      query: { id },
+  const store = await foxy.follow('fx:store');
+  const cartsFollow = await store.follow("fx:carts");
+  const carts = await cartsFollow
+    .get({
+      filters: [`id=${id}`],
       zoom: [
         "items",
         "items:item_options",
         "items:item_options:discount_details",
       ],
-    })
-    .catch(() => Promise.reject(new Error("Error getting cart.")));
-  return carts._embedded["fx:carts"][0] || {};
+    });
+  return (
+    await carts.json()
+  )._embedded["fx:carts"][0] || {};
 };
 
 /**
  * Updates the cart and its contents
  *
- * @param {number} id
- * @param {Object} cart
- * @returns {Promise}
+ * @param {Object} cart with modifications to be.
+ * @returns {Promise} that resolves to the api response.
  */
-const patchCart = async (id, cart) => {
-  return foxy
-    .fetchRaw({
-      body: cart,
-      method: "PATCH",
-      url: cart._links.self.href,
-      zoom: [
-        "items",
-        "items:item_options",
-        "items:item_options:discount_details",
-      ],
-    })
-    .catch((e) => {
-      return Promise.reject("Patching cart failed.");
-    });
+const patchCart = async (cart) => {
+  const selfCart = cart._links.self;
+  const cartData = {...cart};
+  delete cartData._links;
+  return selfCart.patch(cartData);
 };
 
 /**
  * Strips all `sub_` parameters from all cart items.
+ *
  * @param {number} id
  * @param {Object} cart
  */
@@ -115,18 +124,14 @@ const convertCartToOneOff = async (id, cart) => {
   cart._embedded["fx:items"] = cart._embedded["fx:items"].filter(
     (item) => item.subscription_frequency
   );
-
-  for (let i = 0; i < cart._embedded["fx:items"].length; i++) {
-    cart._embedded["fx:items"][i].subscription_frequency = "";
-    cart._embedded["fx:items"][i].subscription_start_date = null;
-    cart._embedded["fx:items"][i].subscription_end_date = null;
-    cart._embedded["fx:items"][i].subscription_next_transaction_date = null;
+  for (const item of cart._embedded["fx:items"]) {
+    item.subscription_frequency = "";
+    delete item.subscription_start_date;
+    delete item.subscription_end_date;
+    delete item.subscription_next_transaction_date;
   }
-
   if (cart._embedded["fx:items"].length > 0) {
-    return patchCart(id, cart).catch((e) => {
-      return Promise.reject("ERROR patching cart.");
-    });
+    return (await patchCart(cart)).json();
   } else {
     return cartOriginal;
   }
@@ -150,18 +155,19 @@ const convertCartToSubscription = async (
 ) => {
   // Remove any existing subscription items in the cart, as we don't need to modify them
   const cartOriginal = JSON.parse(JSON.stringify(cart));
-  cart._embedded["fx:items"] = cart._embedded["fx:items"].filter(
-    (item) => !item.subscription_frequency
-  );
-
-  for (let i = 0; i < cart._embedded["fx:items"].length; i++) {
-    cart._embedded["fx:items"][i].subscription_frequency = frequency;
-  }
-
-  if (cart._embedded["fx:items"].length > 0) {
-    return patchCart(id, cart).catch((e) => {
-      return Promise.reject("ERROR patching cart.");
+  cart._embedded["fx:items"] = cart._embedded["fx:items"]
+    .filter(item => !item.subscription_frequency)
+    .map(item => {
+      item.subscription_frequency = frequency;
+      delete item.subscription_start_date;
+      delete item.subscription_end_date;
+      delete item.subscription_next_transaction_date;
+      return item
     });
+  if (cart._embedded["fx:items"].length > 0) {
+    const patchResponse = await patchCart(cart);
+    const patchResult = await patchResponse.json();
+    return patchResult;
   } else {
     return cartOriginal;
   }
@@ -178,65 +184,68 @@ cartRouter.get("/", (req, res) => {
 // TODO: Make it POST
 cartRouter.get(
   "/:cartId(\\d+)/convert/recurring/:frequency",
-  async (req, res, next) => {
+  async (req, res) => {
+    let err;
     if (!validateConfig()) {
       res.status(500).json("FOXY_API_CLIENT_ID is not configured;");
-      return;
+    } else {
+      setFoxyAPI(app);
+      if (app.foxy) {
+        try {
+          const cart = await getCart(app.foxy, req.params.cartId);
+          if (!validateCart(cart)) {
+            throw createError(404, messageCartNotFound);
+          }
+          const subsCart = await convertCartToSubscription(
+            req.params.cartId,
+            cart,
+            req.params.frequency
+          );
+          res.json(subsCart);
+          return;
+        } catch(e) {
+          err = e;
+          if (err.message === 'Error getting cart.') {
+            err.status = 404;
+            err.message = "Cart not found.";
+          }
+          console.log("Error: ", err.code, err.message);
+        }
+      } else {
+        err.status = 500;
+        err.message = "Could not instantiate Foxy SDK";
+      }
+      if (err.status) {
+        res.status(err.status).json(err.message);
+      } else {
+        res.status(500).json("Error fetching or modifying cart.");
+      }
     }
-    setup();
-    // This code is never executed
-    //if (!req.params.cartId) {
-    //  throw createError(400, `cartId not found.`);
-    //}
-    await getCart(req.params.cartId)
-      .then(async (cart) => {
-        if (!validateCart(cart)) {
-          throw createError(404, messageCartNotFound);
-        }
-        return convertCartToSubscription(
-          req.params.cartId,
-          cart,
-          req.params.frequency
-        );
-      })
-      .then((data) => res.json(data))
-      .catch((err) => {
-        if (err.status) {
-          res.status(err.status).json(err.message);
-        } else {
-          res.status(500).json("Error fetching or modifying cart.");
-        }
-      });
   }
 );
 
 // TODO: Make it POST
 cartRouter.get(
   "/:cartId(\\d+)/convert/nonrecurring",
-  async (req, res, next) => {
+  async (req, res) => {
     if (!validateConfig()) {
       res.status(500).json("FOXY_API_CLIENT_ID is not configured.");
     } else {
-      setup();
-      // Code bellow will never run
-      // if (!req.params.cartId) {
-      //   throw createError(400, messageCartNotFound);
-      // }
-      await getCart(req.params.cartId)
-        .then(async (cart) => {
-          if (!validateCart(cart)) {
-            throw createError(404, messageCartNotFound);
-          }
-          return convertCartToOneOff(req.params.cartId, cart);
-        })
-        .then((data) => res.json(data))
-        .catch((err) => {
-          if (err.status) {
-            res.status(err.status).json(err.message);
-          } else {
-            res.status(500).json("Error fetching or modifying cart.");
-          }
-        });
+      setFoxyAPI(app);
+      try {
+        const cart = await getCart(app.foxy, req.params.cartId);
+        if (!validateCart(cart)) {
+          throw createError(404, messageCartNotFound);
+        }
+        const data = await convertCartToOneOff(req.params.cartId, cart);
+        res.json(data);
+      } catch(err) {
+        if (err.status) {
+          res.status(err.status).json(err.message);
+        } else {
+          res.status(500).json("Error fetching or modifying cart.");
+        }
+      }
     }
   }
 );
@@ -263,18 +272,18 @@ app.use(bodyParser.json());
 
 app.use("/.netlify/functions/cart", cartRouter); // path must route to lambda
 
-// CORS error
-app.use((err, req, res, next) => {
-  if (err.message && err.message === "CORS_ERROR") {
-    res.status(401).json({
-      type: "cors",
-      code: "401",
-      message: "Invalid origin header.",
-    });
-  } else {
-    next();
-  }
-});
+//// CORS error
+//app.use((err, req, res, next) => {
+//  if (err.message && err.message === "CORS_ERROR") {
+//    res.status(401).json({
+//      type: "cors",
+//      code: "401",
+//      message: "Invalid origin header.",
+//    });
+//  } else {
+//    next();
+//  }
+//});
 
 // Unknown Error Handler
 // Without the `next` this barfs the whole stack trace, and says res.status isn't defined?
@@ -288,5 +297,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-module.exports = app;
-module.exports.handler = serverless(app);
+const handler = serverless(app);
+
+module.exports = {
+  app,
+  handler,
+}

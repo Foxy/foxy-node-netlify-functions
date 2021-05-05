@@ -1,17 +1,13 @@
-const { after, afterEach, before, beforeEach, describe, it } = require("mocha");
-const {expect} = require("chai");
-const rewire = require("rewire");
+const IdevAffiliate = require("../../../src/functions/idevaffiliate-marketplace/idevaffiliate-marketplace.js");
 const MockFoxyRequests = require("../../MockFoxyRequests.js");
+const { before, beforeEach, describe, it } = require("mocha");
+const chai = require("chai");
+const { config } = require("../../../config.js");
+const nock = require("nock");
 
-
-const chaiHttp = require('chai-http');
-const IdevAffiliate = rewire('../../../src/functions/idevaffiliate-marketplace/idevaffiliate-marketplace.js');
-const config = IdevAffiliate.__get__('config');
+const expect = chai.expect;
 
 let sentRequests = [];
-IdevAffiliate.__set__('fetch', function () {
-  sentRequests.push(arguments);
-});
 
 describe("Idev Affiliate", function() {
 
@@ -42,13 +38,21 @@ describe("Idev Affiliate", function() {
   });
 
   it ("Should send items to Idev Affiliate", async function () {
+    config.idevAffiliate.apiUrl = 'http://idev.com/api';
+    config.foxy.webhook.encryptionKey = 'foxy';
+
+    nock('http://idev.com')
+      .post('/api', body => body['affiliate_id'] && body['idev_saleamt'] && body['idev_ordernum'])
+      .twice()
+      .reply(200, {});
     const request = MockFoxyRequests.validRequest({
       _embedded: {
         'fx:items': [
-          {code: 'foo', name: 'foo', price: 1},
-          {code: 'bar', name: 'bar', price: 2},
+          {code: 'foo-a123', name: 'foo', price: 1},
+          {code: 'bar-a234', name: 'bar', price: 2},
         ]
-      }
+      },
+      id: 123,
     });
     request.headers['foxy-webhook-event'] = 'transaction/created';
     const response = await IdevAffiliate.handler(request);
@@ -59,11 +63,5 @@ describe("Idev Affiliate", function() {
       )).to.be.true;
     expect(response.statusCode).to.equal(200);
   });
-  
-
-
-
-
-
 
 });

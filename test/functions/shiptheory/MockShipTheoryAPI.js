@@ -1,5 +1,4 @@
 
-
 async function fetch(endpoint, options) {
   if (endpoint.match(/token/)){
     return {
@@ -10,7 +9,7 @@ async function fetch(endpoint, options) {
         }
       }
     }
-  } else if (enpoint.match(/shipments/)) {
+  } else if (endpoint.match(/shipments/)) {
     return {
       json: async function() {
         return {
@@ -22,4 +21,6 @@ async function fetch(endpoint, options) {
 }
 
 
-exports.fetch = fetch
+module.exports = {
+  fetch
+}

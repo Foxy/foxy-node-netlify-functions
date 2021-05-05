@@ -1,6 +1,6 @@
-const DataStoreBase = require('../../foxy/DataStoreBase.js');
-const config = require('../../../config.js');
-const fetch = require('node-fetch');
+const {DataStoreBase} = require("../../foxy/DataStoreBase.js");
+const {config} = require("../../../config.js");
+const fetch = require("node-fetch");
 
 /**
  * @typedef {Object} OrderDeskItem
@@ -33,8 +33,8 @@ class DataStore extends DataStoreBase {
   /**
    * @inheritdoc
    */
-  setCredentials() {
-    const credentials = this.parseConfigCredentials(config);
+  setCredentials(credentials) {
+    credentials = this.parseConfigCredentials(config);
     if (!credentials.key || !credentials.id) {
       throw new Error("Environment variables for OrderDesk store id and/or API key are missing.");
     }
@@ -99,13 +99,15 @@ class DataStore extends DataStoreBase {
    * @returns {Array<OrderDeskItem>} items retrieved from OrderDesk
    */
   async fetchInventoryItems(items) {
+    const u = this.buildEndpoint('inventory-items');
     const response = await fetch(this.buildEndpoint('inventory-items') + '?' + new URLSearchParams({
       code: items.join(',')
     }), {
       headers: this.getDefaultHeader(),
       method: 'GET'
     });
-    return (await response.json()).inventory_items;
+    const parsed = await response.json();
+    return parsed.inventory_items;
   }
 
   /**
@@ -124,18 +126,19 @@ class DataStore extends DataStoreBase {
     items = items.filter(i => !this.skipUpdate.inventory.includes(i.code));
     const invalid = items.filter((i) => !this.validateInventoryItem(i));
     if (invalid.length) {
-      throw new Error("Invalid inventory items for update", invalid.join(','));
+      throw new Error("Invalid inventory items for update " + invalid.join(','));
     }
-    const response = await fetch(this.buildEndpoint('batch-inventory-items'), {
+    const opts = {
       body: JSON.stringify(items),
       headers: this.getDefaultHeader(),
       method: 'PUT'
-    });
+    };
+    const response = await fetch(this.buildEndpoint('batch-inventory-items'), opts );
     return response.json();
   }
 
   /**
-   * Converts an order desk intem into a CartValidados Canonical Item.
+   * Converts an order desk item into a CartValidados Canonical Item.
    *
    * Does not change any field that does not need to be changed.
    * For OrderDesk, simply create an inventory field which is equal to stock.
@@ -162,4 +165,6 @@ class DataStore extends DataStoreBase {
 
 }
 
-module.exports = DataStore;
+module.exports = {
+  DataStore
+}

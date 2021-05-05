@@ -1,7 +1,9 @@
-const { after, afterEach, before, beforeEach, describe, it } = require("mocha");
-const {expect} = require("chai");
 const handler = require("../../../src/functions/shiptheory/index.js");
+const { afterEach, beforeEach, describe, it } = require("mocha");
+const chai = require("chai");
 const sinon = require("sinon"); 
+
+const expect = chai.expect;
 
 describe("Shiptheory", function() {
 

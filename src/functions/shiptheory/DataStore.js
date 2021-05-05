@@ -1,6 +1,5 @@
-const DataStoreBase = require('../../foxy/DataStoreBase.js');
-const config = require('../../../config.js');
-const fetch = require('node-fetch');
+const { DataStoreBase } = require("../../foxy/DataStoreBase.js");
+const fetch = require("node-fetch");
 
 /**
  * @typedef {Object} OrderDeskItem
@@ -87,7 +86,6 @@ class DataStore extends DataStoreBase {
    * @returns {string} the full URL of the endpoint.
    */
   buildEndpoint(path) {
-    console.log('url',  `https://${this.domain}/${this.api}/${path}`);
     return `https://${this.domain}/${this.api}/${path}`;
   }
 
@@ -157,4 +155,6 @@ class DataStore extends DataStoreBase {
 
 }
 
-module.exports = DataStore;
+module.exports = {
+  DataStore
+}
