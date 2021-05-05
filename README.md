@@ -20,7 +20,7 @@ Be sure to check the README for each function in the functions folder, as they p
 - Other features:
   - [cart](src/functions/cart): Converts a cart between recurring and non-recurring. Useful in an upsell flow.
   - [idevaffiliate-marketplace](src/functions/idevaffiliate-marketplace): A marketplace-style integration, using iDevAffiliate.
-  - [ShipTheory](src/functions/shiptheory): Creates shipments in your ShipTheory account upon successful transactions.
+  - [shiptheory](src/functions/shiptheory): Creates shipments in your ShipTheory account upon successful transactions.
 
 
 ### Data Store Integrations
