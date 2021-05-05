@@ -32,7 +32,7 @@ Please, notice that **it ignores existing subscriptions**.
 - It does not handle discounts.
 - It does not handle item options, such as `price_mod`.
 
-# Setup 
+# Setup
 
 ## Setup Overview
 
@@ -82,7 +82,7 @@ repository, there are some steps you may skip (those you've already done).
     - Save your settings clicking on the "Update Payment Gateway" button in the bottom of the page.
 1. Configure your **transaction/created** webhook if you want it to update your inventory in OrderDesk. You may check the docs here: https://wiki.foxycart.com/v/2.0/webhooks
     - Go to your [Foxy.io Admin page](https://admin.foxycart.com/admin.php)
-    - Under "Account", click ["integrations]"(https://admin.foxycart.com/admin.php?ThisAction=AddIntegration) 
+    - Under "Account", click ["integrations]"(https://admin.foxycart.com/admin.php?ThisAction=AddIntegration)
     - Check the "JSON Webhook" box and paste the same Endpoint you copied from your Netlify function in the URL field.
     - Give it a title that makes sense to you.
     - Copy the value from the "Encryption Key" field.
@@ -115,7 +115,7 @@ These environment variables are used to allow your webhook to authenticate authe
 
 | Variable                        | Default Value   | Description|
 | ------------------------------- | --------------- | --------------------------------------------------------------------------------  |
-| `FOXY_WEBHOOK_ENCRYPTION_KEY`     | ""         | **Required** Your wehook encryption key. **This value must not be shared or made public.** | 
+| `FOXY_WEBHOOK_ENCRYPTION_KEY`     | ""         | **Optional** Your wehook encryption key. **This value must not be shared or made public.** |
 | `FOXY_ORDERDESK_API_KEY`          | ""         | **Required** Your OrderDesk API Key                                                    |
 | `FOXY_ORDERDESK_STORE_ID`         | ""         | **Required** Your OrderDesk Store id                                                   |
 
@@ -138,7 +138,7 @@ This is likely unnecessary and you shouldn't change these default values unless 
 | Variable                         | Default Value   | Example config         |Description                                                                                                                                                                                                        |
 | -------------------------------- | --------------- | ---------------------- |---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `FOXY_FIELD_CODE`                  | "sku"           | "code"                 |The name of the field that stores the code in OrderDesk. **There is no need to set this if you are using OrderDesk "code" as your "sku"**.                           |
-| `FOXY_FIELD_PRICE`                 | "price"         | "value"                |The name of the field that stores the price in the OrderDesk. **There is no need to set this if you are using OrderDesk "price" field**.                             | 
+| `FOXY_FIELD_PRICE`                 | "price"         | "value"                |The name of the field that stores the price in the OrderDesk. **There is no need to set this if you are using OrderDesk "price" field**.                             |
 | `FOXY_FIELD_INVENTORY`             | "stock"         | "inventory"            |The name of the field that stores the inventory in OrderDesk. **There is no need to set this if you are using OrderDesk "stock" field**. |
 
 ##### Error messages
@@ -189,3 +189,4 @@ If you forked the repository, you can use the GitHub Action available in the "Ac
 - Click the SyncFork workflow and then "run workflow"
 
 If you've made customizations, there may be conflicts. In this case you par pull the changes and resolve the conflicts manually.
+

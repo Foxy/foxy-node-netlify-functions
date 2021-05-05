@@ -17,15 +17,19 @@ These environment variables are used to configure datastore functions.
 
 | Variable                   | Default Value   | Description|
 | -------------------------- | --------------- | ------------------- |
-| `FOXY_API_CLIENT_ID`         | ""         | **Required** Your Foxy Client Id. | 
-| `FOXY_API_CLIENT_SECRET`     | ""         | **Required** Your Foxy Client Secret.|
-| `FOXY_API_REFRESH_TOKEN `    | ""         | **Required** Your Foxy Client Refresh Token.|
-|`FOXY_WEBHOOK_ENCRYPTION_KEY`|
-|`FOXY_ERROR_INSUFFICIENT_INVENTORY`|
-|`FOXY_ERROR_PRICE_MISMATCH`|
-|`FOXY_FIELD_CODE`|
-|`FOXY_FIELD_INVENTORY`|
-|`FOXY_FIELD_PRICE`|
-|`FOXY_SKIP_INVENTORY_CODES`|
-|`FOXY_SKIP_INVENTORY_UPDATE_CODES`|
-|`FOXY_SKIP_PRICE_CODES`|
+| `FOXY_API_CLIENT_ID`         | ""      | **Required** Your Foxy Client Id. |
+| `FOXY_API_CLIENT_SECRET`     | ""      | **Required** Your Foxy Client Secret.|
+| `FOXY_API_REFRESH_TOKEN `    | ""      | **Required** Your Foxy Client Refresh Token.|
+| `FOXY_WEBHOOK_ENCRYPTION_KEY`     | "" | **Required** Your wehook encryption key. **This value must not be shared or made public.** |
+| `FOXY_ERROR_INSUFFICIENT_INVENTORY` | "Insufficient inventory for these items:" | Occurs when the quantity purchased is greater than the inventory available in Webflow. **A comma separated list of the names of the products out-of-stock will be appended to the end of the error message**. |
+| `FOXY_ERROR_PRICE_MISMATCH`         | "Prices do not match."                    | Occurs when the price of any of the products does not match with the `price` field in Webflow |
+| `FOXY_FIELD_CODE`                   | "code"\* | The name of the field that stores the code in the webflow collection.                                                                                                                                              |
+| `FOXY_FIELD_PRICE`                  | "price"\* | The name of the field that stores the price in the webflow collection.                                                                                                                                             |
+| `FOXY_FIELD_INVENTORY`              | "inventory"\* | The name of the field that stores the inventory in the webflow collection. Set this variable to "false" (without the quotes) to disable inventory verification for all items.                                      |
+| `FOXY_SKIP_INVENTORY_CODES`         | ""\* | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip inventory verification**. |
+| `FOXY_SKIP_PRICE_CODES`             | ""\* | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip price verification**.     |
+| `FOXY_SKIP_INVENTORY_CODES`         | ""\* | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip inventory verification**. |
+
+\* These default values may be different for some functions.
+Please, check the specific documentation for the function you are using.
+
