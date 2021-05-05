@@ -62,7 +62,7 @@ To configure your **environment variables** follow these steps:
 
 After changing your environment variables you may want to redeploy your webhook.
 
-##### Configuration
+##### Environment variables
 
 These environment variables are used to allow your webhook to authenticate authenticate with Foxy and OrderDesk.
 

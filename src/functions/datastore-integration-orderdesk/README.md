@@ -92,7 +92,7 @@ repository, there are some steps you may skip (those you've already done).
 
 # Configuration Reference
 
-There are a some customization you can do to your webhook.
+There are some customization you can do to your webhook.
 These are set with **environment variables** that you can set directly in Netlify dashboard.
 
 To configure your **environment variables** follow these steps:
@@ -108,7 +108,7 @@ This section contains all possible customizations you can do by setting environm
 
 After changing your environment variables you may want to redeploy your webhook.
 
-##### Configuration
+##### Environment variables
 
 These environment variables are used to allow your webhook to authenticate authenticate with Foxy and OrderDesk.
 
