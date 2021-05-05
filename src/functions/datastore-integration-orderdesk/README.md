@@ -118,7 +118,6 @@ These environment variables are used to allow your webhook to authenticate authe
 | `FOXY_WEBHOOK_ENCRYPTION_KEY`     | ""         | **Required** Your wehook encryption key. **This value must not be shared or made public.** | 
 | `FOXY_ORDERDESK_API_KEY`          | ""         | **Required** Your OrderDesk API Key                                                    |
 | `FOXY_ORDERDESK_STORE_ID`         | ""         | **Required** Your OrderDesk Store id                                                   |
-| `FOXY_DATASTORE_CREDENTIALS`      | ""         | This variable is an alternative to `FOXY_ORDERDESK_API_KEY` and `FOXY_ORDERDESK_STORE_ID`. If you provide this variable you don't have to provide those. This is meant to receive a copy of the values provided in the API tab in your OrderDesk settings.|
 
 
 ##### Price and Inventory verification
@@ -173,9 +172,11 @@ Cloning the repository will create your own copy of this Webhook, allowing you t
 Go to your Netlify account and click the "New site from Git" button.
 
 - Choose your repository.
-- Click the "Advanced" button and then "New Variable"
-  - The key should be: `FOXY_DATASTORE_CREDENTIALS`
-  - To get this token, go to OrderDesk settings, at the 'API' tab. Copy all the information provided.
+- Click the "Advanced" button add the following variables.
+    - `FOXY_ORDERDESK_API_KEY`
+    - `FOXY_ORDERDESK_STORE_ID`
+- To get these variables go to OrderDesk settings, at the 'API' tab.
+
 
 # Upgrade your webhook
 

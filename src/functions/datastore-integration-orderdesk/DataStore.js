@@ -64,21 +64,9 @@ class DataStore extends DataStoreBase {
   }
 
   parseConfigCredentials(config) {
-    const rawCredentials = config.datastore.credentials;
-    let matched;
-    if (rawCredentials) {
-      matched = rawCredentials.match(/Store ID (\d{5}) API Key ([A-Za-z0-9]+)$/);
-    }
-    if (matched && matched.length === 3) {
-      return {
-        id: matched[1],
-        key: matched[2]
-      }
-    } else {
-      return {
-        id: config.datastore.provider.orderDesk.storeId,
-        key: config.datastore.provider.orderDesk.apiKey
-      }
+    return {
+      id: config.datastore.provider.orderDesk.storeId,
+      key: config.datastore.provider.orderDesk.apiKey
     }
   }
 

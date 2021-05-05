@@ -36,10 +36,6 @@ describe("OrderDesk Datastore", function() {
 
   describe("Configuration", function() {
 
-    after(
-      () => delete config.datastore.credentials
-    );
-
     it ("Should inform about missing configuration.", function () {
       const cases = [
         ['foo', undefined],
@@ -55,19 +51,6 @@ describe("OrderDesk Datastore", function() {
     it ("Should be configurable using order desk keys", function () {
       const odClient = new DataStore();
       expect(odClient.credentials).to.deep.equal( { id: 'bar', key: 'foo' });
-    });
-
-    it ("Should be configurable using default datastore credentials", function () {
-      setOrderDeskConfig(undefined, undefined);
-      config.datastore.credentials = 'Store ID 11111 API Key foobar';
-      const odClient = new DataStore();
-      expect(odClient.credentials).to.deep.equal(
-        {
-          id: '11111',
-          key: 'foobar'
-        }
-      );
-      setOrderDeskConfig(undefined, undefined);
     });
 
   });
