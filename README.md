@@ -1,17 +1,26 @@
 # Netlify Serverless Functions for the Foxy.io API
 
-This repository allows you to (more) easily create serverless functions to work with the Foxy.io API, deployed using Netlify. The goal is to make this as approachable as possible, so we try to have reasonable default behaviours, and Netlify is a great choice because of the one-click deployment. Once you deploy to Netlify, you can modify your own GitHub files to customize as needed.
+This repository allows you to (more) easily create serverless functions to work with the Foxy.io API, deployed using Netlify.
+The goal is to make this as [approachable](#Built to be approachable) as possible, so we try to have reasonable default behaviours, and Netlify is a great choice because of the one-click deployment.
+Once you deploy to Netlify, you can modify your own GitHub files to customize as needed.
+
+You may use this repository:
+- directly, configuring it to your needs with environment variables
+- as usage examples, to better understand the usage of Foxy API and FoxySDK.
 
 ## Functions
 
-The functions provided in this repository can be used independently, or as a reference for building your own functions. Be sure to check the README for each function in the functions folder.
+The functions provided in this repository are used independently.
 
-- [cart](src/functions/cart): Converts a cart between recurring and non-recurring. Useful in an upsell flow.
-- [idevaffiliate-marketplace](src/functions/idevaffiliate-marketplace): A marketplace-style integration, using iDevAffiliate.
+Be sure to check the README for each function in the functions folder, as they provide specific documentation.
+
 - Datastore integrations: 
-    - [pre-payment-webhook-webflow](src/functions/pre-payment-webhook-webflow): Validates the price and/or availability of items against Webflow CMS collections before a payment is processed.
+    - [datastore-integration-webflow](src/functions/pre-payment-webhook-webflow): Validates the price and/or availability of items against Webflow CMS collections before a payment is processed.
     - [datastore-integration-orderdesk](src/functions/datastore-integration-orderdesk): Validates the cart against OrderDesk and updates the inventory upon successful transaction.
-- [ShipTheory](src/functions/shiptheory): Creates shipments in your ShipTheory account upon successful transactions.
+- Other features:
+  - [cart](src/functions/cart): Converts a cart between recurring and non-recurring. Useful in an upsell flow.
+  - [idevaffiliate-marketplace](src/functions/idevaffiliate-marketplace): A marketplace-style integration, using iDevAffiliate.
+  - [shiptheory](src/functions/shiptheory): Creates shipments in your ShipTheory account upon successful transactions.
 
 
 ### Data Store Integrations
@@ -61,8 +70,73 @@ The pre-payment webhook fires before a transaction is submitted to the payment p
   - To do this, after the deploy is finished, click the "functions" tab, look for your webhook function and copy the **Endpoint URL**.
 1. Configure your prepayment webhook using your endpoint. Check the docs here: https://wiki.foxycart.com/v/2.0/pre_payment_webhook
 
+# Configuration Reference
+
+This section contains all **environment variables** you can use to configure the webhooks in this repository.
+
+**You do not need to configure all these.** Check the documentation for the functions you are using for the configuration relevant to them.
+
+This list is provided for your quick reference.
+
+**Please, note** that the default values for these variables may be different for each function.
+We try to have sensible defaults for each third party service we are integrating with and for each task we are performing.
+
+## How to set **environment variables** in Netlify
+
+These are set with **environment variables** that you can set directly in Netlify dashboard.
+
+To configure your **environment variables** follow these steps:
+- go to your site admin dashboard in Netlify
+- click "Site settings" button
+- click the "Build & deploy" tab in the left menu
+- under **Environment**, click "Edit variables"
+
+Please, notice that the default values where chosen to match the default OrderDesk settings.
+You shouldn't need to change these values unless you are not using OrderDesk default fields.
+
+This section contains all possible customizations you can do by setting environment variables.
+
+After changing your environment variables you will want to redeploy your webhook.
+
+| Environment Variable | Description |
+| -------  | --- | 
+|`FOXY_API_CLIENT_ID`| [description in Foxy Webhook doc](src/foxy/README.md#environment-variables)|
+|`FOXY_API_CLIENT_SECRET`| [description in Foxy Webhook doc](src/foxy/README.md#environment-variables)|
+|`FOXY_API_REFRESH_TOKEN`| [description in Foxy Webhook doc](src/foxy/README.md#environment-variables)|
+|`FOXY_DEFAULT_AUTOSHIP_FREQUENCY`|[description in Cart doc](src/functions/cart#environment-variables)|
+|`FOXY_ERROR_INSUFFICIENT_INVENTORY`| [description in Foxy Webhook doc](src/foxy/README.md#environment-variables)|
+|`FOXY_ERROR_PRICE_MISMATCH`| [description in Foxy Webhook doc](src/foxy/README.md#environment-variables)|
+|`FOXY_FIELD_CODE`| [description in Foxy Webhook doc](src/foxy/README.md#environment-variables)|
+|`FOXY_FIELD_INVENTORY`| [description in Foxy Webhook doc](src/foxy/README.md#environment-variables)|
+|`FOXY_FIELD_PRICE`| [description in Foxy Webhook doc](src/foxy/README.md#environment-variables)|
+|`FOXY_IDEV_API_URL`|[description in Idev Affiliate doc](src/functions/idevaffiliate-marketplace/README.md#environment-variables)|
+|`FOXY_IDEV_SECRET_KEY`|[description in Idev Affiliate doc](src/functions/idevaffiliate-marketplace/README.md#environment-variables)|
+|`FOXY_ORDERDESK_API_KEY`|[description in Idev Affiliate doc](src/functions/datastore-integration-orderdesk/README.md#environment-variables)|
+|`FOXY_ORDERDESK_STORE_ID`|[description in Idev Affiliate doc](src/functions/datastore-integration-orderdesk/README.md#environment-variables)|
+|`FOXY_SKIP_INVENTORY_CODES`| [description in Foxy Webhook doc](src/foxy/README.md#environment-variables)|
+|`FOXY_SKIP_INVENTORY_UPDATE_CODES`| [description in Foxy Webhook doc](src/foxy/README.md#environment-variables)|
+|`FOXY_SKIP_PRICE_CODES`| [description in Foxy Webhook doc](src/foxy/README.md#environment-variables)|
+|`FOXY_WEBFLOW_TOKEN`|[description in Idev Affiliate doc](src/functions/datastore-integration-webflow/README.md#environment-variables)|
+|`FOXY_WEBHOOK_ENCRYPTION_KEY`| [description in Foxy Webhook doc](src/foxy/README.md#environment-variables)|
 
 # Development
+
+## Built to be approachable
+
+This repository aims to used as a reference to users who wish to extend their use of Foxy by adding custom server-side features.
+
+Here are some choices we've made:
+
+- Javascript: the language is approachable in itself and widely known.
+- Netlify: provides easy deployment and continuous integration with near zero configuration.
+- Default behaviours: are set in according to the task, tunned to feel natural for users of the tools each function is integrating with
+- Specific instructions: each function has its own README file that should be the only required reading to implement that function. This does not mean we will repeat instructions everywhere, but simply that by reading the docs of the function user will find everything needed, either on that page or on clearly provided links.
+
+These are some goals:
+
+- users should be able to navigate the code with ease, without usage or knowledge of advanced tools
+- users should be able to copy and customize code with relative ease, without the need 
+
 
 ## Localdev Setup
 

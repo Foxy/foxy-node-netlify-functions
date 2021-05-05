@@ -17,15 +17,16 @@ functions from this repository you don't need to do this step.
 1. Go to Netlify and click `New site from Git`.
 1. Choose the repository you've just cloned.
 
-### Configuration
+### Environment variables
 
 This webhook depends on FoxyAPI and requires setting the following environment variables:
 
 | Variable                   | Default Value   | Description|
 | -------------------------- | --------------- | ------------------- |
-| FOXY_API_CLIENT_ID         | ""         | **Required** Your Foxy Client Id. | 
-| FOXY_API_CLIENT_SECRET     | ""         | **Required** Your Foxy Client Secret.|
-| FOXY_API_REFRESH_TOKEN     | ""         | **Required** Your Foxy Client Refresh Token.|
+| `FOXY_API_CLIENT_ID`         | ""         | **Required** Your Foxy Client Id. | 
+| `FOXY_API_CLIENT_SECRET`     | ""         | **Required** Your Foxy Client Secret.|
+| `FOXY_API_REFRESH_TOKEN `    | ""         | **Required** Your Foxy Client Refresh Token.|
+|`FOXY_DEFAULT_AUTOSHIP_FREQUENCY`| "1m" | The default subscription frequency to be used when converting a cart into subscriptions.|
 
 
 You can grab these values for your store going to your Foxy Store Admin page, click on the "integrations" link and, under "current integrations" click "Get Token".
