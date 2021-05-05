@@ -15,7 +15,7 @@ The functions provided in this repository are used independently.
 Be sure to check the README for each function in the functions folder, as they provide specific documentation.
 
 - Datastore integrations: 
-    - [pre-payment-webhook-webflow](src/functions/pre-payment-webhook-webflow): Validates the price and/or availability of items against Webflow CMS collections before a payment is processed.
+    - [datastore-integration-webflow](src/functions/pre-payment-webhook-webflow): Validates the price and/or availability of items against Webflow CMS collections before a payment is processed.
     - [datastore-integration-orderdesk](src/functions/datastore-integration-orderdesk): Validates the cart against OrderDesk and updates the inventory upon successful transaction.
 - Other features:
   - [cart](src/functions/cart): Converts a cart between recurring and non-recurring. Useful in an upsell flow.
