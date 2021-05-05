@@ -150,8 +150,7 @@ function validSignature(payload, signature, key) {
  */
 function verifyWebhookSignature(req) {
   if (!config.foxy.webhook.encryptionKey) {
-    console.log("Foxy Webhook Encryption key is not set.");
-    console.log("   security can be enhanced if you set it.");
+    console.log("Foxy Webhook Encryption key is not set. Security can be enhanced if you set it.");
     return true;
   }
   const foxyEvent = req.headers['foxy-webhook-event'];
