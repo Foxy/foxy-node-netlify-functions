@@ -96,7 +96,7 @@ You shouldn't need to change these values unless you are not using OrderDesk def
 
 This section contains all possible customizations you can do by setting environment variables.
 
-After changing your environment variables you will want to redeploy your webhook.
+**Attention**: After changing your environment variables you will want to **[redeploy your webhook](#redeploy-your-webhook)**.
 
 | Environment Variable | Description |
 | -------  | --- | 
@@ -118,6 +118,19 @@ After changing your environment variables you will want to redeploy your webhook
 |`FOXY_SKIP_PRICE_CODES`| [description in Foxy Webhook doc](src/foxy/README.md#environment-variables)|
 |`FOXY_WEBFLOW_TOKEN`|[description in Idev Affiliate doc](src/functions/datastore-integration-webflow/README.md#environment-variables)|
 |`FOXY_WEBHOOK_ENCRYPTION_KEY`| [description in Foxy Webhook doc](src/foxy/README.md#environment-variables)|
+
+### Redeploy your webhook
+
+If you change any of your environment variables, it will only take effect after you redeploy your webhook.
+
+To do this, follow these steps:
+
+- go to your Netlify dashboard;
+- under "sites" click on your webhook;
+- click on "Production deploys"
+- on the right side, click "Trigger deploy" and then "deploy site"
+
+The changes you've made to your environment variables will be on effect when the deploy finishes.
 
 # Development
 
