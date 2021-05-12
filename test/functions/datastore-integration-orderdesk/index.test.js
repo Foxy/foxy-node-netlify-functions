@@ -40,12 +40,12 @@ describe("Order Desk Pre-payment Webhook", function() {
       const cases = [
         ["Orderdesk store id", () => config.datastore.provider.orderDesk.storeId = undefined],
         ["Orderdesk API key", () => config.datastore.provider.orderDesk.apiKey = undefined],
-        ["Foxy encryption key", () => config.foxy.webhook.encryptionKey = undefined],
       ];
       for (let c of cases) {
         it(`Warns about ${c[0]}`, async function() {
           c[1]();
-          const response = await odHandler.handler();
+          const valid = validRequest();
+          const response = await odHandler.handler(valid);
           expect(response.statusCode).to.equal(503);
           expect(JSON.parse(response.body).details).to.match(/Service Unavailable/);
         });
