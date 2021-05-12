@@ -62,10 +62,7 @@ const validation = {
       if (!credentials.apiKey) {
         console.error("FOXY_ORDERDESK_API_KEY is not configured");
       }
-      if (!config.foxy.webhook.encryptionKey) {
-        console.error("FOXY_WEBHOOK_ENCRYPTION_KEY is not configured");
-      }
-      return credentials.storeId && credentials.apiKey && config.foxy.webhook.encryptionKey
+      return credentials.storeId && credentials.apiKey;
     },
   },
   input: {
