@@ -17,7 +17,7 @@ function customOptions() {
     fields: {
       code: config.datastore.field.code || 'code',
       inventory: config.datastore.field.inventory || 'inventory',
-      price: config.datastore.field.price || 'price'
+      price: config.datastore.field.price || 'price',
     },
     skip: {
       inventory: (config.datastore.skipValidation.inventory || '').split(',').map(e => e.trim()).filter(e => !!e) || [],
@@ -140,8 +140,8 @@ function getCustomKey(default_key) {
 /**
  * Retrieve an option from an item using it's custom key, if set, or the default key
  *
- * @param item the item to retrieve the custom option from
- * @param option the option to retrieve
+ * @param {Object} item the item to retrieve the custom option from
+ * @param {string} option the option to retrieve
  * @returns {{}|{name: string, value: string|number}} the retrieved option
  */
 function getCustomizableOption(item, option) {
@@ -199,7 +199,7 @@ function extractItems(body) {
 /**
  * Checks if item is valid
  *
- * @param item to be validated
+ * @param {Object} item to be validated
  * @returns {boolean} valid
  */
 function validItem(item) {
@@ -213,8 +213,7 @@ function validItem(item) {
   if (!(item.code || parseInt(item.code, 10) === 0)) {
     errors.push(`${item.name} has no code.`)
   }
-  const collection = getOption(item, 'collection_id').value;
-  if (!collection) {
+  if (!getCollectionId(item)) {
     errors.push(`${item.name} has no collection_id.`)
   }
   if (errors.length) {
@@ -342,6 +341,18 @@ function getWebflow() {
 }
 
 /**
+ * Retrieve the collection id to be used for this item.
+ *
+ * When not set for the specific item, the collection id set for the whole environment is used.
+ *
+ * @param {Object} item the item received from Foxy
+ * @returns {string|number} the collection item to be used to fetch data on this item.
+ */
+function getCollectionId(item) {
+  return getOption(item, 'collection_id').value || config.datastore.provider.webflow.collection;
+}
+
+/**
  * Stores a reference to the matched item in the item itself.
  * returns a pair of matched items that can be easily validated.
  *
@@ -376,7 +387,7 @@ function fetchItem(cache, foxyItem, offset = 0) {
   if (offset) {
     console.log("   ... couldn't find the item in first", offset, "items.");
   }
-  const collectionId = getCustomizableOption(foxyItem, 'collection_id').value;
+  const collectionId = getCollectionId(foxyItem);
   const webflow = getWebflow();
   const found = cache.findItem(collectionId, foxyItem);
   if (found) {

@@ -111,10 +111,10 @@ describe("Verifies the price of an item in a Webflow collection", () => {
   });
 
   /**
-   * Creates a request for a subscrition with a given start date
+   * Creates a request for a subscription with a given start date
    *
-   * @param startDate the start date of the subscription
-   * @returns request event
+   * @param {Date} startDate the start date of the subscription
+   * @returns {Object} request event
    */
   function subscriptionsWithStartDate(startDate) {
     const nextMonth = ((d) => new Date(d.setDate(d.getMonth() + 1)))(
@@ -247,7 +247,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     expect(JSON.parse(response.body)).to.deep.equal({ ok: true, details: "" });
   });
 
-  it("Rejects invalid items.", async () => {
+  it("rejects invalid items.", async () => {
     const invalidItemOptions = {
       'code': /has no code\.$/,
       'collection_id': /has no collection_id\.$/,
@@ -277,11 +277,29 @@ describe("Verifies the price of an item in a Webflow collection", () => {
     }
   });
 
+  it("uses collection_id set in config", async () => {
+    let response;
+    config.datastore.provider.webflow.collection = 'COLLECTIONID';
+    const event = mockFoxyCart.foxyRequest({  options: { collection_id: ''}});
+    const items =  JSON.parse(event.body)._embedded["fx:items"];
+    injectedWebflow.items = function () {
+      return Promise.resolve(
+        mockWebflow.arbitrary(items)({}, {}, [])
+      );
+    };
+    response = await prePayment.handler(event);
+    expect(response.statusCode).to.exist.and.to.equal(200);
+    expect(JSON.parse(response.body)).to.deep.equal({ ok: true, details: "" });
+    config.datastore.provider.webflow.collection = '';
+    response = await prePayment.handler(event);
+    expect(response.statusCode).to.exist.and.to.equal(200);
+    expect(JSON.parse(response.body).details).to.match(/Invalid items/);
+  });
+
   it("Approves when all items are correct", async () => {
     let response;
     const event = mockFoxyCart.foxyRequest({ price: 11, quantity: 1 });
     const items =  JSON.parse(event.body)._embedded["fx:items"];
-    // Make sure the response values matches
     injectedWebflow.items = function () {
       return Promise.resolve(
         mockWebflow.arbitrary(items)({}, {}, [
@@ -289,8 +307,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
         ])
       );
     };
-    const context = {};
-    response = await prePayment.handler(event, context);
+    response = await prePayment.handler(event);
     expect(response.statusCode).to.exist.and.to.equal(200);
     expect(JSON.parse(response.body)).to.deep.equal({ ok: true, details: "" });
   });
@@ -475,6 +492,7 @@ describe("Verifies the price of an item in a Webflow collection", () => {
 /**
  * Returns a response for a request with insufficient inventory.
  *
+ * @param {object} event
  * @returns {object} the insufficient inventory response
  */
 async function insufficientInventoryRequest(event = null) {

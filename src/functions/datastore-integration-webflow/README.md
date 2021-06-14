@@ -50,7 +50,7 @@ When adding your items to the cart, beyond `price` and `quantity` that are neede
 
 | Parameter         | Description                                                                                                          | Example                                 |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| `collection_id`   | **Required** The id of the item's collection.                                                                        | `collectionId=5f74f169fbbb4b118497207a` |
+| `collection_id`   | **Optional** The id of the item's collection. If a default collection_id is provided, this field may be ignored. If both are provided, this field overrides the default collection_id.  | `collectionId=5f74f169fbbb4b118497207a` |
 | `code`            | **Required** The item's code. Must be unique.                                                                        | `code=896EYSA678`                       |
 
 
@@ -72,11 +72,12 @@ You may have some items you don't want to be subject to price verification. This
 
 | Variable                        | Default Value                             | Description                                                                                                                                                                                                        |
 | ------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `FOXY_SKIP_PRICE_CODES`             | ""                                        | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip price verification**.     |
-| `FOXY_SKIP_INVENTORY_CODES`         | ""                                        | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip inventory verification**. |
-| `FOXY_FIELD_CODE`                   | "code"                                    | The name of the field that stores the code in the webflow collection.                                                                                                                                              |
-| `FOXY_FIELD_PRICE`                  | "price"                                   | The name of the field that stores the price in the webflow collection.                                                                                                                                             |
-| `FOXY_FIELD_INVENTORY`              | "inventory"                               | The name of the field that stores the inventory in the webflow collection. Set this variable to "false" (without the quotes) to disable inventory verification for all items.                                      |
+| `FOXY_SKIP_PRICE_CODES`         | ""                                        | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip price verification**.     |
+| `FOXY_SKIP_INVENTORY_CODES`     | ""                                        | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip inventory verification**. |
+| `FOXY_FIELD_CODE`               | "code"                                    | The name of the field that stores the code in the webflow collection.                                                                                                                                              |
+| `FOXY_FIELD_PRICE`              | "price"                                   | The name of the field that stores the price in the webflow collection.                                                                                                                                             |
+| `FOXY_FIELD_INVENTORY`          | "inventory"                               | The name of the field that stores the inventory in the webflow collection. Set this variable to "false" (without the quotes) to disable inventory verification for all items.                                      |
+| `FOXY_WEBFLOW_COLLECTION`       | ""                                        | The id of the collection that contains the products. If this is set, there is no need to set `collection_id` in the HTML.                                                                                          |
 
 ##### Error messages
 
