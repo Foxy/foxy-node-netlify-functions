@@ -135,6 +135,7 @@ class DataStore extends DataStoreBase {
       products: products,
       recipient: {
         address_line_1: shipments[0].address1,
+        address_line_2: shipments[0].address2,
         city: shipments[0].city,
         country: shipments[0].country,
         email: transaction.customer_email,
