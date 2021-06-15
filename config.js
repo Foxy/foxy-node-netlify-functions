@@ -27,6 +27,7 @@ const config = {
         storeId: env("FOXY_ORDERDESK_STORE_ID"),
       },
       webflow: {
+        collection: env('FOXY_WEBFLOW_COLLECTION'),
         token: env('FOXY_WEBFLOW_TOKEN') || env('WEBFLOW_TOKEN'),
       }
     },
