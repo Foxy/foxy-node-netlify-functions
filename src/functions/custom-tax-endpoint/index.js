@@ -30,7 +30,7 @@ if (country != "US") {
 }
 
 let tax_amount = tax_rate * totalToTax;
-let taxConfiguration = {
+const taxConfiguration = {
    "ok":true,
    "details":"",
    "name":"custom tax",
