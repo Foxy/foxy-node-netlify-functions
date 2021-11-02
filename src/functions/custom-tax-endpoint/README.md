@@ -1,6 +1,6 @@
 # Custom Tax Endpoint
 
-This provides you with a function that executes when the address is entered on the checkout, custom calculates, and sends tax rate and amount to the Foxy cart.
+This provides you with a function that executes when the address is entered on the checkout, does custom calculations, and sends the tax rate and amount back to Foxy. It's triggered by configuring the custom tax endpoint in your Foxy store settings.
 
 ## Usage
 
@@ -27,7 +27,7 @@ Go to your Netlify account and click the "New site from Git" button.
 
 - Choose your repository.
 
-After the deploy is complete, click the "functions" tab, look for the `custom-tax-endpoint` function and copy the **Endpoint URL**.
+It should automatically deploy from there. After the deploy is complete, click the "functions" tab, look for the `custom-tax-endpoint` function and copy the **Endpoint URL**.
 
 Configure your custom tax integration using your endpoint. 
 * Go to the [integrations settings](https://admin.foxycart.com/admin.php?ThisAction=AddIntegration) in the Foxy admin.
