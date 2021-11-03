@@ -20,6 +20,7 @@ The logical rules for this example are the following:
 * The tax rate for all US orders is 0% (no tax)
 * The tax rate outside the US is 5% for all customers adding items to the cart with a category of **dealer** and 12% for all other categories outside the US.
 * The tax rate is applied to the total money amount of the items in the cart, plus shipping, minus any discounts.
+* This logic assumes that when the cart contains items that have a category of dealer, no other categories will be present in the cart.
 
 ### Create a new Netlify Site
 
