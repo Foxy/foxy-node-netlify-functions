@@ -22,6 +22,7 @@ function customOptions() {
     skip: {
       inventory: (config.datastore.skipValidation.inventory || '').split(',').map(e => e.trim()).filter(e => !!e) || [],
       price: (config.datastore.skipValidation.price || '').split(',').map(e => e.trim()).filter(e => !!e) || [],
+      updateinfo: config.datastore.skipValidation.updateinfo || 'Update Your Customer Information',
     },
     webflow: {
       limit: 100,
@@ -191,7 +192,7 @@ function createCache() {
 function extractItems(body) {
   const objBody = JSON.parse(body);
   if (objBody && objBody._embedded && objBody._embedded['fx:items']) {
-    return objBody._embedded['fx:items'];
+    return objBody._embedded['fx:items'].filter(item => item.name !== customOptions().skip.updateinfo);
   }
   return [];
 }

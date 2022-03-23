@@ -36,7 +36,8 @@ const config = {
     },
     skipValidation: {
       inventory: env('FOXY_SKIP_INVENTORY_CODES') || env('FX_SKIP_INVENTORY_CODES'),
-      price: env('FOXY_SKIP_PRICE_CODES') || env('FX_SKIP_PRICE_CODES')
+      price: env('FOXY_SKIP_PRICE_CODES') || env('FX_SKIP_PRICE_CODES'),
+      updateinfo: env('FOXY_SKIP_UPDATEINFO_NAME')
     },
   },
   default: {

@@ -15,7 +15,7 @@ The functions provided in this repository are used independently.
 Be sure to check the README for each function in the functions folder, as they provide specific documentation.
 
 - Datastore integrations: 
-    - [datastore-integration-webflow](src/functions/pre-payment-webhook-webflow): Validates the price and/or availability of items against Webflow CMS collections before a payment is processed.
+    - [datastore-integration-webflow](src/functions/datastore-integration-webflow): Validates the price and/or availability of items against Webflow CMS collections before a payment is processed.
     - [datastore-integration-orderdesk](src/functions/datastore-integration-orderdesk): Validates the cart against OrderDesk and updates the inventory upon successful transaction.
 - Other features:
   - [cart](src/functions/cart): Converts a cart between recurring and non-recurring. Useful in an upsell flow.
@@ -117,6 +117,7 @@ This section contains all possible customizations you can do by setting environm
 |`FOXY_SKIP_INVENTORY_CODES`| [description in Foxy Webhook doc](src/foxy/README.md#environment-variables)|
 |`FOXY_SKIP_INVENTORY_UPDATE_CODES`| [description in Foxy Webhook doc](src/foxy/README.md#environment-variables)|
 |`FOXY_SKIP_PRICE_CODES`| [description in Foxy Webhook doc](src/foxy/README.md#environment-variables)|
+|`FOXY_SKIP_UPDATEINFO_NAME`| [description in Foxy Webhook doc](src/foxy/README.md#environment-variables)|
 |`FOXY_WEBFLOW_TOKEN`|[description in Idev Affiliate doc](src/functions/datastore-integration-webflow/README.md#environment-variables)|
 |`FOXY_WEBHOOK_ENCRYPTION_KEY`| [description in Foxy Webhook doc](src/foxy/README.md#environment-variables)|
 
