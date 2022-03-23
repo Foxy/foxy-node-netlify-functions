@@ -29,6 +29,7 @@ These environment variables are used to configure datastore functions.
 | `FOXY_SKIP_INVENTORY_CODES`         | ""\* | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip inventory verification**. |
 | `FOXY_SKIP_PRICE_CODES`             | ""\* | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip price verification**.     |
 | `FOXY_SKIP_INVENTORY_CODES`         | ""\* | A comma separated list of code values (this is the value set in your 'code' field in Webflow or in the field you set with `code_field` parameter. **The items with these codes will skip inventory verification**. |
+| `FOXY_SKIP_UPDATEINFO_NAME`         | "Update Your Customer Information" | The name of the `updateinfo` product for your store, to be ignored from any verifications. |
 
 \* These default values may be different for some functions.
 Please, check the specific documentation for the function you are using.
