@@ -57,6 +57,9 @@ const config = {
     apiUrl: env('FOXY_IDEV_API_URL') || env('IDEV_API_URL'),
     secretKey: env('FOXY_IDEV_SECRET_KEY') || env('IDEV_SECRET_KEY'),
   },
+  vatlayer: {
+    accessKey: env('VATLAYER_ACCESS_KEY'),
+  }
 }
 
 
