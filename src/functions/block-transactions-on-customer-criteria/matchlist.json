@@ -1,9 +1,13 @@
-{  "_comment": "Leave any arrays empty ([]) that you don't want to track.",
+{  "_comment": "Leave any arrays empty ([]) that you don't want to block.",
     "email_addresses": [
         "email@example.com",
         "email2@example.com"
     ],
     "ip_addresses": [
         "192.169.1.1"
+    ],
+    "customer_names": [
+        "John Doe",
+        "Jane Doe"
     ]
 }

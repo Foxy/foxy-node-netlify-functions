@@ -14,7 +14,7 @@ Forking the repository will create your own copy of this Webhook, allowing you t
 
 ### Customize
 
-Modify the matchlist.json file to include the email addresses/ip addresses that you want to block. If you don't want to block based on one of those, you can leave the array empty. Note that the examples provided are for illustrative purposes only. It'll work as is, but blocking based on IP or email isn't necessarily a recommended approach.
+Modify the matchlist.json file to include the email addresses/ip addresses/customer names that you want to block. If you don't want to block based on one of those, you can leave the array empty. Note that the examples provided are for illustrative purposes only. It'll work as is, but blocking based on IP, email or name isn't necessarily a recommended approach.
 
 You can also modify the error message that's displayed to customers when the pre-payment webhook validation fails. The default message is "Sorry, the transaction cannot be completed." Do not remove the quotes enclosing the message.
 
