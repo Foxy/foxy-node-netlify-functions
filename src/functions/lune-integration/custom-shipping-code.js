@@ -15,9 +15,9 @@ const weightUnit = "lb";
 const originAddress = "address goes here, city goes here";
 
 // How to add the offset amount to the rates?
-// If set to false: Add rates with the CO2 offset estimate ammount included
-// If set to true: Keep regular rates, and duplicate them to add them with the CO2 offset estimate ammount included
-const addOffsetRatesSeparetly = true;
+// If set to false: Add rates with the CO2 offset estimate amount included
+// If set to true: Keep regular rates, and duplicate them to add them with the CO2 offset estimate amount included
+const addOffsetRatesSeparately = true;
 
 /* --- End Config --- */
 
@@ -111,7 +111,7 @@ try {
     shippingResultsEmissions.push(shippingEmissions);
   }
 
-  // Add rates Separetly or Update rates with CO2 Offset amount
+  // Add rates Separately or Update rates with CO2 Offset amount
   upsertCO2ShippingRates(shippingResultsEmissions, attributesRequestPayload);
 
   //Save estimate ids with service IDs in the cart's attributes
@@ -155,7 +155,7 @@ function upsertCO2ShippingRates(
         Number(price) + Number(quote.estimated_total_cost)
       ).toFixed(2);
 
-      if (addOffsetRatesSeparetly) {
+      if (addOffsetRatesSeparately) {
         const serviceIdNewRate = 10001 + index;
 
         const serviceNameNewRate = `${service_name} (${CO2MassString})`;

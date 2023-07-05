@@ -12,12 +12,12 @@ async function handler(requestEvent) {
     const cartDetails = JSON.parse(requestEvent.body);
     const ratePrefix = "rate_id_";
     const selectedShippingRateID =
-      cartDetails["_embeded"]["fx:shipment"].shipping_service_id;
+      cartDetails["_embedded"]["fx:shipments"][0].shipping_service_id;
     const luneEstimateID = cartDetails["_embedded"]["fx:attributes"].find(
       (attr) => attr.name === `${ratePrefix}${selectedShippingRateID}`
     ).value;
 
-    const LUNE_API_KEY = config.lune.accessKey;
+    const LUNE_API_KEY = config.lune.apiKey;
 
     if (!luneEstimateID) {
       console.log("No lune CO2 estimate ID is provided");
@@ -33,10 +33,10 @@ async function handler(requestEvent) {
     const orderByEstimateIdUrl = "https://api.lune.co/v1/orders/by-estimate";
     const response = await fetch(orderByEstimateIdUrl, {
       body: JSON.stringify({
-        estimate_id: "luneEstimateID",
+        estimate_id: luneEstimateID,
         metadata: {
           customer_email: cartDetails.customer_email,
-          transaction_id: cartDetails.id,
+          transaction_id: String(cartDetails.id),
         },
       }),
       headers: {
@@ -48,10 +48,10 @@ async function handler(requestEvent) {
     const data = await response.json();
 
     if (data.id) {
-      console.log("Order created succesfully", data);
+      console.log("Order created successfully", data);
       return {
         body: JSON.stringify({
-          details: `Order ${data.id} created succesfully on lune`,
+          details: `Order ${data.id} created successfully on lune`,
           ok: true,
         }),
         statusCode: 200,
