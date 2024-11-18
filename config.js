@@ -29,6 +29,11 @@ const config = {
       webflow: {
         collection: env('FOXY_WEBFLOW_COLLECTION'),
         token: env('FOXY_WEBFLOW_TOKEN') || env('WEBFLOW_TOKEN'),
+      },
+      wix: {
+        accountId: env("FOXY_WIX_ACCOUNT_ID"),
+        apiKey: env("FOXY_WIX_API_KEY"),
+        siteId: env("FOXY_WIX_SITE_ID"),
       }
     },
     skipUpdate: {
