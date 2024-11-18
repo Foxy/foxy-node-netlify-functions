@@ -17,6 +17,7 @@ Be sure to check the README for each function in the functions folder, as they p
 - Datastore integrations: 
     - [datastore-integration-webflow](src/functions/datastore-integration-webflow): Validates the price and/or availability of items against Webflow CMS collections before a payment is processed.
     - [datastore-integration-orderdesk](src/functions/datastore-integration-orderdesk): Validates the cart against OrderDesk and updates the inventory upon successful transaction.
+    - [datastore-integration-wix](src/functions/datastore-integration-wix): Validates the price and/or availability of items against Wix Stores before a payment is processed.
 - Other features:
   - [cart](src/functions/cart): Converts a cart between recurring and non-recurring. Useful in an upsell flow.
   - [idevaffiliate-marketplace](src/functions/idevaffiliate-marketplace): A marketplace-style integration, using iDevAffiliate.
