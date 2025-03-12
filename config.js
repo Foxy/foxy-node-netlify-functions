@@ -30,9 +30,14 @@ const config = {
         storeId: env("FOXY_ORDERDESK_STORE_ID"),
       },
       webflow: {
-        collection: env("FOXY_WEBFLOW_COLLECTION"),
-        token: env("FOXY_WEBFLOW_TOKEN") || env("WEBFLOW_TOKEN"),
+        collection: env('FOXY_WEBFLOW_COLLECTION'),
+        token: env('FOXY_WEBFLOW_TOKEN') || env('WEBFLOW_TOKEN'),
       },
+      wix: {
+        accountId: env("FOXY_WIX_ACCOUNT_ID"),
+        apiKey: env("FOXY_WIX_API_KEY"),
+        siteId: env("FOXY_WIX_SITE_ID"),
+      }
     },
     skipUpdate: {
       inventory: env("FOXY_SKIP_INVENTORY_UPDATE_CODES"),
