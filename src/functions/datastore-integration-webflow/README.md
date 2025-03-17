@@ -147,6 +147,18 @@ The webhook:
 - will assume that there is a field named `price` in your Webflow collection.
 - will fetch the data from your collection directly, find item with `sku` matching the `code` and compare the `price` field. It will approve the purchase if the price is the same as it is stored in your collection, and the inventory is sufficient.
 
+#### Note on Field Name Conversion
+
+The field name that you see in the CMS Editor (in the designer) might not be the actual name of the field.
+
+When fields are defined in the CMS, their names are automatically normalized in the API. For example, a field named `Product Code` in the CMS is converted to `product-code` in the API response. 
+
+Important: Once a field name is set and used in the API, it remains fixed—even if the label in the CMS is later changed.
+
+To ensure proper functionality, configure your environment variables (such as `FOXY_FIELD_CODE`) with the converted field name (e.g., product-code) rather than the original display name.
+
+You can request the schema for that specific collection list using the webflow API and work with the property name presented in the JSON response.
+
 # Deploy your webhook
 
 These are instructions for deploying the webhook to Netlify.

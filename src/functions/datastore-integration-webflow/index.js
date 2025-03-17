@@ -1,8 +1,14 @@
 const FoxyWebhook = require("../../foxy/FoxyWebhook.js");
-const Webflow = require("webflow-api");
+const { WebflowClient } = require("webflow-api");
 const { config } = require("../../../config.js");
 
 let webflowApi;
+
+/**
+ * Sets the Webflow API instance.
+ *
+ * @param {Object} api - The Webflow API instance to set.
+ */
 function setApi(api) {
   webflowApi = api;
 }
@@ -263,7 +269,7 @@ const validation = {
 /**
  * Checks if the price of the item is the same as found in WebFlow Collection
  *
- * @param comparable item received from webflow with item received from foxy embedded
+ * @param {Object} comparable item received from webflow with item received from foxy embedded
  * @returns  {boolean} price is correct
  */
 function isPriceCorrect(comparable) {
@@ -282,7 +288,7 @@ function isPriceCorrect(comparable) {
 /**
  * Checks if there is sufficient inventory for this purchase.
  *
- * @param comparable pair of matched items to be checked
+ * @param {Object} comparable pair of matched items to be checked
  * @returns {boolean} the inventory is sufficient
  */
 function sufficientInventory(comparable) {
@@ -300,10 +306,14 @@ function sufficientInventory(comparable) {
     // The code is set to be ignored: ignore
     return true;
   }
-  let inventoryField = Object.keys(wfItem).find(k => k.toLowerCase().trim() === field.toLowerCase().trim())
+  let inventoryField = Object.keys(wfItem.fieldData).find(
+    (k) => k.toLowerCase().trim() === field.toLowerCase().trim()
+  );
   if (!inventoryField) {
     const numbered = new RegExp(field.toLowerCase().trim()+'-\\d+');
-    inventoryField = Object.keys(wfItem).find(k => k.toLowerCase().trim().match(numbered));
+    inventoryField = Object.keys(wfItem.fieldData).find((k) =>
+      k.toLowerCase().trim().match(numbered)
+    );
   }
   if (inventoryField === undefined) {
     // The Webflow collection does not have the proper inventory field: ignore
@@ -312,7 +322,7 @@ function sufficientInventory(comparable) {
     return true;
   }
   const fxQuantity = Number(fxItem.quantity);
-  const wfInventory = Number(wfItem[inventoryField]);
+  const wfInventory = Number(wfItem.fieldData[inventoryField]);
   if (isNaN(fxQuantity) || isNaN(wfInventory)) {
     console.log(`Warning: a value for quantity or inventory is not a number: quantity ${fxQuantity} ; inventory: ${wfInventory}`)
     return true;
@@ -332,11 +342,11 @@ function getToken() {
 /**
  * Retrieve an instance of the Webflow API Client
  *
- * @returns {Webflow} the webflow api object
+ * @returns {WebflowClient} the webflow api object
  */
 function getWebflow() {
   if (!webflowApi) {
-    webflowApi = new Webflow({ token: getToken() });
+    webflowApi = new WebflowClient({ accessToken: getToken() });
   }
   return webflowApi;
 }
@@ -357,8 +367,8 @@ function getCollectionId(item) {
  * Stores a reference to the matched item in the item itself.
  * returns a pair of matched items that can be easily validated.
  *
- * @param webflowItem the item received from Webflow
- * @param foxyItem the item received from Foxy
+ * @param {Object} webflowItem the item received from Webflow
+ * @param {Object} foxyItem the item received from Foxy
  * @returns {object} a pair of comparable items
  */
 function enrichFetchedItem(webflowItem, foxyItem) {
@@ -395,8 +405,7 @@ function fetchItem(cache, foxyItem, offset = 0) {
     return Promise.resolve(enrichFetchedItem(found, foxyItem));
   }
   return new Promise((resolve, reject) => {
-    webflow.items(
-      { collectionId }, { limit: customOptions().webflow.limit, offset, sort: [getCustomKey('code'), 'ASC'] },
+    webflow.collections.items.listItemsLive(collectionId , { limit: customOptions().webflow.limit, offset, sortBy: "name", sortOrder: "asc"},
     ).then((collection) => {
       cache.addItems(collectionId, collection.items);
       let code_exists = null;
@@ -419,7 +428,7 @@ function fetchItem(cache, foxyItem, offset = 0) {
       } else {
         if (match) {
           resolve(enrichFetchedItem(match, foxyItem));
-        } else if (collection.total > collection.offset + collection.count) {
+        } else if (collection.pagination.total > collection.pagination.offset + collection.items.length) {
           fetchItem(cache, foxyItem, ((offset / customOptions().webflow.limit) + 1) * customOptions().webflow.limit)
             .then((i) => resolve(i))
             .catch((e) => {reject(e);});
@@ -436,7 +445,7 @@ function fetchItem(cache, foxyItem, offset = 0) {
 /**
  * Checks if a particular enriched item should be evaluated or not
  *
- * @param comparable enriched item to evaluate
+ * @param {object} comparable enriched item to evaluate
  * @returns {boolean} the item should be evaluated
  */
 function shouldEvaluate(comparable) {
@@ -460,7 +469,7 @@ function shouldEvaluate(comparable) {
 /**
  * Searches for an invalid value applying a list of criteria
  *
- * @param values to find mismatches
+ * @param {Array} values to find mismatches
  * @returns {boolean|string} mismatches were found
  */
 function findMismatch(values) {
@@ -488,7 +497,7 @@ function findMismatch(values) {
 function outOfStockItems(values) {
   return values
     .filter(v => !sufficientInventory(v))
-    .map(v => v.wfItem.name)
+    .map(v => v.wfItem.fieldData.name)
     .join(', ')
   ;
 }
@@ -501,15 +510,18 @@ function outOfStockItems(values) {
  * @returns {any} the value stored in the key
  */
 function iGet(object, key) {
+  const objectData = object && object.fieldData ? object.fieldData : object;
   const numbered = new RegExp(key.toLowerCase().trim()+'(-\\d+)?');
-  const existingKey = Object.keys(object).filter(k => k.toLowerCase().trim().match(numbered)).sort();
-  return object[existingKey[0]];
+  const existingKey = Object.keys(objectData)
+    .filter((k) => k.toLowerCase().trim().match(numbered))
+    .sort();
+  return objectData[existingKey[0]];
 }
 
 module.exports = {
-  handler,
-  getWebflow,
   extractItems,
   getCustomizableOption,
+  getWebflow,
+  handler,
   setApi
 }
